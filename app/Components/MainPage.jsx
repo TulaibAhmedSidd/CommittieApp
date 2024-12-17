@@ -207,13 +207,13 @@ export default function MainPage() {
           {myCommittie ? "Hide my committies" : 'See my available committies'}
         </button>
       </div>
-      <h1 className="text-2xl font-bold mb-6">Available Committees</h1>
 
       {
         myCommittie ?
           <MyCommittie />
           :
           <>
+            <h1 className="text-2xl font-bold mb-6">Available Committees</h1>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {
                 checkArrNull(committees) ?
