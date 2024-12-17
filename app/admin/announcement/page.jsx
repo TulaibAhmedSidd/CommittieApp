@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import NotAvailText from "@/app/Components/NotAvailText";
+import { checkArrNull } from "@/app/utils/commonFunc";
 
 export default function AdminPage() {
     const [committees, setCommittees] = useState([]);
@@ -90,27 +92,32 @@ export default function AdminPage() {
             </button>
 
             {/* Results Table */}
-            {results.length > 0 && (
-                <div className="mt-6">
-                    <h2 className="text-2xl font-semibold mb-2">Results</h2>
-                    <table className="w-full border-collapse border border-gray-300">
-                        <thead>
-                            <tr>
-                                <th className="border p-2 bg-gray-200">Position</th>
-                                <th className="border p-2 bg-gray-200">Member ID</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {results.map((result) => (
-                                <tr key={result.member}>
-                                    <td className="border p-2 text-center">{result.position}</td>
-                                    <td className="border p-2 text-center">{result.name}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            )}
+            {
+
+                checkArrNull(results) ? (
+                    <NotAvailText text="No Members available yet!" />
+                ) :
+                    results.length > 0 && (
+                        <div className="mt-6">
+                            <h2 className="text-2xl font-semibold mb-2">Results</h2>
+                            <table className="w-full border-collapse border border-gray-300">
+                                <thead>
+                                    <tr>
+                                        <th className="border p-2 bg-gray-200">Position</th>
+                                        <th className="border p-2 bg-gray-200">Member ID</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {results.map((result) => (
+                                        <tr key={result.member}>
+                                            <td className="border p-2 text-center">{result.position}</td>
+                                            <td className="border p-2 text-center">{result.name}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
         </div>
     );
 }

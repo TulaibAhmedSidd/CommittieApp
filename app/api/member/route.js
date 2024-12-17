@@ -1,6 +1,7 @@
 import connectToDatabase from "../../utils/db";
 import Committee from "../models/Committee";
 import Member from "../models/Member";
+import bcrypt from 'bcryptjs';
 
 // export async function GET() {
 //   await connectToDatabase();
@@ -149,9 +150,10 @@ export async function GET() {
 export async function POST(req) {
   try {
     await connectToDatabase();
-    const { name, email } = await req.json();
+    const { name, email, password } = await req.json();
+    const hashedPassword = await bcrypt.hash(password, 10); // 10 is the salt rounds
 
-    const newMember = new Member({ name, email });
+    const newMember = new Member({ name, email, password: hashedPassword });
     await newMember.save();
 
     return new Response(JSON.stringify(newMember), { status: 201 });

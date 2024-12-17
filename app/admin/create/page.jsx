@@ -35,7 +35,7 @@ export default function CreateCommittee() {
                             placeholder="Committee Name"
                             value={formData.name}
                             onChange={handleChange}
-                            className="w-full border-gray-300 rounded px-4 py-2"
+                            className="w-full border border-gray-300 rounded px-4 py-2"
                             required
                         />
                     </div>
@@ -46,7 +46,7 @@ export default function CreateCommittee() {
                             placeholder="Description"
                             value={formData.description}
                             onChange={handleChange}
-                            className="w-full border-gray-300 rounded px-4 py-2"
+                            className="w-full border border-gray-300 rounded px-4 py-2"
                             required
                         />
                     </div>
@@ -58,7 +58,7 @@ export default function CreateCommittee() {
                             placeholder="Max Members"
                             value={formData.maxMembers}
                             onChange={handleChange}
-                            className="w-full border-gray-300 rounded px-4 py-2"
+                            className="w-full border border-gray-300 rounded px-4 py-2"
                             required
                         />
                     </div>
