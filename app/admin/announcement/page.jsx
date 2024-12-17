@@ -34,7 +34,7 @@ export default function AdminPage() {
 
         try {
             const res = await fetch('/api/announcement', {
-                method: 'PUT',
+                method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ committeeId: selectedCommittee }),
             });
@@ -104,7 +104,7 @@ export default function AdminPage() {
                             {results.map((result) => (
                                 <tr key={result.member}>
                                     <td className="border p-2 text-center">{result.position}</td>
-                                    <td className="border p-2 text-center">{result.member}</td>
+                                    <td className="border p-2 text-center">{result.name}</td>
                                 </tr>
                             ))}
                         </tbody>

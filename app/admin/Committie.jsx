@@ -39,10 +39,27 @@ export default function Committiee() {
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-        <div className='flex gap-1'>
+
+      </div>
+      <div className='flex gap-1 my-2 flex-wrap'>
         <Link href="/admin/create">
           <button className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600">
             Create New Committee
+          </button>
+        </Link>
+        <Link href="/admin/members">
+          <button className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600">
+            View Members in a Committie
+          </button>
+        </Link>
+        <Link href="/admin/assign-member">
+          <button className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600">
+            Assign Committie to a Member
+          </button>
+        </Link>
+        <Link href="/admin/addmember">
+          <button className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600">
+            Add/Edit Members
           </button>
         </Link>
         <Link href="/admin/announcement">
@@ -50,7 +67,10 @@ export default function Committiee() {
             Announcement
           </button>
         </Link>
-        </div>
+      </div>
+      <div className="flex justify-between items-center my-6">
+        <h1 className="text-2xl  font-semibold ">Showing All Committies</h1>
+
       </div>
       <ul className="space-y-4">
         {committees.map((committee) => (

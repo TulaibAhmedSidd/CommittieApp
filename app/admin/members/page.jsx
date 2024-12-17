@@ -31,20 +31,52 @@ export default function ManageMembers() {
     setSelectedCommittee(committee);
   };
 
+  // const handleApproveMember = async (memberId) => {
+  //   try {
+  //     await approveMember(selectedCommittee._id, memberId);
+  //     const updatedCommittee = {
+  //       ...selectedCommittee,
+  //       members: selectedCommittee.members.map((m) =>
+  //         m._id === memberId ? { ...m, status: 'approved' } : m
+  //       ),
+  //     };
+  //     setSelectedCommittee(updatedCommittee);
+  //   } catch (err) {
+  //     alert('Failed to approve member');
+  //   }
+  // };
+
   const handleApproveMember = async (memberId) => {
     try {
-      await approveMember(selectedCommittee._id, memberId);
-      const updatedCommittee = {
-        ...selectedCommittee,
-        members: selectedCommittee.members.map((m) =>
-          m._id === memberId ? { ...m, status: 'approved' } : m
-        ),
-      };
-      setSelectedCommittee(updatedCommittee);
+        const response = await fetch('/api/member/approve', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                memberId: memberId,
+                updates: { status: 'approved' },
+            }),
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to approve member');
+        }
+
+        const updatedMember = await response.json();
+        alert(`Member ${updatedMember.name} approved successfully!`);
+
+        // Update the UI state
+        const updatedCommittee = {
+            ...selectedCommittee,
+            members: selectedCommittee.members.map((m) =>
+                m._id === memberId ? { ...m, status: 'approved' } : m
+            ),
+        };
+        setSelectedCommittee(updatedCommittee);
     } catch (err) {
-      alert('Failed to approve member');
+        console.error(err.message);
+        alert('Failed to approve member');
     }
-  };
+};
 
   const handleDeleteMember = async (memberId) => {
     if (!confirm('Are you sure you want to remove this member?')) return;
