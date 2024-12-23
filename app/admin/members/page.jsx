@@ -11,7 +11,14 @@ export default function ManageMembers() {
   const [error, setError] = useState(null);
 
   const router = useRouter();
-
+  useEffect(() => {
+    // Check if user is logged in
+    const token = localStorage.getItem("admin_token");
+    if (!token) {
+      router.push("/admin/login"); // Redirect to login page if no token
+    } else {
+    }
+  }, []);
   useEffect(() => {
     async function loadCommittees() {
       try {
@@ -94,14 +101,7 @@ export default function ManageMembers() {
 
   if (loading) return <p>Loading...</p>;
   if (error) return <p className="text-red-500">Error: {error}</p>;
-  useEffect(() => {
-    // Check if user is logged in
-    const token = localStorage.getItem("admin_token");
-    if (!token) {
-      router.push("/admin/login"); // Redirect to login page if no token
-    } else {
-    }
-  }, []);
+
   return (
     <div className="p-6">
       <div className='flex justify-between' >
