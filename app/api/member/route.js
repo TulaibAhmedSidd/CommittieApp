@@ -141,7 +141,7 @@ export async function GET() {
     const members = await Member.find();
     return new Response(JSON.stringify(members), { status: 200 });
   } catch (err) {
-    return new Response(JSON.stringify({ error: "Failed to fetch members" }), {
+    return new Response(JSON.stringify({ error: "Failed to fetch members"+ err  }), {
       status: 500,
     });
   }
@@ -158,7 +158,7 @@ export async function POST(req) {
 
     return new Response(JSON.stringify(newMember), { status: 201 });
   } catch (err) {
-    return new Response(JSON.stringify({ error: "Failed to add member" }), {
+    return new Response(JSON.stringify({ error: "Failed to add member" + err }), {
       status: 400,
     });
   }
@@ -183,7 +183,7 @@ export async function DELETE(req) {
       { status: 200 }
     );
   } catch (err) {
-    return new Response(JSON.stringify({ error: "Failed to delete member" }), {
+    return new Response(JSON.stringify({ error: "Failed to delete member" + err }), {
       status: 400,
     });
   }

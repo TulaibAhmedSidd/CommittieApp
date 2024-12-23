@@ -49,7 +49,7 @@ export async function PATCH(req) {
     return new Response(
       JSON.stringify({
         error: "Failed to assign member",
-        details: err.message,
+        details: err.message+ err ,
       }),
       { status: 400 }
     );

@@ -201,7 +201,7 @@ export async function POST(req) {
     console.error("Error announcing results:", err);
     return new Response(
       JSON.stringify({
-        error: "Failed to announce results",
+        error: "Failed to announce results"+ err ,
         details: err.message,
       }),
       { status: 500 }

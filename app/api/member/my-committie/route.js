@@ -88,7 +88,7 @@ export async function POST(req) {
   } catch (err) {
     console.error("Error fetching committees with results:", err);
     return NextResponse.json(
-      { message: "Failed to fetch committees" },
+      { message: "Failed to fetch committees :" + err },
       { status: 500 }
     );
   }

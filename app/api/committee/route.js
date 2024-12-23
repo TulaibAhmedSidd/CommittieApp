@@ -30,7 +30,7 @@ export async function POST(req) {
 
         return new Response(JSON.stringify(newCommittee), { status: 201 });
     } catch (err) {
-        return new Response(JSON.stringify({ error: 'Failed to create committee' }), { status: 400 });
+        return new Response(JSON.stringify({ error: 'Failed to create committee'+ err  }), { status: 400 });
     }
 }
 
@@ -54,7 +54,7 @@ export async function PATCH(req) {
 
         return new Response(JSON.stringify(updatedCommittee), { status: 200 });
     } catch (err) {
-        return new Response(JSON.stringify({ error: 'Failed to update committee' }), { status: 400 });
+        return new Response(JSON.stringify({ error: 'Failed to update committee'+ err  }), { status: 400 });
     }
 }
 
@@ -74,6 +74,6 @@ export async function DELETE(req) {
 
         return new Response(JSON.stringify({ message: 'Committee deleted successfully' }), { status: 200 });
     } catch (err) {
-        return new Response(JSON.stringify({ error: 'Failed to delete committee' }), { status: 400 });
+        return new Response(JSON.stringify({ error: 'Failed to delete committee' + err }), { status: 400 });
     }
 }

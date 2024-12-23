@@ -12,12 +12,12 @@ export async function POST(req) {
     const admin = await Admin.findOne({ email });
 
     if (!admin) {
-      return new Response(JSON.stringify({ message: "Invalid email or password" }), { status: 400 });
+      return new Response(JSON.stringify({ message: "Invalid email or password" + err }), { status: 400 });
     }
 
     const isMatch = await bcrypt.compare(password, admin.password);
     if (!isMatch) {
-      return new Response(JSON.stringify({ message: "Invalid email or password" }), { status: 400 });
+      return new Response(JSON.stringify({ message: "Invalid email or password"+ err  }), { status: 400 });
     }
 
     // Create JWT token for admin
@@ -29,10 +29,10 @@ export async function POST(req) {
 
     return new Response(JSON.stringify({ token }), { status: 200 });
   } catch (error) {
-    return new Response(JSON.stringify({ message: "Server error" }), { status: 500 });
+    return new Response(JSON.stringify({ message: "Server error" + err }), { status: 500 });
   }
 }
 
 export async function GET(req) {
-  return new Response(JSON.stringify({ message: "GET method not allowed" }), { status: 405 });
+  return new Response(JSON.stringify({ message: "GET method not allowed"+ err  }), { status: 405 });
 }

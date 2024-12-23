@@ -42,7 +42,9 @@ export default function MyCommittie() {
         }
     }
     useEffect(() => {
-        fetchCommittees();
+        if(userId){
+            fetchCommittees();
+        }
     }, [userId]);
 
     if (loading) {

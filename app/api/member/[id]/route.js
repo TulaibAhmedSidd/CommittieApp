@@ -14,7 +14,7 @@ export async function PUT(req, { params }) {
     if (!member) return new Response('Member not found', { status: 404 });
     return new Response(JSON.stringify(member), { status: 200 });
   } catch (err) {
-    return new Response('Failed to update member', { status: 500 });
+    return new Response('Failed to update member'+ err , { status: 500 });
   }
 }
 
@@ -27,6 +27,6 @@ export async function DELETE(req, { params }) {
     if (!member) return new Response('Member not found', { status: 404 });
     return new Response('Member deleted successfully', { status: 200 });
   } catch (err) {
-    return new Response('Failed to delete member', { status: 500 });
+    return new Response('Failed to delete member'+ err , { status: 500 });
   }
 }
