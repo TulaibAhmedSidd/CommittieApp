@@ -29,9 +29,9 @@ export default function LoginPage() {
       // Save JWT token to local storage
       localStorage.setItem("token", data?.token);
       localStorage.setItem("member", JSON.stringify(data?.member));
+      router.push("/userDash");
 
       // Redirect to the main page or desired route
-      router.push("/");
     } catch (err) {
       setError(err.message);
     } finally {
