@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import NotAvailText from "@/app/Components/NotAvailText";
 import { checkArrNull } from "@/app/utils/commonFunc";
+import { useRouter } from 'next/navigation';
 
 export default function AdminPage() {
     const [committees, setCommittees] = useState([]);
