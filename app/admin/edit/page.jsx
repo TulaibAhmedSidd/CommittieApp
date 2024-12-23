@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { fetchCommittees, updateCommittee } from '../apis';
 import { useRouter } from 'next/navigation';
+import GoBackButton from "@components/GoBackButton"
 
 export default function EditCommittee(params) {
   const router = useRouter();
@@ -45,7 +46,10 @@ export default function EditCommittee(params) {
   }, []);
   return (
     <div className="max-w-3xl mx-auto p-6 bg-white shadow rounded">
-      <h1 className="text-2xl font-bold mb-4">Edit Committee</h1>
+      <div className="flex items-center gap-2 mb-6">
+        <GoBackButton />
+        <h1 className="text-2xl font-bold ">Edit Committee</h1>
+      </div>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block font-semibold">Committee Name</label>

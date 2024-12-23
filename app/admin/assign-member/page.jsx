@@ -2,19 +2,31 @@
 import { useEffect, useState } from 'react';
 import { fetchCommittees, fetchMembers } from '../apis';
 import { useRouter } from 'next/navigation';
+import MembersListing from '../AdminComponents/MembersListing';
+import GoBackButton from '@/app/components/GoBackButton';
 
 export default function AssignMembers() {
     const [members, setMembers] = useState([]);
     const [committees, setCommittees] = useState([]);
     const [selectedMember, setSelectedMember] = useState('');
     const [selectedCommittee, setSelectedCommittee] = useState('');
-
+    const [loading, setLoading] = useState(false)
     const fetchApis = async () => {
-        const res = await fetchMembers();
-        const res2 = await fetchCommittees();
-        if (res) setMembers(res);
-        if (res2) setCommittees(res2);
+        setLoading(true)
+        try {
+            const res = await fetchMembers();
+            const res2 = await fetchCommittees();
+            if (res) setMembers(res);
+            if (res2) setCommittees(res2);
+            if (res || res2) {
+                setLoading(false)
+            }
 
+        } catch (err) {
+            console.log(err)
+        } finally {
+            setLoading(false)
+        }
     }
     useEffect(() => {
         fetchApis()
@@ -45,12 +57,14 @@ export default function AssignMembers() {
                 headers: { 'Content-Type': 'application/json' },
             });
 
-            if (!res.ok) throw new Error('Failed to assign member');
+            if (!res.ok) {
+                throw new Error('Failed to assign member/ either already assigned')
+            };
             alert('Member assigned successfully');
             fetchMembers();
             fetchCommittees();
         } catch (err) {
-            alert(err.message);
+            alert(err);
         }
     };
     const router = useRouter();
@@ -62,35 +76,52 @@ export default function AssignMembers() {
         } else {
         }
     }, []);
+
+    const CommittieApprovedMember = committees?.map((mem) => mem.members);
+    console.log("CommittieApprovedMember", CommittieApprovedMember)
     return (
         <div className="container mx-auto p-4">
-            <h1 className="text-2xl font-bold mb-4">Assign Member to Committee</h1>
+            <div className="flex items-center gap-2 mb-6">
+                <GoBackButton />
+                <h1 className="text-2xl font-bold ">Assign Member to Committee</h1>
+            </div>
             <div className="space-y-4">
                 <select
+                    disabled={loading}
+                    value={selectedCommittee}
+                    onChange={(e) => setSelectedCommittee(e.target.value)}
+                    className="border p-2 w-full"
+                >
+                    <option value="">{loading ? 'Fetching Data...' : 'Select Committee'}</option>
+                    {committees?.map((committee) => {
+                        let memebersApproved = committee.members?.filter((meme) => meme?.status != 'pending')
+                        return (
+                            <option key={committee._id} value={committee._id}>
+                                {committee.name} ({memebersApproved?.length + " - Approved member"} / out of {committee.maxMembers})
+                            </option>
+                        )
+                    })
+                    }
+                </select>
+                <select
+                    disabled={loading}
                     value={selectedMember}
                     onChange={(e) => setSelectedMember(e.target.value)}
                     className="border p-2 w-full"
                 >
-                    <option value="">Select Member</option>
-                    {members.map((member) => (
-                        <option key={member._id} value={member._id}>
+                    <option value="">{loading ? 'Fetching Data...' : 'Select Member'}</option>
+                    {members?.map((member) => (
+                        <option key={member._id} value={member._id}
+                            disabled={
+                                CommittieApprovedMember?.map((iem)=>includes)
+                            }
+                        >
                             {member.name} - {member.email}
                         </option>
                     ))}
                 </select>
 
-                <select
-                    value={selectedCommittee}
-                    onChange={(e) => setSelectedCommittee(e.target.value)}
-                    className="border p-2 w-full"
-                >
-                    <option value="">Select Committee</option>
-                    {committees.map((committee) => (
-                        <option key={committee._id} value={committee._id}>
-                            {committee.name} ({committee.members.length}/{committee.maxMembers})
-                        </option>
-                    ))}
-                </select>
+
 
                 <button
                     onClick={handleAssign}
@@ -98,6 +129,9 @@ export default function AssignMembers() {
                 >
                     Assign Member
                 </button>
+            </div>
+            <div className='py-8'>
+                <MembersListing />
             </div>
         </div>
     );

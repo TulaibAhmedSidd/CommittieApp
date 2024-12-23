@@ -69,6 +69,11 @@ export default function Committiee() {
         </button>
       </div>
       <div className='flex gap-1 my-2 flex-wrap'>
+        <Link href="/admin/add-admin">
+          <button className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600">
+            Create New Admin
+          </button>
+        </Link>
         <Link href="/admin/create">
           <button className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600">
             Create New Committee

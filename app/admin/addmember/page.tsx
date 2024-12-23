@@ -1,5 +1,6 @@
 "use client";
 
+import GoBackButton from "@/app/components/GoBackButton";
 import NotAvailText from "@/app/Components/NotAvailText";
 import { checkArrNull } from "@/app/utils/commonFunc";
 import { useRouter } from "next/navigation";
@@ -191,7 +192,10 @@ export default function AddMembers() {
   }, []);
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Add / Edit Member</h1>
+      <div className="flex items-center gap-2 mb-6">
+        <GoBackButton />
+        <h1 className="text-2xl font-bold ">Add / Edit Member</h1>
+      </div>
       <form onSubmit={handleSubmit} className="space-y-4 mb-8">
         <label className="mt-3" htmlFor="name">
           Member Name

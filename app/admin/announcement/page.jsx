@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import NotAvailText from "@/app/Components/NotAvailText";
 import { checkArrNull } from "@/app/utils/commonFunc";
 import { useRouter } from 'next/navigation';
+import GoBackButton from "@/app/components/GoBackButton";
 
 export default function AdminPage() {
     const [committees, setCommittees] = useState([]);
@@ -66,8 +67,10 @@ export default function AdminPage() {
     }, []);
     return (
         <div className="container mx-auto p-6">
-            <h1 className="text-3xl font-bold mb-4">Admin - Committee Announcements</h1>
-
+            <div className="flex items-center gap-2 mb-6">
+                <GoBackButton />
+                <h1 className="text-3xl font-bold ">Admin - Committee Announcements</h1>
+            </div>
             {/* Committee Selection */}
             <div className="mb-4">
                 <label htmlFor="committee" className="block text-lg font-medium">

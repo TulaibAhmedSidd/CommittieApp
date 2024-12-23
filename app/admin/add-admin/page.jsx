@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import GoBackButton from "@/app/components/GoBackButton";
 
 export default function AdminRegister() {
     const [name, setName] = useState("");
@@ -47,7 +48,10 @@ export default function AdminRegister() {
 
     return (
         <div className="container mx-auto px-4 py-8">
-            <h1 className="text-3xl font-bold mb-6 text-center">Register New Admin</h1>
+            <div className='flex items-center gap-2 mb-6' >
+                <GoBackButton />
+                <h1 className="text-3xl font-bold  text-center">Register New Admin</h1>
+            </div>
             <form onSubmit={handleRegister} className="max-w-md mx-auto p-6 bg-white shadow-md rounded-lg">
                 <div className="mb-4">
                     <label htmlFor="name" className="block text-sm font-medium text-gray-700">
