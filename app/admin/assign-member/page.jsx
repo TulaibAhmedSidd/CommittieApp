@@ -78,7 +78,11 @@ export default function AssignMembers() {
     }, []);
 
     const CommittieApprovedMember = committees?.map((mem) => mem.members);
-    console.log("CommittieApprovedMember", CommittieApprovedMember)
+
+    const checkIfIdExists = (array, id) => {
+        return array.some(user => user._id === id);
+    };
+
     return (
         <div className="container mx-auto p-4">
             <div className="flex items-center gap-2 mb-6">
@@ -113,7 +117,7 @@ export default function AssignMembers() {
                     {members?.map((member) => (
                         <option key={member._id} value={member._id}
                             disabled={
-                                CommittieApprovedMember?.map((iem)=>includes)
+                                checkIfIdExists(CommittieApprovedMember, member._id)
                             }
                         >
                             {member.name} - {member.email}
