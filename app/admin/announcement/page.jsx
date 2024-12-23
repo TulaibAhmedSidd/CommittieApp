@@ -54,7 +54,15 @@ export default function AdminPage() {
             setLoading(false);
         }
     }
-
+    const router = useRouter();
+    useEffect(() => {
+        // Check if user is logged in
+        const token = localStorage.getItem("admin_token");
+        if (!token) {
+            router.push("/admin/login"); // Redirect to login page if no token
+        } else {
+        }
+    }, []);
     return (
         <div className="container mx-auto p-6">
             <h1 className="text-3xl font-bold mb-4">Admin - Committee Announcements</h1>

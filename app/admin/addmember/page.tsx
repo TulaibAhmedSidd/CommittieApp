@@ -2,6 +2,7 @@
 
 import NotAvailText from "@/app/Components/NotAvailText";
 import { checkArrNull } from "@/app/utils/commonFunc";
+import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 // import { fetchMembers } from "../apis";
 
@@ -179,7 +180,15 @@ export default function AddMembers() {
       alert(err.message);
     }
   };
-
+  const router = useRouter();
+  useEffect(() => {
+    // Check if user is logged in
+    const token = localStorage.getItem("admin_token");
+    if (!token) {
+      router.push("/admin/login"); // Redirect to login page if no token
+    } else {
+    }
+  }, []);
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Add / Edit Member</h1>

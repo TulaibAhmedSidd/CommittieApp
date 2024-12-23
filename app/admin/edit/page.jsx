@@ -35,7 +35,14 @@ export default function EditCommittee(params) {
       alert('Failed to update committee');
     }
   };
-
+  useEffect(() => {
+    // Check if user is logged in
+    const token = localStorage.getItem("admin_token");
+    if (!token) {
+      router.push("/admin/login"); // Redirect to login page if no token
+    } else {
+    }
+  }, []);
   return (
     <div className="max-w-3xl mx-auto p-6 bg-white shadow rounded">
       <h1 className="text-2xl font-bold mb-4">Edit Committee</h1>

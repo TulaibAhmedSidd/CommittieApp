@@ -70,6 +70,14 @@ export async function POST(req) {
       { expiresIn: "1h" }
     );
 
+    if (!token) {
+      return new Response(
+        JSON.stringify({ message: "can't generate token error, " }),
+        {
+          status: 400,
+        }
+      );
+    }
     // Return the token
     return new Response(JSON.stringify({ token: token, member: member }), {
       status: 200,

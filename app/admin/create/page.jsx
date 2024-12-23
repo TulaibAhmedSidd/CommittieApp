@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createCommittee } from '../apis';
 import { useRouter } from 'next/navigation';
 
@@ -21,7 +21,14 @@ export default function CreateCommittee() {
             alert('Failed to create committee');
         }
     };
-
+    useEffect(() => {
+        // Check if user is logged in
+        const token = localStorage.getItem("admin_token");
+        if (!token) {
+            router.push("/admin/login"); // Redirect to login page if no token
+        } else {
+        }
+    }, []);
     return (
         <div className="min-h-[100vh] flex justify-center items-center ">
             <div className=" min-w-[70vw] max-w-3xl mx-auto p-6 bg-white shadow rounded">

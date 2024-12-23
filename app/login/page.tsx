@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
@@ -38,7 +38,15 @@ export default function LoginPage() {
       setLoading(false);
     }
   };
-
+  useEffect(() => {
+    // Check if user is logged in
+    const token = localStorage.getItem("token");
+    if (!token) {
+      // router.push("/login");  // Redirect to login page if no token
+    } else {
+      router.push("/userDash");  // Redirect to login page if no token
+    }
+  }, []);
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold mb-6">Login</h1>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 export default function AdminLogin() {
@@ -41,7 +41,14 @@ export default function AdminLogin() {
             setLoading(false);
         }
     };
-
+  useEffect(() => {
+    // Check if user is logged in
+    const token = localStorage.getItem("admin_token");
+    if (!token) {
+      router.push("/admin/login"); // Redirect to login page if no token
+    } else {
+    }
+  }, []);
     return (
         <div className="container mx-auto px-4 py-8">
             <h1 className="text-3xl font-bold mb-6 text-center">Admin Login</h1>

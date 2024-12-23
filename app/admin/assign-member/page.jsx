@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { fetchCommittees, fetchMembers } from '../apis';
+import { useRouter } from 'next/navigation';
 
 export default function AssignMembers() {
     const [members, setMembers] = useState([]);
@@ -52,7 +53,15 @@ export default function AssignMembers() {
             alert(err.message);
         }
     };
-
+    const router = useRouter();
+    useEffect(() => {
+        // Check if user is logged in
+        const token = localStorage.getItem("admin_token");
+        if (!token) {
+            router.push("/admin/login"); // Redirect to login page if no token
+        } else {
+        }
+    }, []);
     return (
         <div className="container mx-auto p-4">
             <h1 className="text-2xl font-bold mb-4">Assign Member to Committee</h1>

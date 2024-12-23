@@ -48,35 +48,35 @@ export default function ManageMembers() {
 
   const handleApproveMember = async (memberId) => {
     try {
-        const response = await fetch('/api/member/approve', {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                memberId: memberId,
-                updates: { status: 'approved' },
-            }),
-        });
+      const response = await fetch('/api/member/approve', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          memberId: memberId,
+          updates: { status: 'approved' },
+        }),
+      });
 
-        if (!response.ok) {
-            throw new Error('Failed to approve member');
-        }
+      if (!response.ok) {
+        throw new Error('Failed to approve member');
+      }
 
-        const updatedMember = await response.json();
-        alert(`Member ${updatedMember.name} approved successfully!`);
+      const updatedMember = await response.json();
+      alert(`Member ${updatedMember.name} approved successfully!`);
 
-        // Update the UI state
-        const updatedCommittee = {
-            ...selectedCommittee,
-            members: selectedCommittee.members.map((m) =>
-                m._id === memberId ? { ...m, status: 'approved' } : m
-            ),
-        };
-        setSelectedCommittee(updatedCommittee);
+      // Update the UI state
+      const updatedCommittee = {
+        ...selectedCommittee,
+        members: selectedCommittee.members.map((m) =>
+          m._id === memberId ? { ...m, status: 'approved' } : m
+        ),
+      };
+      setSelectedCommittee(updatedCommittee);
     } catch (err) {
-        console.error(err.message);
-        alert('Failed to approve member');
+      console.error(err.message);
+      alert('Failed to approve member');
     }
-};
+  };
 
   const handleDeleteMember = async (memberId) => {
     if (!confirm('Are you sure you want to remove this member?')) return;
@@ -94,7 +94,14 @@ export default function ManageMembers() {
 
   if (loading) return <p>Loading...</p>;
   if (error) return <p className="text-red-500">Error: {error}</p>;
-
+  useEffect(() => {
+    // Check if user is logged in
+    const token = localStorage.getItem("admin_token");
+    if (!token) {
+      router.push("/admin/login"); // Redirect to login page if no token
+    } else {
+    }
+  }, []);
   return (
     <div className="p-6">
       <div className='flex justify-between' >

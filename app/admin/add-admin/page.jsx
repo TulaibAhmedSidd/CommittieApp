@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 export default function AdminRegister() {
@@ -10,7 +10,14 @@ export default function AdminRegister() {
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
     const router = useRouter();
-
+    useEffect(() => {
+        // Check if user is logged in
+        const token = localStorage.getItem("admin_token");
+        if (!token) {
+            router.push("/admin/login");  // Redirect to login page if no token
+        } else {
+        }
+    }, []);
     const handleRegister = async (e) => {
         e.preventDefault();
         setLoading(true);
