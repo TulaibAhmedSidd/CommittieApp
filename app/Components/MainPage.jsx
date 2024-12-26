@@ -413,7 +413,7 @@ export default function MainPage() {
                     {committee.maxMembers}
                   </p>
                   <div className="mt-4">
-                    {committee.status === "open" || committee.maxMembers - committee.members.length == 0 ? (
+                    {committee.status === "open" || committee.maxMembers - committee.members.length != 0 ? (
                       <button
                         className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
                         onClick={() => registerForCommittee(committee._id)}
