@@ -1,4 +1,3 @@
-import MainPage from './Components/MainPage'
 import UserType from './Components/UserType';
 
 export default function Home() {

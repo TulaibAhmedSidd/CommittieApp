@@ -3,6 +3,11 @@ export async function fetchCommittees() {
   if (!res.ok) throw new Error("Failed to fetch committees");
   return res.json();
 }
+export async function fetchCommitteebyId(id) {
+  const res = await fetch(`/api/committee/${id}`);
+  if (!res.ok) throw new Error("Failed to fetch committe by id");
+  return res.json();
+}
 
 export async function createCommittee(data) {
   const res = await fetch("/api/committee", {

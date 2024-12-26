@@ -4,12 +4,14 @@ import { fetchCommittees, fetchMembers } from '../apis';
 import { useRouter } from 'next/navigation';
 import MembersListing from '../AdminComponents/MembersListing';
 import GoBackButton from '@/app/components/GoBackButton';
+import RefreshButton from '@/app/components/RefreshButton';
 
 export default function AssignMembers() {
     const [members, setMembers] = useState([]);
     const [committees, setCommittees] = useState([]);
     const [selectedMember, setSelectedMember] = useState('');
     const [selectedCommittee, setSelectedCommittee] = useState('');
+    const [selectedCommitteeIndex, setSelectedCommitteeIndex] = useState(0);
     const [loading, setLoading] = useState(false)
     const fetchApis = async () => {
         setLoading(true)
@@ -60,9 +62,8 @@ export default function AssignMembers() {
             if (!res.ok) {
                 throw new Error('Failed to assign member/ either already assigned')
             };
+            fetchApis()
             alert('Member assigned successfully');
-            fetchMembers();
-            fetchCommittees();
         } catch (err) {
             alert(err);
         }
@@ -83,24 +84,41 @@ export default function AssignMembers() {
         return array.some(user => user._id === id);
     };
 
+    useEffect(() => {
+        return () => {
+            setSelectedCommitteeIndex(0)
+        }
+    }, [])
+
+    console.log("selectedCommitteeIndex", selectedCommitteeIndex)
     return (
         <div className="container mx-auto p-4">
             <div className="flex items-center gap-2 mb-6">
                 <GoBackButton />
                 <h1 className="text-2xl font-bold ">Assign Member to Committee</h1>
+                <RefreshButton
+                    onClick={() => {
+                        fetchApis();
+                    }}
+                />
             </div>
             <div className="space-y-4">
                 <select
                     disabled={loading}
                     value={selectedCommittee}
-                    onChange={(e) => setSelectedCommittee(e.target.value)}
+                    onChange={(e) => {
+                        console.log(e.target)
+                        setSelectedCommittee(e.target.value);
+                        // setSelectedCommitteeIndex(index + 1)
+
+                    }}
                     className="border p-2 w-full"
                 >
                     <option value="">{loading ? 'Fetching Data...' : 'Select Committee'}</option>
-                    {committees?.map((committee) => {
+                    {committees?.map((committee, index) => {
                         let memebersApproved = committee.members?.filter((meme) => meme?.status != 'pending')
                         return (
-                            <option key={committee._id} value={committee._id}>
+                            <option key={committee._id} value={committee._id} onClick={() => setSelectedCommitteeIndex(index + 1)}>
                                 {committee.name} ({memebersApproved?.length + " - Approved member"} / out of {committee.maxMembers})
                             </option>
                         )
@@ -117,7 +135,7 @@ export default function AssignMembers() {
                     {members?.map((member) => (
                         <option key={member._id} value={member._id}
                             disabled={
-                                checkIfIdExists(CommittieApprovedMember, member._id)
+                                checkIfIdExists(CommittieApprovedMember[selectedCommitteeIndex], member._id)
                             }
                         >
                             {member.name} - {member.email}

@@ -1,9 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { fetchCommittees, approveMember, deleteMember } from "../apis";
+import {
+  fetchCommittees,
+  approveMember,
+  deleteMember,
+  fetchCommitteebyId,
+} from "../apis";
 import { usePathname, useRouter } from "next/navigation";
 import GoBackButton from "@/app/components/GoBackButton";
+import RefreshButton from "@/app/components/RefreshButton";
+import { toast } from "react-toastify";
 
 export default function MembersListing() {
   const [committees, setCommittees] = useState([]);
@@ -20,17 +27,28 @@ export default function MembersListing() {
     } else {
     }
   }, []);
-  useEffect(() => {
-    async function loadCommittees() {
-      try {
-        const data = await fetchCommittees();
-        setCommittees(data);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
+  async function loadCommittees() {
+    try {
+      const data = await fetchCommittees();
+      setCommittees(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
+  }
+  async function loadCommitteById(id) {
+    try {
+      const data = await fetchCommitteebyId(id);
+      // setCommittees([data]);
+      setSelectedCommittee(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+  useEffect(() => {
     loadCommittees();
   }, []);
 
@@ -50,7 +68,9 @@ export default function MembersListing() {
   //     };
   //     setSelectedCommittee(updatedCommittee);
   //   } catch (err) {
-  //     alert('Failed to approve member');
+  //       toast.success("Successfully registered!", { position: "bottom-center" });
+
+  // alert('Failed to approve member');
   //   }
   // };
 
@@ -70,6 +90,8 @@ export default function MembersListing() {
       }
 
       const updatedMember = await response.json();
+      toast.success("Successfully registered!", { position: "bottom-center" });
+
       alert(`Member ${updatedMember.name} approved successfully!`);
 
       // Update the UI state
@@ -82,6 +104,8 @@ export default function MembersListing() {
       setSelectedCommittee(updatedCommittee);
     } catch (err) {
       console.error(err.message);
+      toast.success("Successfully registered!", { position: "bottom-center" });
+
       alert("Failed to approve member");
     }
   };
@@ -96,6 +120,8 @@ export default function MembersListing() {
       };
       setSelectedCommittee(updatedCommittee);
     } catch (err) {
+      toast.success("Successfully registered!", { position: "bottom-center" });
+
       alert("Failed to remove member");
     }
   };
@@ -141,7 +167,17 @@ export default function MembersListing() {
         <div className="mt-6">
           <h2 className="text-2xl font-semibold">{selectedCommittee.name}</h2>
           <p className="text-gray-600">{selectedCommittee.description}</p>
-          <h3 className="text-xl font-semibold mt-4">Members</h3>
+          <div className="mt-4 flex gap-2 items-center">
+            <h3 className="text-xl font-semibold ">
+              {selectedCommittee?.members?.length} - Members
+            </h3>
+            <RefreshButton
+              onClick={() => {
+                loadCommitteById(selectedCommittee?._id);
+              }}
+            />
+          </div>
+
           <ul className="space-y-4 mt-2">
             {selectedCommittee.members.map((member) => (
               <li

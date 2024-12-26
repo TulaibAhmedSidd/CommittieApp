@@ -136,7 +136,11 @@ export default function AddMembers() {
       const method = editingId ? "PUT" : "POST"; // Use PUT for edit, POST for create
       const response = await fetch(url, {
         method,
-        body: JSON.stringify({ name, email, password: Password }),
+        body: JSON.stringify({
+          name,
+          email: email?.toLowerCase(),
+          password: Password,
+        }),
         headers: { "Content-Type": "application/json" },
       });
 
