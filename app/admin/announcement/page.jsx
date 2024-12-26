@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import NotAvailText from "@/app/Components/NotAvailText";
 import { checkArrNull } from "@/app/utils/commonFunc";
 import { useRouter } from 'next/navigation';
-import GoBackButton from "@/app/components/GoBackButton";
+import GoBackButton from "../../Components/GoBackButton";
 
 export default function AdminPage() {
     const [committees, setCommittees] = useState([]);

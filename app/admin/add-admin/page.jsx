@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import GoBackButton from "@/app/components/GoBackButton";
+import GoBackButton from "../../Components/GoBackButton";
 import { toast } from "react-toastify";
 
 export default function AdminRegister() {

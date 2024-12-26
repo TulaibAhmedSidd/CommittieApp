@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { createCommittee } from '../apis';
 import { useRouter } from 'next/navigation';
-import GoBackButton from "@components/GoBackButton"
+import GoBackButton from "../../Components/GoBackButton"
 import { toast } from 'react-toastify';
 
 export default function CreateCommittee() {

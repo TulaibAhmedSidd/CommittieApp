@@ -3,8 +3,8 @@ import { useEffect, useState } from 'react';
 import { fetchCommittees, fetchMembers } from '../apis';
 import { useRouter } from 'next/navigation';
 import MembersListing from '../AdminComponents/MembersListing';
-import GoBackButton from '@/app/components/GoBackButton';
-import RefreshButton from '@/app/components/RefreshButton';
+import GoBackButton from '../../Components/GoBackButton';
+import RefreshButton from '../../Components/RefreshButton';
 import { toast } from 'react-toastify';
 
 export default function AssignMembers() {

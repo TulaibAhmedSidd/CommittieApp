@@ -8,8 +8,8 @@ import {
   fetchCommitteebyId,
 } from "../apis";
 import { usePathname, useRouter } from "next/navigation";
-import GoBackButton from "@/app/components/GoBackButton";
-import RefreshButton from "@/app/components/RefreshButton";
+import GoBackButton from "../../Components/GoBackButton";
+import RefreshButton from "../../Components/RefreshButton";
 import { toast } from "react-toastify";
 
 export default function MembersListing() {
