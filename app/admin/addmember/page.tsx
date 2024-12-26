@@ -1,7 +1,7 @@
 "use client";
 
-import GoBackButton from "@/app/components/GoBackButton";
-import NotAvailText from "@/app/Components/NotAvailText";
+import GoBackButton from "../../Components/GoBackButton";
+import NotAvailText from "../../Components/NotAvailText";
 import { checkArrNull } from "@/app/utils/commonFunc";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
