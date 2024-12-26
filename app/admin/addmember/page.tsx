@@ -5,6 +5,7 @@ import NotAvailText from "@/app/Components/NotAvailText";
 import { checkArrNull } from "@/app/utils/commonFunc";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
+import { toast } from "react-toastify";
 // import { fetchMembers } from "../apis";
 
 // export default function AddMember() {
@@ -121,7 +122,7 @@ export default function AddMembers() {
       const data = await response.json();
       setMembers(data);
     } catch (err) {
-      alert(err.message);
+      toast.error("Member eeoor!" + err.message, { position: "bottom-center" });
     }
   }
   useEffect(() => {
@@ -153,16 +154,18 @@ export default function AddMembers() {
       //   if (response.ok) {
       //     fetchMembers(); // Refetch members after adding or updating
       //   }
-      alert(
+      toast.success(
         editingId ? "Member updated successfully" : "Member added successfully"
-      );
+        , {
+        position: "bottom-center",
+      });
       setName("");
       setEmail("");
       setPassword("");
       setEditingId(null);
       fetchMembers(); // Refetch members after adding or updating
     } catch (err) {
-      alert(err.message);
+      toast.error("Member eeoor!" + err.message, { position: "bottom-center" });
     }
   };
 
@@ -179,10 +182,12 @@ export default function AddMembers() {
     try {
       const response = await fetch(`/api/member/${id}`, { method: "DELETE" });
       if (!response.ok) throw new Error("Failed to delete member");
-      alert("Member deleted successfully");
+      toast.success("Member deleted successfully!", {
+        position: "bottom-center",
+      });
       fetchMembers(); // Refetch members after deletion
     } catch (err) {
-      alert(err.message);
+      toast.error("Member eeoor!" + err.message, { position: "bottom-center" });
     }
   };
   const router = useRouter();

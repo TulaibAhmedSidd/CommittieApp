@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { createCommittee } from '../apis';
 import { useRouter } from 'next/navigation';
 import GoBackButton from "@components/GoBackButton"
+import { toast } from 'react-toastify';
 
 export default function CreateCommittee() {
     const router = useRouter();
@@ -19,7 +20,9 @@ export default function CreateCommittee() {
             await createCommittee(formData);
             router.push('/admin');
         } catch (err) {
-            alert('Failed to create committee');
+            toast.error("Failed to create committee!", {
+                position: "bottom-center",
+              });
         }
     };
     useEffect(() => {

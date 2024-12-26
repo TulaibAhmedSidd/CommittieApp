@@ -92,8 +92,6 @@ export default function MembersListing() {
       const updatedMember = await response.json();
       toast.success("Successfully registered!", { position: "bottom-center" });
 
-      alert(`Member ${updatedMember.name} approved successfully!`);
-
       // Update the UI state
       const updatedCommittee = {
         ...selectedCommittee,
@@ -104,9 +102,7 @@ export default function MembersListing() {
       setSelectedCommittee(updatedCommittee);
     } catch (err) {
       console.error(err.message);
-      toast.success("Successfully registered!", { position: "bottom-center" });
-
-      alert("Failed to approve member");
+      toast.error("Failed to approve member !", { position: "bottom-center" });
     }
   };
   const routerPath = usePathname();
@@ -120,9 +116,7 @@ export default function MembersListing() {
       };
       setSelectedCommittee(updatedCommittee);
     } catch (err) {
-      toast.success("Successfully registered!", { position: "bottom-center" });
-
-      alert("Failed to remove member");
+      toast.error("Failed to remove member!", { position: "bottom-center" });
     }
   };
 

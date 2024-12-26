@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "react-toastify";
 
 export default function AdminLogin() {
     const [email, setEmail] = useState("");
@@ -37,18 +38,21 @@ export default function AdminLogin() {
             router.push("/admin");
         } catch (err) {
             setError(err.message);
+            toast.error("login failed!", {
+                position: "bottom-center",
+            });
         } finally {
             setLoading(false);
         }
     };
-  useEffect(() => {
-    // Check if user is logged in
-    const token = localStorage.getItem("admin_token");
-    if (!token) {
-      router.push("/admin/login"); // Redirect to login page if no token
-    } else {
-    }
-  }, []);
+    useEffect(() => {
+        // Check if user is logged in
+        const token = localStorage.getItem("admin_token");
+        if (!token) {
+            router.push("/admin/login"); // Redirect to login page if no token
+        } else {
+        }
+    }, []);
     return (
         <div className="container mx-auto px-4 py-8">
             <h1 className="text-3xl font-bold mb-6 text-center">Admin Login</h1>

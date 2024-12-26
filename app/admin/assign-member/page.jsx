@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import MembersListing from '../AdminComponents/MembersListing';
 import GoBackButton from '@/app/components/GoBackButton';
 import RefreshButton from '@/app/components/RefreshButton';
+import { toast } from 'react-toastify';
 
 export default function AssignMembers() {
     const [members, setMembers] = useState([]);
@@ -48,7 +49,7 @@ export default function AssignMembers() {
 
     const handleAssign = async () => {
         if (!selectedMember || !selectedCommittee) {
-            alert('Please select both a member and a committee');
+            toast.info("Please select both a member and a committee!" + err, { position: "bottom-center" });
             return;
         }
 
@@ -63,9 +64,9 @@ export default function AssignMembers() {
                 throw new Error('Failed to assign member/ either already assigned')
             };
             fetchApis()
-            alert('Member assigned successfully');
+            toast.success("Member assigned successfully!", { position: "bottom-center" });
         } catch (err) {
-            alert(err);
+            toast.error("error:!" + err, { position: "bottom-center" });
         }
     };
     const router = useRouter();
@@ -78,19 +79,12 @@ export default function AssignMembers() {
         }
     }, []);
 
-    const CommittieApprovedMember = committees?.map((mem) => mem.members);
-
-    const checkIfIdExists = (array, id) => {
-        return array.some(user => user._id === id);
-    };
 
     useEffect(() => {
         return () => {
             setSelectedCommitteeIndex(0)
         }
     }, [])
-
-    console.log("selectedCommitteeIndex", selectedCommitteeIndex)
     return (
         <div className="container mx-auto p-4">
             <div className="flex items-center gap-2 mb-6">
@@ -109,8 +103,10 @@ export default function AssignMembers() {
                     onChange={(e) => {
                         console.log(e.target)
                         setSelectedCommittee(e.target.value);
-                        // setSelectedCommitteeIndex(index + 1)
-
+                        const selectedCommitteeIndex = committees?.findIndex(
+                            (committee) => committee._id === e.target.value
+                        );
+                        setSelectedCommitteeIndex(selectedCommitteeIndex); // Update the index state
                     }}
                     className="border p-2 w-full"
                 >
@@ -125,22 +121,37 @@ export default function AssignMembers() {
                     })
                     }
                 </select>
+
+                {/* Member select */}
                 <select
-                    disabled={loading}
+                    disabled={loading || !selectedCommittee}
                     value={selectedMember}
                     onChange={(e) => setSelectedMember(e.target.value)}
                     className="border p-2 w-full"
                 >
                     <option value="">{loading ? 'Fetching Data...' : 'Select Member'}</option>
-                    {members?.map((member) => (
-                        <option key={member._id} value={member._id}
-                            disabled={
-                                checkIfIdExists(CommittieApprovedMember[selectedCommitteeIndex], member._id)
-                            }
-                        >
-                            {member.name} - {member.email}
-                        </option>
-                    ))}
+                    {members?.map((member) => {
+                        const selectedCommitteeMembers =
+                            selectedCommittee
+                                ? committees.find((committee) => committee._id === selectedCommittee)?.members || []
+                                : [];
+
+                        const isMemberInCommittee = Array.isArray(selectedCommitteeMembers)
+                            && selectedCommitteeMembers.some(
+                                (m) => m._id === member._id && m.status === 'approved'
+                            );
+
+                        return (
+                            <option
+                                key={member._id}
+                                value={member._id}
+                                disabled={isMemberInCommittee} // Disable if already in committee
+                            >
+                                {member.name} - {member.email}
+                                {isMemberInCommittee ? " (Already in Committee)" : ""}
+                            </option>
+                        );
+                    })}
                 </select>
 
 

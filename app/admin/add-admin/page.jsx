@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import GoBackButton from "@/app/components/GoBackButton";
+import { toast } from "react-toastify";
 
 export default function AdminRegister() {
     const [name, setName] = useState("");
@@ -37,9 +38,10 @@ export default function AdminRegister() {
             }
 
             // On successful registration, redirect to admin login page or dashboard
-            alert("Admin created successfully!");
+            toast.success("Admin created successfully!", { position: "bottom-center" });
             router.push("/admin/login");
         } catch (err) {
+            toast.error("Admin not!" + err, { position: "bottom-center" });
             setError(err.message);
         } finally {
             setLoading(false);
