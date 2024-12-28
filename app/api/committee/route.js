@@ -10,6 +10,10 @@ export async function GET() {
         const committees = await Committee.find().populate({
             path: 'members', // Field name in your Committee schema
             model: 'Member', // Model name that is referenced
+        })
+        .populate({
+            path: 'result.member', // Populating the `member` inside the `result` array
+            model: 'Member',
         });
         return new Response(JSON.stringify(committees), { status: 200 });
     } catch (err) {

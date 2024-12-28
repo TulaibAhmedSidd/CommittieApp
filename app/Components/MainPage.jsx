@@ -291,6 +291,7 @@ import { useRouter } from "next/navigation";
 import { checkArrNull } from "../utils/commonFunc";
 import NotAvailText from "../Components/NotAvailText";
 import MyCommittie from "./MyCommittie";
+import RefreshButton from "./RefreshButton";
 
 export default function MainPage() {
   const [committees, setCommittees] = useState([]);
@@ -315,6 +316,7 @@ export default function MainPage() {
   }, []);
 
   const fetchCommittees = async () => {
+    setLoading(true);
     try {
       const res = await fetch("/api/committee");
       if (!res.ok) throw new Error("Failed to fetch committees");
@@ -433,9 +435,16 @@ export default function MainPage() {
         </>
       )}
       <div className="mt-12">
-        <h2 className="text-3xl font-bold text-gray-800 border-b-2 border-gray-300 pb-2 mb-6">
-          Admin Announcements
-        </h2>
+        <div className="flex items-center gap-2 mb-6">
+          <h2 className="text-3xl font-bold text-gray-800 border-b-2 border-gray-300 pb-2">
+            Admin Announcements
+          </h2>
+          <RefreshButton
+            onClick={() => {
+              fetchCommittees();
+            }}
+          />
+        </div>
         <div className="space-y-6">
           {checkArrNull(committees.filter((committee) => committee.result.length > 0)) ? (
             <NotAvailText text="No Committees Announcement available yet!" />
@@ -455,9 +464,9 @@ export default function MainPage() {
                   </p>
                   <ul className="list-disc pl-5 space-y-2">
                     {committee.result.map((res) => (
-                      <li key={res.position} className="text-lg text-gray-700">
-                        <span className="font-bold">Position {res.position}:</span>{" "}
-                        <span className="text-green-700">{res.member}</span>
+                      <li key={res?.position} className="text-lg text-gray-700">
+                        <span className="font-bold">Position {res?.position}:</span>{" "}
+                        <span className="text-green-700">{res?.member?.name}</span>
                       </li>
                     ))}
                   </ul>
