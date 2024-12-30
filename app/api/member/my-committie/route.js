@@ -93,6 +93,52 @@ import Member from "../../models/Member";
 //   }
 // }
 
+//above is perfectly working fine
+
+// import connectToDatabase from "../../../utils/db";
+// import Committee from "../../models/Committee";
+
+// export async function POST(req) {
+//   try {
+//     // Connect to database
+//     await connectToDatabase();
+
+//     // Parse incoming request data
+//     const { userId } = await req.json();
+
+//     // Validate request payload
+//     if (!userId) {
+//       return new Response(
+//         JSON.stringify({ error: "User ID is required" }),
+//         { status: 400 }
+//       );
+//     }
+
+//     // Find all committees where the user is in members or pendingMembers
+//     const committees = await Committee.find({
+//       $or: [
+//         { "members.memberId": userId },
+//         { pendingMembers: userId }
+//       ]
+//     }).populate("members.memberId pendingMembers");
+
+//     // Respond with the list of committees
+//     return new Response(
+//       JSON.stringify({ committees }),
+//       { status: 200 }
+//     );
+//   } catch (err) {
+//     console.error("Error fetching committees:", err);
+//     return new Response(
+//       JSON.stringify({
+//         error: "Failed to fetch committees",
+//         details: err.message,
+//       }),
+//       { status: 500 }
+//     );
+//   }
+// }
+
 import connectToDatabase from "../../../utils/db";
 import Committee from "../../models/Committee";
 
@@ -106,23 +152,40 @@ export async function POST(req) {
 
     // Validate request payload
     if (!userId) {
-      return new Response(
-        JSON.stringify({ error: "User ID is required" }),
-        { status: 400 }
-      );
+      return new Response(JSON.stringify({ error: "User ID is required" }), {
+        status: 400,
+      });
     }
 
-    // Find all committees where the user is in members or pendingMembers
-    const committees = await Committee.find({
-      $or: [
-        { "members.memberId": userId },
-        { pendingMembers: userId }
-      ]
-    }).populate("members.memberId pendingMembers");
+    // Find all committees where the user is either in members or pendingMembers
+    // const committees = await Committee.find({
+    //   $or: [{ "members.memberId": userId }, { pendingMembers: userId }],
+    // })
+    //   .populate("members.memberId pendingMembers")
+    //   .lean();
+    const committees = await Committee.find()
+      .populate("members.member pendingMembers")
+      .lean();
 
-    // Respond with the list of committees
+    // Separate approved and pending committees
+    console.log("committees", committees);
+    const approvedCommittees = committees.filter((committee) => {
+      console.log("committee.members", committee.members);
+      return committee.members.some(
+        (member) => member._id.toString() === userId
+      );
+    });
+
+    const pendingCommittees = committees.filter((committee) => {
+      console.log("committee.pendingMembers", committee.pendingMembers);
+      return committee.pendingMembers.some(
+        (member) => member?._id.toString() === userId
+      );
+    });
+
+    // Respond with both approved and pending committees
     return new Response(
-      JSON.stringify({ committees }),
+      JSON.stringify({ approvedCommittees, pendingCommittees }),
       { status: 200 }
     );
   } catch (err) {
@@ -136,4 +199,3 @@ export async function POST(req) {
     );
   }
 }
-

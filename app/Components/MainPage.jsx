@@ -532,6 +532,11 @@ export default function MainPage() {
       fetchCommittees();
     }
   }, []);
+  useEffect(() => {
+    if (userLoggedData?._id) {
+      fetchMemberById(userLoggedData?._id);
+    }
+  }, [userLoggedData?._id]);
 
   const fetchMemberById = async (id) => {
     setLoading(true);
@@ -647,8 +652,8 @@ export default function MainPage() {
   if (!userLoggedIn) {
     return <div>Redirecting to login...</div>;
   }
-  console.log("committees", committees)
-  console.log("userLoggedData", userLoggedData)
+  // console.log("committees", committees)
+  // console.log("userLoggedData", userLoggedData)
   return (
     <div className="container mx-auto px-6 py-8">
       <div className="flex justify-between items-center mb-8">
@@ -667,6 +672,14 @@ export default function MainPage() {
           Logout
         </button>
       </div>
+        {/* <button
+          onClick={() => {
+            fetchMemberById(userLoggedData?._id);
+          }}
+          className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600"
+        >
+          Fetch kr bhai
+        </button> */}
 
       <div className="flex gap-2 mb-6">
         <button
