@@ -168,16 +168,13 @@ export async function POST(req) {
       .lean();
 
     // Separate approved and pending committees
-    console.log("committees", committees);
     const approvedCommittees = committees.filter((committee) => {
-      console.log("committee.members", committee.members);
       return committee.members.some(
         (member) => member._id.toString() === userId
       );
     });
 
     const pendingCommittees = committees.filter((committee) => {
-      console.log("committee.pendingMembers", committee.pendingMembers);
       return committee.pendingMembers.some(
         (member) => member?._id.toString() === userId
       );

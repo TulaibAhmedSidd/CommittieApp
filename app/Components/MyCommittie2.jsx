@@ -126,7 +126,6 @@ export default function MyCommittie2() {
     if (!userId && userData) setUserId(userData?._id);
   }, [userId]);
 
-  console.log("committees =>", committees);
 
   const fetchCommittees = async () => {
     try {
