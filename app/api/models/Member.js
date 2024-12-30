@@ -10,15 +10,25 @@
 // const Member = mongoose.models.Member || mongoose.model('Member', MemberSchema);
 // export default Member;
 
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 const MemberSchema = new mongoose.Schema({
-    name: String,
-    email: String,
-    password: { type: String, required: true },  // Add password field
-    committee: { type: mongoose.Schema.Types.ObjectId, ref: 'Committee' },
-    status: { type: String, enum: ['pending', 'approved'], default: 'pending' },
+  name: String,
+  email: String,
+  password: { type: String, required: true }, // Add password field
+  committee: { type: mongoose.Schema.Types.ObjectId, ref: "Committee" },
+  status: { type: String, enum: ["pending", "approved"], default: "pending" },
+  committees: [
+    {
+      committee: { type: mongoose.Schema.Types.ObjectId, ref: "Committee" },
+      status: {
+        type: String,
+        enum: ["pending", "approved"],
+        default: "pending",
+      },
+    },
+  ],
 });
 
-const Member = mongoose.models.Member || mongoose.model('Member', MemberSchema);
+const Member = mongoose.models.Member || mongoose.model("Member", MemberSchema);
 export default Member;

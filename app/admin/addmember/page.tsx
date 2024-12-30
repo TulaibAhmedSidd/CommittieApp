@@ -141,6 +141,7 @@ export default function AddMembers() {
           name,
           email: email?.toLowerCase(),
           password: Password,
+          committees: [],
         }),
         headers: { "Content-Type": "application/json" },
       });
@@ -155,10 +156,11 @@ export default function AddMembers() {
       //     fetchMembers(); // Refetch members after adding or updating
       //   }
       toast.success(
-        editingId ? "Member updated successfully" : "Member added successfully"
-        , {
-        position: "bottom-center",
-      });
+        editingId ? "Member updated successfully" : "Member added successfully",
+        {
+          position: "bottom-center",
+        }
+      );
       setName("");
       setEmail("");
       setPassword("");

@@ -14,6 +14,10 @@ export async function GET() {
         .populate({
             path: 'result.member', // Populating the `member` inside the `result` array
             model: 'Member',
+        })
+        .populate({
+            path: 'pendingMembers', // Populating the `member` inside the `result` array
+            model: 'Member',
         });
         return new Response(JSON.stringify(committees), { status: 200 });
     } catch (err) {

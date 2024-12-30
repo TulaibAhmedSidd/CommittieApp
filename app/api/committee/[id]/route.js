@@ -9,6 +9,9 @@ export async function GET(req, { params }) {
     const FoundComittie = await Committee.findById(id).populate({
         path: 'members', // Field name in your Committee schema
         model: 'Member', // Model name that is referenced
+    }).populate({
+        path: 'pendingMembers', // Field name in your Committee schema
+        model: 'Member', // Model name that is referenced
     });
     return new Response(JSON.stringify(FoundComittie), { status: 200 });
   } catch (err) {
