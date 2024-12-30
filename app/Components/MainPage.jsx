@@ -652,8 +652,27 @@ export default function MainPage() {
   if (!userLoggedIn) {
     return <div>Redirecting to login...</div>;
   }
-  // console.log("committees", committees)
-  // console.log("userLoggedData", userLoggedData)
+
+  const getButtonStyles = (committeeId) => {
+    const status = renderText(committeeId); // Get the status of the committee
+
+    if (status.includes("Approved")) {
+      return {
+        bgColor: 'bg-slate-500',
+        hoverColor: 'hover:bg-slate-300'
+      };
+    }
+    if (status.includes("Pending")) {
+      return {
+        bgColor: 'bg-orange-400',
+        hoverColor: 'hover:bg-orange-300'
+      };
+    }
+    return {
+      bgColor: 'bg-blue-500',
+      hoverColor: 'hover:bg-blue-400'
+    };
+  };
   return (
     <div className="container mx-auto px-6 py-8">
       <div className="flex justify-between items-center mb-8">
@@ -672,14 +691,6 @@ export default function MainPage() {
           Logout
         </button>
       </div>
-        {/* <button
-          onClick={() => {
-            fetchMemberById(userLoggedData?._id);
-          }}
-          className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600"
-        >
-          Fetch kr bhai
-        </button> */}
 
       <div className="flex gap-2 mb-6">
         <button
@@ -724,18 +735,11 @@ export default function MainPage() {
                     {committee.maxMembers}
                   </p>
                   <div className="mt-4">
-                    {/* {isApprovedMember(committee._id) ? (
-                      <button
-                        className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600"
-                        onClick={() => disapproveMember(committee._id)}
-                      >
-                        Disapprove
-                      </button>
-                    ) : ( */}
-                    {console.log("String(renderText(committee._id))", String(renderText(committee._id)))}
                     <button
                       disabled={String(renderText(committee._id))?.includes('Joined')}
-                      className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
+                      className={`text-white px-4 py-2 rounded-lg 
+                        ${getButtonStyles(committee._id).bgColor} 
+                        ${getButtonStyles(committee._id).hoverColor}`}
                       onClick={() => registerForCommittee(committee._id)}
                     >
                       {renderText(committee._id)}
@@ -748,6 +752,34 @@ export default function MainPage() {
           </div>
         </>
       )}
+
+
+      <div className="mt-8">
+        <h2 className="text-2xl font-semibold mb-4">Committee Announcements</h2>
+
+        <div className="space-y-4">
+          {committees.map((committee) => (
+            checkArrNull(committee.results) ? (
+              <NotAvailText text={"No Committees Announcements Yet! For:" + committee?.name} />
+            ) :
+              committee.results?.length > 0 && (
+                <div key={committee._id} className="bg-white shadow-lg rounded-lg p-6 border border-gray-200">
+                  <h3 className="text-xl font-semibold text-gray-800">{committee.name}</h3>
+                  <p className="text-gray-600">{committee.description}</p>
+
+                  <h4 className="mt-4 text-lg font-semibold text-gray-700">Results:</h4>
+                  {committee.results.map((result) => (
+                    <div key={result._id} className="bg-gray-100 p-4 rounded-lg mt-2">
+                      <h5 className="font-semibold text-gray-800">{result.title}</h5>
+                      <p className="text-gray-600">{result.content}</p>
+                      <p className="text-sm text-gray-500">Posted on: {new Date(result.createdAt).toLocaleDateString()}</p>
+                    </div>
+                  ))}
+                </div>
+              )
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
