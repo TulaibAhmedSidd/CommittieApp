@@ -292,6 +292,8 @@ import { checkArrNull } from "../utils/commonFunc";
 import NotAvailText from "../Components/NotAvailText";
 import MyCommittie from "./MyCommittie";
 import RefreshButton from "./RefreshButton";
+import { CommonData } from "../utils/data";
+import { toast } from "react-toastify";
 
 export default function MainPage() {
   const [committees, setCommittees] = useState([]);
@@ -329,17 +331,21 @@ export default function MainPage() {
     }
   };
 
+  console.log("userLoggedData", userLoggedData)
   const registerForCommittee = async (committeeId) => {
     try {
-      const res = await fetch(`/api/member?id=${committeeId}`, {
-        method: "POST",
+      const res = await fetch('/api/member/assign-members', {
+        method: 'PATCH',
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: userLoggedData?.name, email: userLoggedData?.email }),
+        body: JSON.stringify({ memberId: userLoggedData?._id, committeeId: committeeId }),
+        // body: JSON.stringify({ name: userLoggedData?.name, email: userLoggedData?.email }),
       });
-      if (!res.ok) throw new Error("Failed to register");
+      if (!res.ok) throw new Error("");
+      fetchCommittees()
       alert("Registered successfully!");
     } catch (err) {
-      alert(err.message);
+      console.log('err',err)
+      // toast.error("Failed to register !" + err?.error, { position: "bottom-center" });
     }
   };
 
@@ -355,6 +361,12 @@ export default function MainPage() {
     return <div>Redirecting to login...</div>;
   }
 
+  function ApprovedMember(arr) {
+    return arr.filter((item) => item?.status == CommonData.status.approved)
+  }
+  const AlreadyJoined = (committeeId) => {
+    return committeeId == userLoggedData?.committee;
+  }
   return (
     <div className="container mx-auto px-6 py-8">
       <div className="flex justify-between items-center mb-8">
@@ -411,22 +423,28 @@ export default function MainPage() {
                   <p className="text-gray-600">{committee.description}</p>
                   <p className="mt-2 text-gray-800">
                     <strong>Slots Available:</strong>{" "}
-                    {committee.maxMembers - committee.members.length} /{" "}
+                    {committee.maxMembers - ApprovedMember(committee?.members)?.length} /{" "}
                     {committee.maxMembers}
                   </p>
                   <div className="mt-4">
-                    {committee.maxMembers - committee.members.length != 0 ? (
-                      <button
-                        className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
-                        onClick={() => registerForCommittee(committee._id)}
-                      >
-                        Join Committee
-                      </button>
-                    ) : (
-                      <span className="text-red-500 font-semibold">
-                        Committee Full
-                      </span>
-                    )}
+                    {
+                      AlreadyJoined(committee?._id)
+                        ?
+                        <span className="text-red-500 font-semibold">
+                          Already Joined
+                        </span> :
+                        committee.maxMembers - ApprovedMember(committee?.members)?.length != 0 ? (
+                          <button
+                            className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
+                            onClick={() => registerForCommittee(committee._id)}
+                          >
+                            Join Committee
+                          </button>
+                        ) : (
+                          <span className="text-red-500 font-semibold">
+                            Committee Full
+                          </span>
+                        )}
                   </div>
                 </div>
               ))

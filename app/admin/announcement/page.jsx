@@ -12,6 +12,7 @@ export default function AdminPage() {
     const [results, setResults] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [previousResults, setPreviousResults] = useState([]);
 
     // Fetch all committees
     useEffect(() => {
@@ -44,8 +45,12 @@ export default function AdminPage() {
             });
 
             const data = await res.json();
+            const committeeData = committees.find((committee) => committee._id === selectedCommittee);
+            console.log("committeeData",committeeData)
+            setPreviousResults(committeeData.result);
             if (res.ok) {
                 setResults(data.result);
+
             } else {
                 setError(data.error || 'Failed to announce results');
             }
@@ -71,6 +76,7 @@ export default function AdminPage() {
                 <GoBackButton />
                 <h1 className="text-3xl font-bold ">Admin - Committee Announcements</h1>
             </div>
+
             {/* Committee Selection */}
             <div className="mb-4">
                 <label htmlFor="committee" className="block text-lg font-medium">
@@ -97,21 +103,43 @@ export default function AdminPage() {
             {/* Announce Button */}
             <button
                 onClick={handleAnnounceResults}
-                className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-3"
                 disabled={loading}
             >
                 {loading ? 'Announcing...' : 'Announce Results'}
             </button>
 
             {/* Results Table */}
-            {
+            {selectedCommittee && (
+                <>
+                    <div className="mt-6">
+                        <h2 className="text-2xl font-semibold mb-2">Previously Announced Results</h2>
+                        {previousResults.length > 0 ? (
+                            <table className="w-full border-collapse border border-gray-300">
+                                <thead>
+                                    <tr>
+                                        <th className="border p-2 bg-gray-200">Position</th>
+                                        <th className="border p-2 bg-gray-200">Member ID</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {previousResults.map((result) => (
+                                        <tr key={result.member._id}>
+                                            <td className="border p-2 text-center">{result.position}</td>
+                                            <td className="border p-2 text-center">{result.member.name}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        ) : (
+                            <NotAvailText text="No results announced yet." />
+                        )}
+                    </div>
 
-                checkArrNull(results) ? (
-                    <NotAvailText text="No Members available yet!" />
-                ) :
-                    results.length > 0 && (
+                    {/* Newly Announced Results */}
+                    {results.length > 0 && (
                         <div className="mt-6">
-                            <h2 className="text-2xl font-semibold mb-2">Results</h2>
+                            <h2 className="text-2xl font-semibold mb-2">Newly Announced Results</h2>
                             <table className="w-full border-collapse border border-gray-300">
                                 <thead>
                                     <tr>
@@ -121,15 +149,17 @@ export default function AdminPage() {
                                 </thead>
                                 <tbody>
                                     {results.map((result) => (
-                                        <tr key={result.member}>
+                                        <tr key={result.member._id}>
                                             <td className="border p-2 text-center">{result.position}</td>
-                                            <td className="border p-2 text-center">{result.name}</td>
+                                            <td className="border p-2 text-center">{result.member.name}</td>
                                         </tr>
                                     ))}
                                 </tbody>
                             </table>
                         </div>
                     )}
+                </>
+            )}
         </div>
     );
 }
