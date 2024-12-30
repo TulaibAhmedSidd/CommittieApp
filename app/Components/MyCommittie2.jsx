@@ -48,7 +48,6 @@ export default function MyCommittie2() {
     );
   }
 
-  console.log("committees",committees)
   const renderStatus = (committee) => {
     // Check if user is in the approved members list
     const isApproved = committee.members.some(
@@ -67,8 +66,6 @@ export default function MyCommittie2() {
     if (isPending) {
       return <span className="text-yellow-500 font-semibold">Pending</span>;
     }
-    console.log("isApproved", isApproved)
-    console.log("isPending", isPending)
     // Default status
     return <span className="text-red-500 font-semibold">Not Requested</span>;
   };

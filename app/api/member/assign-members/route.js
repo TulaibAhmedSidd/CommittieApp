@@ -152,9 +152,6 @@ export async function PATCH(req) {
     }
 
     // Check if the committee is full
-    console.log("committee.members",committee.members)
-    console.log("committee.maxMembers",committee.maxMembers)
-    console.log("committee.condi",committee.members.length >= committee.maxMembers)
     if (committee.members.length >= committee.maxMembers) {
       return new Response(
         JSON.stringify({ error: "Committee is already full" }),
