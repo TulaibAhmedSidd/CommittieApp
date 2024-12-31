@@ -44,38 +44,56 @@ export default function LoginPage() {
     if (!token) {
       // router.push("/login");  // Redirect to login page if no token
     } else {
-      router.push("/userDash");  // Redirect to login page if no token
+      router.push("/userDash"); // Redirect to login page if no token
     }
   }, []);
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-6">Login</h1>
-      <form onSubmit={handleLogin} className="space-y-4">
-        {error && <div className="text-red-500">{error}</div>}
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="Email"
-          className="p-2 w-full border border-gray-300 rounded"
-          required
-        />
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="Password"
-          className="p-2 w-full border border-gray-300 rounded"
-          required
-        />
-        <button
-          type="submit"
-          className="bg-blue-500 text-white px-4 py-2 rounded w-full hover:bg-blue-600"
-          disabled={loading}
-        >
-          {loading ? "Logging in..." : "Login"}
-        </button>
-      </form>
+    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+      <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+        <h1 className="text-3xl font-semibold text-center mb-6">Login</h1>
+        <form onSubmit={handleLogin} className="space-y-4">
+          {error && <div className="text-red-500 text-center">{error}</div>}
+
+          <div>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Email"
+              className="p-3 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              required
+            />
+          </div>
+
+          <div>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Password"
+              className="p-3 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              required
+            />
+          </div>
+
+          <button
+            type="submit"
+            className="bg-blue-500 text-white px-4 py-2 rounded-lg w-full hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            disabled={loading}
+          >
+            {loading ? "Logging in..." : "Login"}
+          </button>
+
+          {/* <div className="text-center mt-4">
+            <a
+              href="/forgot-password"
+              className="text-sm text-blue-500 hover:underline"
+            >
+              Forgot your password?
+            </a>
+          </div> */}
+        </form>
+      </div>
     </div>
   );
 }
