@@ -29,10 +29,11 @@ export default function AdminLogin() {
                 throw new Error(errorData.message || "Failed to log in");
             }
 
-            const { token } = await res.json();
+            const { token,data } = await res.json();
 
             // Store the token in localStorage
             localStorage.setItem("admin_token", token);
+            localStorage.setItem("admin_detail", JSON.stringify(data));
 
             // Redirect to the admin dashboard
             router.push("/admin");

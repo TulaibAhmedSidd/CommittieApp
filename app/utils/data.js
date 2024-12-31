@@ -3,4 +3,5 @@ export const CommonData = {
     pending: "pending",
     approved: "approved",
   },
+  tas:'tulaib'
 };

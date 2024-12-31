@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import GoBackButton from '@/app/Components/GoBackButton';
+import { checkerForAddAdmin } from '@/app/utils/commonFunc';
 
 export default function AddAdmin() {
     const [formData, setFormData] = useState({ name: '', email: '', password: '' });
@@ -38,14 +39,29 @@ export default function AddAdmin() {
             setError(err.message);
         }
     };
-  useEffect(() => {
-    // Check if user is logged in
-    const token = localStorage.getItem("admin_token");
-    if (!token) {
-      router.push("/admin/login"); // Redirect to login page if no token
-    } else {
+    const [userLoggedDetails, setUserLoggedDetails] = useState(null);
+
+    const detail = localStorage.getItem("admin_detail");
+    useEffect(() => {
+        // Check if user is logged in
+        if (detail) {
+            setUserLoggedDetails(JSON.parse(detail));
+        }
+    }, [detail]);
+    useEffect(() => {
+        // Check if user is logged in
+        const token = localStorage.getItem("admin_token");
+        if (!token) {
+            router.push("/admin/login"); // Redirect to login page if no token
+        } else {
+        }
+    }, []);
+
+    const adminChecker = checkerForAddAdmin(userLoggedDetails);
+
+    if ((userLoggedDetails && !adminChecker)) {
+        router?.push('/admin')
     }
-  }, []);
     return (
         <div className="flex items-center justify-center min-h-screen bg-gray-100">
             <div className="bg-white shadow-lg rounded-lg p-6 w-full max-w-md">

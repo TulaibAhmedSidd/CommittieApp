@@ -1,6 +1,7 @@
 import React from 'react'
 
-const AdminGuide = () => {
+const AdminGuide = (props) => {
+    const { showAddAdmin } = props;
     return (
         <div className=" p-6 rounded-lg mb-6">
             <h2 className="text-xl font-semibold mb-4">Admin/Organizer Guide</h2>

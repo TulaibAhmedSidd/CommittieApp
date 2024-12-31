@@ -1,14 +1,25 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { checkerForAddAdmin } from '@/app/utils/commonFunc';
 
 export default function AdminTabs() {
     const router = useRouter();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [userLoggedDetails, setUserLoggedDetails] = useState(null);
 
     const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
+    const detail = localStorage.getItem("admin_detail");
+    useEffect(() => {
+        // Check if user is logged in
+        if (detail) {
+            setUserLoggedDetails(JSON.parse(detail));
+        }
+    }, [detail]);
+
+    const adminChecker = checkerForAddAdmin(userLoggedDetails);
     return (
         <header className="fixed top-0 left-0 w-full bg-white shadow-lg z-50">
             <div className="max-w-screen-xl mx-auto flex items-center justify-between px-4 py-3">
@@ -39,11 +50,14 @@ export default function AdminTabs() {
                     className={`${isMenuOpen ? 'block' : 'hidden'
                         } lg:flex lg:items-center lg:space-x-4 absolute lg:relative bg-white lg:bg-transparent w-full lg:w-auto left-0 top-full lg:top-0 px-4 lg:px-0 border border-b-2 md:border-none`}
                 >
-                    <Link href="/admin/add-admin">
-                        <p className="block lg:inline-block text-blue-600 py-2 px-4 hover:text-blue-700 hover:underline">
-                            Create Organizer
-                        </p>
-                    </Link>
+                    {
+                        adminChecker &&
+                        <Link href="/admin/add-admin">
+                            <p className="block lg:inline-block text-blue-600 py-2 px-4 hover:text-blue-700 hover:underline">
+                                Create Organizer
+                            </p>
+                        </Link>
+                    }
                     <Link href="/admin/create">
                         <p className="block lg:inline-block text-blue-600 py-2 px-4 hover:text-blue-700 hover:underline">
                             Create Committee
