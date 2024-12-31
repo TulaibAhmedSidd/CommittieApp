@@ -40,8 +40,10 @@ export default function AddAdmin() {
         }
     };
     const [userLoggedDetails, setUserLoggedDetails] = useState(null);
-
-    const detail = localStorage.getItem("admin_detail");
+    let detail = null;
+    if (typeof window !== "undefined") {
+        detail = localStorage.getItem("admin_detail");
+    }
     useEffect(() => {
         // Check if user is logged in
         if (detail) {

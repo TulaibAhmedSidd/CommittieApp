@@ -10,8 +10,10 @@ export default function AdminTabs() {
     const [userLoggedDetails, setUserLoggedDetails] = useState(null);
 
     const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
-
-    const detail = localStorage.getItem("admin_detail");
+    let detail = null;
+    if (typeof window !== "undefined") {
+        detail = localStorage.getItem("admin_detail");
+    }
     useEffect(() => {
         // Check if user is logged in
         if (detail) {
