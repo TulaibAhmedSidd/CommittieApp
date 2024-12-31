@@ -1,115 +1,115 @@
-"use client";
+'use client';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import GoBackButton from '@/app/Components/GoBackButton';
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import GoBackButton from "../../Components/GoBackButton";
-import { toast } from "react-toastify";
-
-export default function AdminRegister() {
-    const [name, setName] = useState("");
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [error, setError] = useState("");
-    const [loading, setLoading] = useState(false);
+export default function AddAdmin() {
+    const [formData, setFormData] = useState({ name: '', email: '', password: '' });
+    const [error, setError] = useState(null);
+    const [successMessage, setSuccessMessage] = useState(null);
     const router = useRouter();
-    useEffect(() => {
-        // Check if user is logged in
-        const token = localStorage.getItem("admin_token");
-        if (!token) {
-            router.push("/admin/login");  // Redirect to login page if no token
-        } else {
-        }
-    }, []);
-    const handleRegister = async (e) => {
+
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setFormData((prevData) => ({ ...prevData, [name]: value }));
+    };
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        setLoading(true);
-        setError("");
+        setError(null);
+        setSuccessMessage(null);
 
         try {
-            const res = await fetch("/api/admin", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name, email, password }),
+            // Replace this with your API call
+            const response = await fetch('/api/admin', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData),
             });
 
-            if (!res.ok) {
-                const errorData = await res.json();
-                throw new Error(errorData.message || "Failed to register admin");
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to add admin');
             }
 
-            // On successful registration, redirect to admin login page or dashboard
-            toast.success("Admin created successfully!", { position: "bottom-center" });
-            router.push("/admin/login");
+            setSuccessMessage('Admin added successfully!');
+            setFormData({ name: '', email: '', password: '' });
         } catch (err) {
-            toast.error("Admin not!" + err, { position: "bottom-center" });
             setError(err.message);
-        } finally {
-            setLoading(false);
         }
     };
 
     return (
-        <div className="container mx-auto px-4 py-8">
-            <div className='flex items-center gap-2 mb-6' >
-                <GoBackButton />
-                <h1 className="text-3xl font-bold  text-center">Register New Admin</h1>
-            </div>
-            <form onSubmit={handleRegister} className="max-w-md mx-auto p-6 bg-white shadow-md rounded-lg">
-                <div className="mb-4">
-                    <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                        Name
-                    </label>
-                    <input
-                        type="text"
-                        id="name"
-                        name="name"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        required
-                        className="mt-1 px-4 py-2 border border-gray-300 rounded-md w-full"
-                    />
+        <div className="flex items-center justify-center min-h-screen bg-gray-100">
+            <div className="bg-white shadow-lg rounded-lg p-6 w-full max-w-md">
+                <div className='flex items-center gap-2 mb-4' >
+                    <GoBackButton />
+                    <h1 className="text-2xl font-semibold text-center text-gray-800 ">
+                        Add New Committee Organizer
+                    </h1>
                 </div>
-
-                <div className="mb-4">
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                        Email
-                    </label>
-                    <input
-                        type="email"
-                        id="email"
-                        name="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                        className="mt-1 px-4 py-2 border border-gray-300 rounded-md w-full"
-                    />
-                </div>
-
-                <div className="mb-6">
-                    <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                        Password
-                    </label>
-                    <input
-                        type="password"
-                        id="password"
-                        name="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                        className="mt-1 px-4 py-2 border border-gray-300 rounded-md w-full"
-                    />
-                </div>
-
-                {error && <div className="text-red-500 mb-4">{error}</div>}
-
+                {error && <p className="text-red-500 text-center mb-4">{error}</p>}
+                {successMessage && <p className="text-green-500 text-center mb-4">{successMessage}</p>}
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                        <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                            Full Name
+                        </label>
+                        <input
+                            type="text"
+                            id="name"
+                            name="name"
+                            value={formData.name}
+                            onChange={handleInputChange}
+                            required
+                            className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Enter full name"
+                        />
+                    </div>
+                    <div>
+                        <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                            Email Address
+                        </label>
+                        <input
+                            type="email"
+                            id="email"
+                            name="email"
+                            value={formData.email}
+                            onChange={handleInputChange}
+                            required
+                            className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Enter email address"
+                        />
+                    </div>
+                    <div>
+                        <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                            Password
+                        </label>
+                        <input
+                            type="password"
+                            id="password"
+                            name="password"
+                            value={formData.password}
+                            onChange={handleInputChange}
+                            required
+                            className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Enter password"
+                        />
+                    </div>
+                    <button
+                        type="submit"
+                        className="w-full bg-blue-600 text-white py-2 rounded-md shadow-md hover:bg-blue-700 transition duration-200"
+                    >
+                        Add Organizer
+                    </button>
+                </form>
                 <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600"
+                    onClick={() => router.push('/admin')}
+                    className="mt-4 w-full bg-gray-500 text-white py-2 rounded-md shadow-md hover:bg-gray-600 transition duration-200"
                 >
-                    {loading ? "Creating..." : "Create Admin"}
+                    Cancel
                 </button>
-            </form>
+            </div>
         </div>
     );
 }

@@ -2,10 +2,13 @@ import React from 'react'
 import Committiee from './Committie'
 
 const AmdinPanel = () => {
-    
+
     return (
         <div>
-            <Committiee />
+            {/* Navigation Tabs */}
+            <div className='mt-20' >
+                <Committiee />
+            </div>
         </div>
     )
 }

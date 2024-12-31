@@ -46,7 +46,7 @@ export default function AdminPage() {
 
             const data = await res.json();
             const committeeData = committees.find((committee) => committee._id === selectedCommittee);
-            console.log("committeeData",committeeData)
+            console.log("committeeData", committeeData)
             setPreviousResults(committeeData.result);
             if (res.ok) {
                 setResults(data.result);
@@ -71,22 +71,22 @@ export default function AdminPage() {
         }
     }, []);
     return (
-        <div className="container mx-auto p-6">
+        <div className="container mt-20 mx-auto p-6 bg-white rounded-lg shadow-lg">
             <div className="flex items-center gap-2 mb-6">
                 <GoBackButton />
-                <h1 className="text-3xl font-bold ">Admin - Committee Announcements</h1>
+                <h1 className="text-3xl font-semibold text-gray-800">Admin - Committee Announcements</h1>
             </div>
 
             {/* Committee Selection */}
-            <div className="mb-4">
-                <label htmlFor="committee" className="block text-lg font-medium">
+            <div className="mb-6">
+                <label htmlFor="committee" className="block text-lg font-semibold text-gray-700 mb-2">
                     Select Committee
                 </label>
                 <select
                     id="committee"
                     value={selectedCommittee}
                     onChange={(e) => setSelectedCommittee(e.target.value)}
-                    className="w-full border p-2 rounded"
+                    className="w-full border border-gray-300 rounded-lg p-3 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                     <option value="">-- Select Committee --</option>
                     {committees.map((committee) => (
@@ -98,35 +98,35 @@ export default function AdminPage() {
             </div>
 
             {/* Error Message */}
-            {error && <p className="text-red-500 mb-4">{error}</p>}
+            {error && <p className="text-red-500 mb-4 font-semibold">{error}</p>}
 
             {/* Announce Button */}
             <button
                 onClick={handleAnnounceResults}
-                className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-3"
+                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg w-full transition-all disabled:opacity-50"
                 disabled={loading}
             >
-                {loading ? 'Announcing...' : 'Announce Results'}
+                {loading ? 'Announcing Results...' : 'Announce Results'}
             </button>
 
-            {/* Results Table */}
+            {/* Results Section */}
             {selectedCommittee && (
                 <>
-                    <div className="mt-6">
-                        <h2 className="text-2xl font-semibold mb-2">Previously Announced Results</h2>
+                    <div className="mt-8">
+                        <h2 className="text-2xl font-semibold text-gray-800 mb-4">Previously Announced Results</h2>
                         {previousResults.length > 0 ? (
-                            <table className="w-full border-collapse border border-gray-300">
+                            <table className="w-full table-auto border-collapse border border-gray-300 shadow-sm">
                                 <thead>
-                                    <tr>
-                                        <th className="border p-2 bg-gray-200">Position</th>
-                                        <th className="border p-2 bg-gray-200">Member ID</th>
+                                    <tr className="bg-gray-200">
+                                        <th className="border p-3 text-left text-gray-700">Position</th>
+                                        <th className="border p-3 text-left text-gray-700">Member Name</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {previousResults.map((result) => (
                                         <tr key={result.member._id}>
-                                            <td className="border p-2 text-center">{result.position}</td>
-                                            <td className="border p-2 text-center">{result.member.name}</td>
+                                            <td className="border p-3 text-center">{result.position}</td>
+                                            <td className="border p-3">{result.member.name}</td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -138,20 +138,20 @@ export default function AdminPage() {
 
                     {/* Newly Announced Results */}
                     {results.length > 0 && (
-                        <div className="mt-6">
-                            <h2 className="text-2xl font-semibold mb-2">Newly Announced Results</h2>
-                            <table className="w-full border-collapse border border-gray-300">
+                        <div className="mt-8">
+                            <h2 className="text-2xl font-semibold text-gray-800 mb-4">Newly Announced Results</h2>
+                            <table className="w-full table-auto border-collapse border border-gray-300 shadow-sm">
                                 <thead>
-                                    <tr>
-                                        <th className="border p-2 bg-gray-200">Position</th>
-                                        <th className="border p-2 bg-gray-200">Member ID</th>
+                                    <tr className="bg-gray-200">
+                                        <th className="border p-3 text-left text-gray-700">Position</th>
+                                        <th className="border p-3 text-left text-gray-700">Member Name</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {results.map((result) => (
                                         <tr key={result.member._id}>
-                                            <td className="border p-2 text-center">{result.position}</td>
-                                            <td className="border p-2 text-center">{result.member.name}</td>
+                                            <td className="border p-3 text-center">{result.position}</td>
+                                            <td className="border p-3">{result.member.name}</td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -162,4 +162,5 @@ export default function AdminPage() {
             )}
         </div>
     );
+
 }

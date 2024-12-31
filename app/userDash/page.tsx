@@ -3,7 +3,7 @@ import MainPage from "../Components/MainPage";
 
 const UserDash = () => {
   return (
-    <div>
+    <div className="">
       <MainPage />
     </div>
   );
