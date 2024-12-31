@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation';
 import NotAvailText from "@/app/Components/NotAvailText";
 import { checkArrNull } from "@/app/utils/commonFunc";
 import AdminTabs from "./AdminComponents/AdminTabs";
+import Spinner from './AdminComponents/Spinner';
+import AdminGuide from './AdminComponents/AdminGuide';
 
 
 export default function Committiee() {
@@ -51,7 +53,7 @@ export default function Committiee() {
     }
   };
 
-  if (loading) return <p>Loading...</p>;
+  if (loading) return <Spinner />
   if (error) return <p className="text-red-500">Error: {error}</p>;
   // If the user is not logged in, they are redirected to the login page
   if (!userLoggedIn) {
@@ -157,6 +159,7 @@ export default function Committiee() {
           Logout
         </button>
       </div>
+      <AdminGuide />
 
 
 
