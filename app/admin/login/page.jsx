@@ -37,7 +37,7 @@ export default function AdminLogin() {
             // Redirect to the admin dashboard
             router.push("/admin");
         } catch (err) {
-            setError(err.message);
+            setError('Login failed maybe password, or check your email.');
             toast.error("login failed!", {
                 position: "bottom-center",
             });
@@ -54,7 +54,7 @@ export default function AdminLogin() {
         }
     }, []);
     return (
-        <div className="container mx-auto px-4 py-8">
+        <div className="container mx-auto px-4 py-8 mt-20">
             <h1 className="text-3xl font-bold mb-6 text-center">Admin Login</h1>
             <form onSubmit={handleLogin} className="max-w-md mx-auto p-6 bg-white shadow-md rounded-lg">
                 <div className="mb-4">

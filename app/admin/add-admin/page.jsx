@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import GoBackButton from '@/app/Components/GoBackButton';
 
@@ -38,7 +38,14 @@ export default function AddAdmin() {
             setError(err.message);
         }
     };
-
+  useEffect(() => {
+    // Check if user is logged in
+    const token = localStorage.getItem("admin_token");
+    if (!token) {
+      router.push("/admin/login"); // Redirect to login page if no token
+    } else {
+    }
+  }, []);
     return (
         <div className="flex items-center justify-center min-h-screen bg-gray-100">
             <div className="bg-white shadow-lg rounded-lg p-6 w-full max-w-md">
