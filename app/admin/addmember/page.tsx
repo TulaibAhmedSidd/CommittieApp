@@ -1,8 +1,20 @@
 "use client";
 
+import {
+  ApiHeaderType,
+  ApiMethod,
+  APIRoute,
+  AppRoutes,
+  CommonStringData,
+  InputTypes,
+  LocalKeys,
+  ResponseError,
+  ResponseSuccess,
+  ToastPosition,
+} from "@/app/utils/commonData";
 import GoBackButton from "../../Components/GoBackButton";
 import NotAvailText from "../../Components/NotAvailText";
-import { checkArrNull } from "@/app/utils/commonFunc";
+import { joinMultipleStringWithSpace } from "@/app/utils/commonFunc";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
@@ -17,12 +29,14 @@ export default function AddMembers() {
   // Fetch all members from the backend
   async function fetchMembers() {
     try {
-      const response = await fetch("/api/member");
-      if (!response.ok) throw new Error("Failed to fetch members");
+      const response = await fetch(APIRoute.member);
+      if (!response.ok) throw new Error(ResponseError.FetchError);
       const data = await response.json();
       setMembers(data);
     } catch (err) {
-      toast.error("Member eeoor!" + err.message, { position: "bottom-center" });
+      toast.error(ResponseError.FetchError + err.message, {
+        position: ToastPosition.BottomCenter,
+      });
     }
   }
   useEffect(() => {
@@ -30,11 +44,13 @@ export default function AddMembers() {
   }, []);
 
   // Handle form submission (Add or Edit)
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: any) => {
     e.preventDefault();
     try {
-      const url = editingId ? `/api/member/${editingId}` : "/api/member"; // Edit if editingId is present
-      const method = editingId ? "PUT" : "POST"; // Use PUT for edit, POST for create
+      const url = editingId
+        ? `${APIRoute.member}${editingId}`
+        : APIRoute.member; // Edit if editingId is present
+      const method = editingId ? ApiMethod.PUT : ApiMethod.POST; // Use PUT for edit, POST for create
       const response = await fetch(url, {
         method,
         body: JSON.stringify({
@@ -43,22 +59,18 @@ export default function AddMembers() {
           password: Password,
           committees: [],
         }),
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": ApiHeaderType.application_json },
       });
 
       if (!response.ok)
         throw new Error(
-          editingId ? "Failed to update member" : "Failed to add member"
+          editingId ? ResponseError.UpdateError : ResponseError.AddError
         );
 
-      // On success, reset fields and refetch members
-      //   if (response.ok) {
-      //     fetchMembers(); // Refetch members after adding or updating
-      //   }
       toast.success(
-        editingId ? "Member updated successfully" : "Member added successfully",
+        editingId ? ResponseSuccess.UpdateSuccess : ResponseSuccess.AddSuccess,
         {
-          position: "bottom-center",
+          position: ToastPosition.BottomCenter,
         }
       );
       setName("");
@@ -67,37 +79,40 @@ export default function AddMembers() {
       setEditingId(null);
       fetchMembers(); // Refetch members after adding or updating
     } catch (err) {
-      toast.error("Member eeoor!" + err.message, { position: "bottom-center" });
+      toast.error(err.message, { position: ToastPosition.BottomCenter });
     }
   };
 
   // Handle edit button click
   const handleEdit = (member) => {
     setName(member.name);
-    // setPassword(member.password);
     setEmail(member.email);
     setEditingId(member._id); // Set the ID of the member being edited
   };
 
   // Handle delete button click
-  const handleDelete = async (id) => {
+  const handleDelete = async (id: any) => {
     try {
-      const response = await fetch(`/api/member/${id}`, { method: "DELETE" });
-      if (!response.ok) throw new Error("Failed to delete member");
-      toast.success("Member deleted successfully!", {
-        position: "bottom-center",
+      const response = await fetch(`${APIRoute.member}${id}`, {
+        method: ApiMethod.DELETE,
+      });
+      if (!response.ok) throw new Error(ResponseError.DeleteError);
+      toast.success(ResponseSuccess.DeleteSuccess, {
+        position: ToastPosition.BottomCenter,
       });
       fetchMembers(); // Refetch members after deletion
     } catch (err) {
-      toast.error("Member eeoor!" + err.message, { position: "bottom-center" });
+      toast.error(err.message, {
+        position: ToastPosition.BottomCenter,
+      });
     }
   };
   const router = useRouter();
   useEffect(() => {
     // Check if user is logged in
-    const token = localStorage.getItem("admin_token");
+    const token = localStorage.getItem(LocalKeys.admin_token);
     if (!token) {
-      router.push("/admin/login"); // Redirect to login page if no token
+      router.push(AppRoutes.adminLogin); // Redirect to login page if no token
     } else {
     }
   }, []);
@@ -106,21 +121,31 @@ export default function AddMembers() {
       <div className="flex items-center gap-2 mb-6">
         <GoBackButton />
         <h1 className="text-3xl font-semibold text-gray-800">
-          {editingId ? "Edit Member" : "Add Member"}
+          {editingId
+            ? joinMultipleStringWithSpace([
+                CommonStringData.Edit,
+                CommonStringData.Member,
+              ])
+            : joinMultipleStringWithSpace([
+                CommonStringData.Add,
+                CommonStringData.Member,
+              ])}
         </h1>
       </div>
-
       <form onSubmit={handleSubmit} className="space-y-6 mb-8">
         <div>
           <label
-            htmlFor="name"
+            htmlFor={CommonStringData.Name}
             className="block text-lg font-semibold text-gray-700 mb-2"
           >
-            Member Name
+            {joinMultipleStringWithSpace([
+              CommonStringData.Member,
+              CommonStringData.Name,
+            ])}
           </label>
           <input
-            type="text"
-            name="name"
+            type={InputTypes.text}
+            name={CommonStringData.Name}
             placeholder="Enter member's name"
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -131,14 +156,17 @@ export default function AddMembers() {
 
         <div>
           <label
-            htmlFor="password"
+            htmlFor={CommonStringData.Password}
             className="block text-lg font-semibold text-gray-700 mb-2"
           >
-            Member Password
+            {joinMultipleStringWithSpace([
+              CommonStringData.Member,
+              CommonStringData.Password,
+            ])}
           </label>
           <input
-            type="password"
-            name="password"
+            type={InputTypes.password}
+            name={CommonStringData.Password}
             placeholder="Enter member's password"
             value={Password}
             onChange={(e) => setPassword(e.target.value)}
@@ -150,14 +178,17 @@ export default function AddMembers() {
 
         <div>
           <label
-            htmlFor="email"
+            htmlFor={CommonStringData.Email}
             className="block text-lg font-semibold text-gray-700 mb-2"
           >
-            Member Email
+            {joinMultipleStringWithSpace([
+              CommonStringData.Member,
+              CommonStringData.Email,
+            ])}
           </label>
           <input
-            type="email"
-            name="email"
+            type={InputTypes.email}
+            name={CommonStringData.Email}
             placeholder="Enter member's email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -167,15 +198,26 @@ export default function AddMembers() {
         </div>
 
         <button
-          type="submit"
+          type={InputTypes.submit}
           className="w-full py-3 mt-6 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          {editingId ? "Update Member" : "Add Member"}
+          {editingId
+            ? joinMultipleStringWithSpace([
+                CommonStringData.Edit,
+                CommonStringData.Member,
+              ])
+            : joinMultipleStringWithSpace([
+                CommonStringData.Add,
+                CommonStringData.Member,
+              ])}
         </button>
       </form>
 
       <h2 className="text-2xl font-semibold text-gray-800 mb-4">
-        Existing Members
+        {joinMultipleStringWithSpace([
+          CommonStringData.Existing,
+          CommonStringData.Member,
+        ])}
       </h2>
 
       <div className="space-y-6">
@@ -196,13 +238,13 @@ export default function AddMembers() {
                   onClick={() => handleEdit(member)}
                   className="bg-yellow-500 text-white py-1 px-3 rounded-lg hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-400"
                 >
-                  Edit
+                  {CommonStringData.Edit}
                 </button>
                 <button
                   onClick={() => handleDelete(member._id)}
                   className="bg-red-500 text-white py-1 px-3 rounded-lg hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-400"
                 >
-                  Delete
+                  {CommonStringData.Delete}
                 </button>
               </div>
             </div>

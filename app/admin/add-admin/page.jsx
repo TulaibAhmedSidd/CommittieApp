@@ -65,7 +65,7 @@ export default function AddAdmin() {
         router?.push('/admin')
     }
     return (
-        <div className="flex items-center justify-center min-h-screen bg-gray-100">
+        <div className="flex items-center justify-center min-h-screen ">
             <div className="bg-white shadow-lg rounded-lg p-6 w-full max-w-md">
                 <div className='flex items-center gap-2 mb-4' >
                     <GoBackButton />

@@ -18,3 +18,7 @@ export const checkerForAddAdmin = (userLoggedDetails) => {
     return false;
   }
 };
+
+export function joinMultipleStringWithSpace(strArr) {
+  return strArr.join(" ");
+}
