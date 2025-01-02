@@ -4,8 +4,11 @@ const CommitteeSchema = new mongoose.Schema({
   name: String,
   description: String,
   maxMembers: Number,
-  monthlyInstallment: Number,
+  monthlyAmount: Number,
   monthDuration: Number,
+  totalAmount: Number,
+  startDate: Date, // Added start date field
+  endDate: Date,   // Added end date field
   members: [
     {
       type: mongoose.Schema.Types.ObjectId,
@@ -20,7 +23,6 @@ const CommitteeSchema = new mongoose.Schema({
     },
   ],
   pendingMembers: [
-    // This field tracks the members who are waiting for approval
     {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Member",

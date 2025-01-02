@@ -503,13 +503,11 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { checkArrNull } from "../utils/commonFunc";
+import { checkArrNull, formatMoney } from "../utils/commonFunc";
 import NotAvailText from "../Components/NotAvailText";
-import MyCommittie from "./MyCommittie";
 import MyCommittie2 from "./MyCommittie2";
-import RefreshButton from "./RefreshButton";
-import { CommonData } from "../utils/data";
 import { toast } from "react-toastify";
+import moment from "moment";
 
 export default function MainPage() {
   const [committees, setCommittees] = useState([]);
@@ -723,32 +721,90 @@ export default function MainPage() {
               <NotAvailText text="No Committees Available Yet!" />
             ) : (
               committees.map((committee) => (
+                // <div
+                //   key={committee._id}
+                //   className="bg-white shadow-lg rounded-lg p-6 border border-gray-200 hover:shadow-xl transition-shadow"
+                // >
+                //   <h3 className="text-xl font-semibold text-gray-800">
+                //     {committee.name}
+                //   </h3>
+                //   <p className="text-gray-600">{committee.description}</p>
+                //   <p className="mt-2 text-gray-800">
+                //     <strong>Slots Available:</strong>{" "}
+                //     {committee.maxMembers - committee.members.length} /{" "}
+                //     {committee.maxMembers}
+                //   </p>
+                //   <div className="mt-4">
+                //     <button
+                //       disabled={String(renderText(committee._id))?.includes('Joined')}
+                //       className={`text-white px-4 py-2 rounded-lg 
+                //         ${getButtonStyles(committee._id).bgColor} 
+                //         ${getButtonStyles(committee._id).hoverColor}`}
+                //       onClick={() => registerForCommittee(committee._id)}
+                //     >
+                //       {renderText(committee._id)}
+                //     </button>
+                //     {/* )} */}
+                //   </div>
+                // </div>
                 <div
                   key={committee._id}
-                  className="bg-white shadow-lg rounded-lg p-6 border border-gray-200 hover:shadow-xl transition-shadow"
+                  className="bg-white shadow-lg rounded-lg p-6 border border-gray-200 hover:shadow-xl transition-shadow relative"
                 >
-                  <h3 className="text-xl font-semibold text-gray-800">
-                    {committee.name}
+                  <div className="absolute top-3 right-4 bg-green-100 text-green-600 px-3 py-1 rounded-full text-sm font-semibold shadow">
+                  Months Duration: {committee.monthDuration}
+                  </div>
+                  {/* Committee Header */}
+                  <h3 className="text-xl font-semibold text-gray-800 my-2 mt-5">
+                    {committee.name}sadsd s dsa dsa d asd sad sa 
                   </h3>
-                  <p className="text-gray-600">{committee.description}</p>
-                  <p className="mt-2 text-gray-800">
+                  <p className="text-gray-600 mb-2">{committee.description}</p>
+
+                  {/* Slots Available */}
+              
+                  <p className="text-gray-800 mb-4">
                     <strong>Slots Available:</strong>{" "}
-                    {committee.maxMembers - committee.members.length} /{" "}
-                    {committee.maxMembers}
+                    <span className="font-bold text-gray-700">
+                      {committee.maxMembers - committee.members.length} / {committee.maxMembers}
+                    </span>
                   </p>
+
+                  {/* Start and End Dates */}
+                  <div className="flex justify-between mb-4">
+                    <div className="text-center">
+                      <p className="text-sm text-gray-500">Start Date</p>
+                      <p className="text-lg font-semibold text-gray-700">{moment(committee.startDate).format('LL')}</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-sm text-gray-500">End Date</p>
+                      <p className="text-lg font-semibold text-gray-700">{moment(committee.endDate).format('LL')}</p>
+                    </div>
+                  </div>
+
+                  {/* Monthly Amount and Total Amount */}
+                  <div className="bg-blue-50 p-4 rounded-lg shadow-inner border border-blue-200 mb-4 text-center">
+                    <p className="text-sm text-gray-500">Monthly Amount</p>
+                    <p className="text-2xl font-bold text-blue-600">PKR. {formatMoney(committee.monthlyAmount)}</p>
+                    <p className="text-sm text-gray-500 mt-2">Total Amount</p>
+                    <p className="text-xl font-bold text-blue-700">
+                      PKR. {formatMoney(committee.totalAmount)}
+                    </p>
+                  </div>
+
+                  {/* Registration Button */}
                   <div className="mt-4">
                     <button
-                      disabled={String(renderText(committee._id))?.includes('Joined')}
-                      className={`text-white px-4 py-2 rounded-lg 
-                        ${getButtonStyles(committee._id).bgColor} 
-                        ${getButtonStyles(committee._id).hoverColor}`}
+                      disabled={String(renderText(committee._id))?.includes("Joined")}
+                      className={`text-white px-4 py-2 rounded-lg w-full
+                      ${getButtonStyles(committee._id).bgColor} 
+                      ${getButtonStyles(committee._id).hoverColor}`}
                       onClick={() => registerForCommittee(committee._id)}
                     >
                       {renderText(committee._id)}
                     </button>
-                    {/* )} */}
                   </div>
                 </div>
+
               ))
             )}
           </div>

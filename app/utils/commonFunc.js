@@ -22,3 +22,9 @@ export const checkerForAddAdmin = (userLoggedDetails) => {
 export function joinMultipleStringWithSpace(strArr) {
   return strArr.join(" ");
 }
+export function formatMoney(amount) {
+  if (amount == null || isNaN(amount)) {
+    return "0"; // Default for null or invalid input
+  }
+  return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
