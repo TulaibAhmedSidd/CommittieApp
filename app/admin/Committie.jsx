@@ -64,19 +64,23 @@ export default function Committiee() {
 
   return (
     <div className="p-8 bg-transparent min-h-screen">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-lg md:text-4xl font-bold text-gray-800">Committee Organizer Dashboard</h1>
+      <div className="flex justify-between items-center mb-8 p-4 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg shadow-lg">
+        <h1 className="text-xl md:text-3xl font-bold text-white">Committee Organizer Dashboard</h1>
         <button
           onClick={() => {
             localStorage?.clear();
-            router.push('/admin/login');
-            router.refresh();
+            setTimeout(() => {
+              router.push('/admin/login');
+              router.refresh();
+            }, 800);
           }}
-          className="bg-red-500 text-white py-2 px-6 rounded-lg shadow hover:bg-red-600 transition duration-200"
+          className="bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-600 transition duration-200 transform hover:scale-105"
         >
           Logout
         </button>
       </div>
+
+
       <AdminGuide />
 
       {/* Committees List */}

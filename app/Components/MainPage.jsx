@@ -676,7 +676,7 @@ export default function MainPage() {
   return (
     <div className="container mx-auto px-6 py-8">
       <div className="flex justify-between items-center mb-8 p-4 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg shadow-lg">
-        <h1 className="text-3xl font-bold text-white">
+        <h1 className="text-xl md:text-3xl font-bold text-white">
           Welcome, <span className="text-lg font-medium">{userLoggedData?.name}</span>
         </h1>
         <button
