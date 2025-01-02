@@ -773,11 +773,11 @@ export default function MainPage() {
                   <div className="flex justify-between mb-4">
                     <div className="text-center">
                       <p className="text-sm text-gray-500">Start Date</p>
-                      <p className="text-lg font-semibold text-gray-700">{moment(committee.startDate).format('LL')}</p>
+                      <p className="text-lg font-semibold text-gray-700">{moment(committee.startDate).format('MMMM YYYY')}</p>
                     </div>
                     <div className="text-center">
                       <p className="text-sm text-gray-500">End Date</p>
-                      <p className="text-lg font-semibold text-gray-700">{moment(committee.endDate).format('LL')}</p>
+                      <p className="text-lg font-semibold text-gray-700">{moment(committee.endDate).format('MMMM YYYY')}</p>
                     </div>
                   </div>
 

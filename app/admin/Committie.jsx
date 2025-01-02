@@ -106,11 +106,11 @@ export default function Committiee() {
                 <div className="flex justify-between bg-gray-50 p-4 rounded-lg shadow-inner border border-gray-200 mb-4">
                   <div className="text-center">
                     <p className="text-sm text-gray-500">Start Date</p>
-                    <p className="text-lg font-bold text-gray-700">{moment(committee.startDate).format('LL')}</p>
+                    <p className="text-lg font-bold text-gray-700">{moment(committee.startDate).format('MMMM YYYY')}</p>
                   </div>
                   <div className="text-center">
                     <p className="text-sm text-gray-500">End Date</p>
-                    <p className="text-lg font-bold text-gray-700">{moment(committee.endDate).format('LL')}</p>
+                    <p className="text-lg font-bold text-gray-700">{moment(committee.endDate).format('MMMM YYYY')}</p>
                   </div>
                 </div>
 
