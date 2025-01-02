@@ -1,7 +1,8 @@
 import connectToDatabase from "../../utils/db";
 import Committee from "../models/Committee";
 import Member from "../models/Member";
-import bcrypt from 'bcryptjs';
+import bcrypt from "bcryptjs";
+import nodemailer from "nodemailer";
 
 // export async function GET() {
 //   await connectToDatabase();
@@ -141,9 +142,12 @@ export async function GET() {
     const members = await Member.find();
     return new Response(JSON.stringify(members), { status: 200 });
   } catch (err) {
-    return new Response(JSON.stringify({ error: "Failed to fetch members"+ err  }), {
-      status: 500,
-    });
+    return new Response(
+      JSON.stringify({ error: "Failed to fetch members" + err }),
+      {
+        status: 500,
+      }
+    );
   }
 }
 
@@ -153,16 +157,75 @@ export async function POST(req) {
     const { name, email, password } = await req.json();
     const hashedPassword = await bcrypt.hash(password, 10); // 10 is the salt rounds
 
-    const newMember = new Member({ name, email, password: hashedPassword });
+    const newMember = new Member({
+      name,
+      email,
+      password: hashedPassword,
+      resetToken: "",
+    });
     await newMember.save();
+
+    // Generate a reset token (you could use JWT or a random string)
+    const resetToken = Math.random().toString(36).substring(2); // Simple example of generating a token
+
+    // Create a reset URL (e.g., to a route in your app)
+    const resetUrl = `https://committie-app.vercel.app/reset-password?token=${resetToken}`;
+
+    // Store the reset token (in your database, for example)
+    newMember.resetToken = resetToken;
+    await newMember.save();
+
+    // Set up Nodemailer transporter
+    const transporter = nodemailer.createTransport({
+      service: "gmail", // You can use another service like SendGrid
+      auth: {
+        user: process.env.SMTP_EMAIL,
+        pass: process.env.SMTP_PASSWORD,
+      },
+    });
+
+    // Email content
+    const mailOptions = {
+      from: process.env.SMTP_EMAIL,
+      to: email,
+      subject: "Reset Your Password",
+      html: `
+        <p>Hello ${name},</p>
+        <p>We have created your account. Please click the link below to reset your password:</p>
+        <a href="${resetUrl}">Reset Password</a>
+      `,
+    };
+
+    // Send the email
+    await transporter.sendMail(mailOptions);
 
     return new Response(JSON.stringify(newMember), { status: 201 });
   } catch (err) {
-    return new Response(JSON.stringify({ error: "Failed to add member" + err }), {
-      status: 400,
-    });
+    return new Response(
+      JSON.stringify({ error: "Failed to add member: " + err }),
+      {
+        status: 400,
+      }
+    );
   }
 }
+
+// export async function POST(req) {
+//   try {
+//     await connectToDatabase();
+//     const { name, email, password } = await req.json();
+//     const hashedPassword = await bcrypt.hash(password, 10); // 10 is the salt rounds
+
+//     const newMember = new Member({ name, email, password: hashedPassword });
+//     await newMember.save();
+
+//     return new Response(JSON.stringify(newMember), { status: 201 });
+//   } catch (err) {
+//     return new Response(JSON.stringify({ error: "Failed to add member" + err }), {
+//       status: 400,
+//     });
+//   }
+// }
 
 // DELETE: Remove a member
 export async function DELETE(req) {
@@ -183,8 +246,11 @@ export async function DELETE(req) {
       { status: 200 }
     );
   } catch (err) {
-    return new Response(JSON.stringify({ error: "Failed to delete member" + err }), {
-      status: 400,
-    });
+    return new Response(
+      JSON.stringify({ error: "Failed to delete member" + err }),
+      {
+        status: 400,
+      }
+    );
   }
 }
