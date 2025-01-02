@@ -4,6 +4,8 @@ const CommitteeSchema = new mongoose.Schema({
   name: String,
   description: String,
   maxMembers: Number,
+  monthlyInstallment: Number,
+  monthDuration: Number,
   members: [
     {
       type: mongoose.Schema.Types.ObjectId,
