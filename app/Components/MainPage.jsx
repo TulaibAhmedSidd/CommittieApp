@@ -548,7 +548,9 @@ export default function MainPage() {
       localStorage.setItem("member", JSON.stringify(data));
       setLoading(false);
     } catch (err) {
-      setError(err.message);
+      localStorage.clear();
+      router.push('/login')
+      // setError(err.message);
       setLoading(false);
     }
   };
