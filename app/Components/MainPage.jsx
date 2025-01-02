@@ -675,9 +675,9 @@ export default function MainPage() {
   };
   return (
     <div className="container mx-auto px-6 py-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-800">
-          Welcome, {userLoggedData?.name}
+      <div className="flex justify-between items-center mb-8 p-4 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg shadow-lg">
+        <h1 className="text-3xl font-bold text-white">
+          Welcome, <span className="text-lg font-medium">{userLoggedData?.name}</span>
         </h1>
         <button
           onClick={() => {
@@ -686,11 +686,12 @@ export default function MainPage() {
               router.push("/login");
             }, 800);
           }}
-          className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600"
+          className="bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-600 transition duration-200 transform hover:scale-105"
         >
           Logout
         </button>
       </div>
+
 
       <div className="flex gap-2 mb-6">
         <button
@@ -752,16 +753,16 @@ export default function MainPage() {
                   className="bg-white shadow-lg rounded-lg p-6 border border-gray-200 hover:shadow-xl transition-shadow relative"
                 >
                   <div className="absolute top-3 right-4 bg-green-100 text-green-600 px-3 py-1 rounded-full text-sm font-semibold shadow">
-                  Months Duration: {committee.monthDuration}
+                    Months Duration: {committee.monthDuration}
                   </div>
                   {/* Committee Header */}
                   <h3 className="text-xl font-semibold text-gray-800 my-2 mt-5">
-                    {committee.name}sadsd s dsa dsa d asd sad sa 
+                    {committee.name}sadsd s dsa dsa d asd sad sa
                   </h3>
                   <p className="text-gray-600 mb-2">{committee.description}</p>
 
                   {/* Slots Available */}
-              
+
                   <p className="text-gray-800 mb-4">
                     <strong>Slots Available:</strong>{" "}
                     <span className="font-bold text-gray-700">
