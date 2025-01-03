@@ -1,5 +1,6 @@
 import connectToDatabase from "../../utils/db";
 import Committee from "../models/Committee";
+import Admin from "../models/Admin";
 import Member from "../models/Member";
 
 // Handle GET requests (fetch all committees)
@@ -19,8 +20,20 @@ export async function GET() {
       .populate({
         path: "pendingMembers", // Populating the `member` inside the `result` array
         model: "Member",
+      })
+      .populate({
+        path: "createdBy", // Populate admin details
+        model: "Admin",
       });
-    return new Response(JSON.stringify(committees), { status: 200 });
+      const committeesWithDetails = committees.map((committee) => ({
+        ...committee.toObject(), // Convert Mongoose document to plain JS object
+        createdBy: committee.createdBy?._id, // Include `createdBy` ID directly
+        adminDetails: {
+          name: committee.createdBy?.name || "",
+          email: committee.createdBy?.email || "",
+        },
+      }));
+    return new Response(JSON.stringify(committeesWithDetails), { status: 200 });
   } catch (err) {
     return new Response(
       JSON.stringify({ error: "Failed to fetch committees =>", err }),
@@ -83,6 +96,7 @@ export async function POST(req) {
       monthlyAmount,
       monthDuration,
       startDate,
+      createdBy,
     } = body;
 
     // Validate required fields
@@ -122,6 +136,7 @@ export async function POST(req) {
       startDate,
       endDate: calculatedEndDate.toISOString().split("T")[0], // Format date
       totalAmount,
+      createdBy,
     });
 
     await newCommittee.save();
@@ -153,13 +168,32 @@ export async function PATCH(req) {
       monthlyAmount,
       monthDuration,
       startDate,
+      createdBy
     } = body;
 
     // Validate required fields
-    if (!id) {
+    // if (!id) {
+    //   return new Response(
+    //     JSON.stringify({ error: "Committee ID is required." }),
+    //     { status: 400 }
+    //   );
+    // }
+    // Validate required fields
+    if (!id || !createdBy) {
       return new Response(
-        JSON.stringify({ error: "Committee ID is required." }),
+        JSON.stringify({ error: "Committee ID and createdBy are required." }),
         { status: 400 }
+      );
+    }
+
+    // Ensure only the creator can update the committee
+    const committee = await Committee.findById(id);
+    if (!committee || committee.createdBy !== createdBy) {
+      return new Response(
+        JSON.stringify({
+          error: "You are not authorized to update this committee.",
+        }),
+        { status: 403 }
       );
     }
 
@@ -214,7 +248,23 @@ export async function DELETE(req) {
 
   try {
     const body = await req.json();
-    const { id } = body;
+      const { id, createdBy } = body;
+
+    if (!id || !createdBy) {
+      return new Response(
+        JSON.stringify({ error: "Committee ID and createdBy are required." }),
+        { status: 400 }
+      );
+    }
+
+    // Ensure only the creator can delete the committee
+    const committee = await Committee.findById(id);
+    if (!committee || committee.createdBy !== createdBy) {
+      return new Response(
+        JSON.stringify({ error: "You are not authorized to delete this committee." }),
+        { status: 403 }
+      );
+    }
 
     const deletedCommittee = await Committee.findByIdAndDelete(id);
 

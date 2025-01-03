@@ -1,7 +1,12 @@
 export async function fetchCommittees() {
-  const res = await fetch("/api/committee");
-  if (!res.ok) throw new Error("Failed to fetch committees");
-  return res.json();
+  try {
+    const res = await fetch("/api/committee");
+    if (!res.ok) throw new Error("Failed to fetch committees");
+    return res.json();
+  
+  } catch (eerr) {
+    console.log("errr: ", eerr);
+  }
 }
 export async function fetchCommitteebyId(id) {
   const res = await fetch(`/api/committee/${id}`);
@@ -10,12 +15,12 @@ export async function fetchCommitteebyId(id) {
 }
 
 export async function createCommittee(data) {
-  const res = await fetch("/api/committee", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  });
-  if (!res.ok) throw new Error("Failed to create committee");
+    const res = await fetch("/api/committee", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error("Failed to create committee");
   return res.json();
 }
 

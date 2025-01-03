@@ -16,6 +16,19 @@ export default function MembersListing() {
 
   const router = useRouter();
 
+  const [userLoggedDetails, setUserLoggedDetails] = useState(null);
+
+  let detail = null;
+  if (typeof window !== "undefined") {
+    detail = localStorage.getItem("admin_detail");
+  }
+  useEffect(() => {
+    // Check if user is logged in
+    if (detail) {
+      setUserLoggedDetails(JSON.parse(detail));
+    }
+  }, [detail]);
+
   useEffect(() => {
     const token = localStorage.getItem("admin_token");
     if (!token) {
@@ -99,18 +112,27 @@ export default function MembersListing() {
       <label className="block mb-6">
         <span className="font-semibold text-gray-700">Select a Committee</span>
         <select
-          className="block w-full mt-2 border-gray-300 rounded-lg px-4 py-2"
+          className="block w-full mt-2 border border-gray-300 rounded-lg px-4 py-2"
           onChange={(e) => handleSelectCommittee(e.target.value)}
           defaultValue=""
         >
           <option value="" disabled>
             -- Choose a committee --
           </option>
-          {committees.map((committee) => (
-            <option key={committee._id} value={committee._id}>
-              {committee.name}
-            </option>
-          ))}
+          {committees.map((committee) => {
+            const isHisOwnCommittie =
+              committee?.createdBy == userLoggedDetails?._id || false;
+
+            return (
+              <option
+                key={committee._id}
+                value={committee._id}
+                disabled={isHisOwnCommittie ? false : true}
+              >
+                {committee.name}{!isHisOwnCommittie && " (Not your Committie)"}
+              </option>
+            );
+          })}
         </select>
       </label>
 

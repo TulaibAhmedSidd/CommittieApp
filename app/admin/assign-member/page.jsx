@@ -13,6 +13,20 @@ const AssignMembers = () => {
     const [selectedMember, setSelectedMember] = useState('');
     const [selectedCommittee, setSelectedCommittee] = useState('');
     const [loading, setLoading] = useState(false);
+    const [userLoggedDetails, setUserLoggedDetails] = useState(null);
+
+
+    let detail = null;
+    if (typeof window !== "undefined") {
+        detail = localStorage.getItem("admin_detail");
+    }
+    useEffect(() => {
+        // Check if user is logged in
+        if (detail) {
+            setUserLoggedDetails(JSON.parse(detail));
+        }
+    }, [detail]);
+
 
     const fetchApis = async () => {
         setLoading(true);
@@ -66,7 +80,7 @@ const AssignMembers = () => {
     }, []);
 
     return (
-        <div className="container mx-auto p-6">
+        <div className="container mx-auto p-6 mt-20">
             <div className="flex items-center gap-2 mb-6">
                 <GoBackButton />
                 <h1 className="text-3xl font-bold text-gray-800">Assign Member to Committee</h1>
@@ -92,9 +106,11 @@ const AssignMembers = () => {
                     <option value="">{loading ? 'Fetching Data...' : 'Select Committee'}</option>
                     {committees?.map((committee) => {
                         const approvedMembersCount = committee.members?.length;
+                        const isHisOwnCommittie = committee?.createdBy == userLoggedDetails?._id || false;
+
                         return (
-                            <option key={committee._id} value={committee._id}>
-                                {committee.name} ({approvedMembersCount} Approved Members / out of {committee.maxMembers})
+                            <option key={committee._id} value={committee._id} disabled={isHisOwnCommittie ? false : true}>
+                                {committee.name} ({approvedMembersCount} Approved Members / out of {committee.maxMembers}){!isHisOwnCommittie && " (Not your Committie)"}
                             </option>
                         );
                     })}
@@ -114,11 +130,14 @@ const AssignMembers = () => {
                         const isMemberInPendingCommittee = committee?.pendingMembers?.some((m) => m._id === member._id);
                         const isMemberInApprovedCommittee = committee?.members?.some((m) => m._id === member._id);
                         const isMemberInCommittee = isMemberInPendingCommittee || isMemberInApprovedCommittee;
+                        const isHisOwnCommittie =
+                            member?.createdBy == userLoggedDetails?._id ?false:true
+
                         return (
                             <option
                                 key={member._id}
                                 value={member._id}
-                                disabled={isMemberInCommittee} // Disable if already in selected committee
+                                disabled={isMemberInCommittee ||isHisOwnCommittie} // Disable if already in selected committee
                             >
                                 {member.name} - {member.email}
                                 {isMemberInCommittee ? " (Already in Committee)" : ""}

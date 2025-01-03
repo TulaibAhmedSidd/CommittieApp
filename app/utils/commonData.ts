@@ -33,6 +33,7 @@ export enum ApiHeaderType {
 }
 export enum APIRoute {
   member = "/api/member/",
+  adminMember = "/api/member/admin-members/",
 }
 export enum ResponseError {
   FetchError = "Failed to Fetch :",

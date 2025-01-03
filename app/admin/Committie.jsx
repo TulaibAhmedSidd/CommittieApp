@@ -19,6 +19,20 @@ export default function Committiee() {
   const [userLoggedIn, setUserLoggedIn] = useState(false);
   const router = useRouter();
 
+  const [userLoggedDetails, setUserLoggedDetails] = useState(null);
+
+  let detail = null;
+  if (typeof window !== "undefined") {
+    detail = localStorage.getItem("admin_detail");
+  }
+  useEffect(() => {
+    // Check if user is logged in
+    if (detail) {
+      setUserLoggedDetails(JSON.parse(detail));
+    }
+  }, [detail]);
+
+
   useEffect(() => {
     // Check if user is logged in
     const token = localStorage.getItem("admin_token");
@@ -85,17 +99,20 @@ export default function Committiee() {
 
       {/* Committees List */}
       <div className="bg-white shadow rounded-lg p-6">
-        <h2 className="text-2xl font-semibold text-gray-800 mb-6">Showing All Committees</h2>
-        <ul className="space-y-6">
+        <h2 className="text-2xl font-semibold text-gray-800 mb-9">Showing All Committees</h2>
+        <ul className="space-y-12 ">
           {checkArrNull(committees) ? (
             <NotAvailText text="No Committees available yet!" />
           ) : (
             committees.map((committee) => (
               <li
                 key={committee._id}
-                className="bg-white p-6 rounded-lg shadow-lg border border-gray-200 relative"
+                className="bg-white p-6 rounded-lg shadow-lg border border-gray-200 relative "
               >
                 {/* Max Members */}
+                <div className="absolute top-[-30px] left-4 bg-pink-100 text-pink-600 px-3 py-1 rounded-full text-sm font-semibold shadow">
+                  Created by Organizer: {committee?.adminDetails?.name}
+                </div>
                 <div className="absolute top-4 right-4 bg-green-100 text-green-600 px-3 py-1 rounded-full text-sm font-semibold shadow">
                   Max Members: {committee.maxMembers}
                 </div>
@@ -137,13 +154,20 @@ export default function Committiee() {
                 {/* Buttons */}
                 <div className="flex justify-end gap-3">
                   <Link href={`/admin/edit?id=${committee._id}`}>
-                    <button className="bg-yellow-500 text-white py-2 px-4 rounded-lg shadow hover:bg-yellow-600 transition duration-200">
+                    <button
+                      disabled={
+                        committee?.createdBy == userLoggedDetails?._id ? false : true
+                      }
+                      className="bg-yellow-500 text-white py-2 px-4 rounded-lg shadow hover:bg-yellow-600 transition duration-200 disabled:bg-slate-400">
                       Edit
                     </button>
                   </Link>
                   <button
+                    disabled={
+                      committee?.createdBy == userLoggedDetails?._id ? false : true
+                    }
                     onClick={() => handleDelete(committee._id)}
-                    className="bg-red-500 text-white py-2 px-4 rounded-lg shadow hover:bg-red-600 transition duration-200"
+                    className="bg-red-500 text-white py-2 px-4 rounded-lg shadow hover:bg-red-600 transition duration-200 disabled:bg-slate-400"
                   >
                     Delete
                   </button>

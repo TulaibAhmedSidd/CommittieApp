@@ -67,12 +67,12 @@ export default function AdminTabs() {
                     </Link>
                     <Link href="/admin/members">
                         <p className="block lg:inline-block text-blue-600 py-2 px-4 hover:text-blue-700 hover:underline">
-                            View Members
+                            View Members in Committee
                         </p>
                     </Link>
                     <Link href="/admin/assign-member">
                         <p className="block lg:inline-block text-blue-600 py-2 px-4 hover:text-blue-700 hover:underline">
-                            Assign Committee
+                            Assign Committee to a Member
                         </p>
                     </Link>
                     <Link href="/admin/addmember">

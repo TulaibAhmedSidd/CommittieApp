@@ -16,9 +16,22 @@ export default function CreateCommittee() {
         startDate: "",
         endDate: "",
         totalAmount: "", // New field
+        createdBy: ''
     });
 
     const [errors, setErrors] = useState({}); // Track validation errors
+    const [userLoggedDetails, setUserLoggedDetails] = useState(null);
+    let detail = null;
+    if (typeof window !== "undefined") {
+        detail = localStorage.getItem("admin_detail");
+    }
+    useEffect(() => {
+        // Check if user is logged in
+        if (detail) {
+            setUserLoggedDetails(JSON.parse(detail));
+            setFormData({ ...formData, createdBy: userLoggedDetails?._id });
+        }
+    }, [detail]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -87,7 +100,9 @@ export default function CreateCommittee() {
         if (!validate()) return;
 
         try {
-            await createCommittee(formData);
+            let allData = { ...formData, createdBy: userLoggedDetails?._id, }
+            console.log("allData", allData)
+            await createCommittee(allData);
             router.push("/admin");
         } catch (err) {
             toast.error("Failed to create committee!", {

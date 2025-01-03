@@ -154,7 +154,7 @@ export async function GET() {
 export async function POST(req) {
   try {
     await connectToDatabase();
-    const { name, email, password } = await req.json();
+    const { name, email, password, createdBy  } = await req.json();
     const hashedPassword = await bcrypt.hash(password, 10); // 10 is the salt rounds
 
     const newMember = new Member({
@@ -162,6 +162,7 @@ export async function POST(req) {
       email,
       password: hashedPassword,
       resetToken: "",
+      createdBy 
     });
     await newMember.save();
 

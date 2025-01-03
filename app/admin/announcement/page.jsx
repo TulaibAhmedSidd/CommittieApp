@@ -14,6 +14,19 @@ export default function AdminPage() {
     const [error, setError] = useState('');
     const [previousResults, setPreviousResults] = useState([]);
 
+    const [userLoggedDetails, setUserLoggedDetails] = useState(null);
+
+    let detail = null;
+    if (typeof window !== "undefined") {
+        detail = localStorage.getItem("admin_detail");
+    }
+    useEffect(() => {
+        // Check if user is logged in
+        if (detail) {
+            setUserLoggedDetails(JSON.parse(detail));
+        }
+    }, [detail]);
+
     // Fetch all committees
     useEffect(() => {
         async function fetchCommittees() {
@@ -89,11 +102,18 @@ export default function AdminPage() {
                     className="w-full border border-gray-300 rounded-lg p-3 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                     <option value="">-- Select Committee --</option>
-                    {committees.map((committee) => (
-                        <option key={committee._id} value={committee._id}>
-                            {committee.name}
-                        </option>
-                    ))}
+                    {committees.map((committee) => {
+                        const isHisOwnCommittie =
+                            committee?.createdBy == userLoggedDetails?._id || false;
+
+                        return (
+                            <option
+                                disabled={isHisOwnCommittie ? false : true}
+                                key={committee._id} value={committee._id}>
+                                {committee.name}
+                            </option>
+                        )
+                    })}
                 </select>
             </div>
 

@@ -29,6 +29,8 @@ const MemberSchema = new mongoose.Schema({
       },
     },
   ],
+  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "Admin", required: true }, // New field
+
 });
 
 const Member = mongoose.models.Member || mongoose.model("Member", MemberSchema);

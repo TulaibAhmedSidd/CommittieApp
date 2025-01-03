@@ -717,7 +717,7 @@ export default function MainPage() {
           <h2 className="text-2xl font-semibold mb-6 text-gray-700">
             Available Committees
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ">
             {checkArrNull(committees) ? (
               <NotAvailText text="No Committees Available Yet!" />
             ) : (
@@ -750,14 +750,17 @@ export default function MainPage() {
                 // </div>
                 <div
                   key={committee._id}
-                  className="bg-white shadow-lg rounded-lg p-6 border border-gray-200 hover:shadow-xl transition-shadow relative"
+                  className="mt-4  bg-white shadow-lg rounded-lg p-6 border border-gray-200 hover:shadow-xl transition-shadow relative"
                 >
+                  <div className="absolute top-[-30px] left-0 bg-violet-100 text-violet-600 px-3 py-1 rounded-full text-sm font-semibold shadow">
+                    Created by Organizer: {committee?.adminDetails?.name}
+                  </div>
                   <div className="absolute top-3 right-4 bg-green-100 text-green-600 px-3 py-1 rounded-full text-sm font-semibold shadow">
                     Months Duration: {committee.monthDuration}
                   </div>
                   {/* Committee Header */}
                   <h3 className="text-xl font-semibold text-gray-800 my-2 mt-5">
-                    {committee.name}sadsd s dsa dsa d asd sad sa
+                    {committee.name}
                   </h3>
                   <p className="text-gray-600 mb-2">{committee.description}</p>
 

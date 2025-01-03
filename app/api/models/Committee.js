@@ -8,7 +8,7 @@ const CommitteeSchema = new mongoose.Schema({
   monthDuration: Number,
   totalAmount: Number,
   startDate: Date, // Added start date field
-  endDate: Date,   // Added end date field
+  endDate: Date, // Added end date field
   members: [
     {
       type: mongoose.Schema.Types.ObjectId,
@@ -28,6 +28,11 @@ const CommitteeSchema = new mongoose.Schema({
       ref: "Member",
     },
   ],
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Admin",
+    required: true,
+  }, // New field
 });
 
 export default mongoose.models.Committee ||
