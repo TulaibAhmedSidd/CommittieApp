@@ -80,7 +80,7 @@ const AssignMembers = () => {
     }, []);
 
     return (
-        <div className="container mx-auto p-6 mt-20">
+        <div className="container mx-auto p-6 mt-[100px]">
             <div className="flex items-center gap-2 mb-6">
                 <GoBackButton />
                 <h1 className="text-3xl font-bold text-gray-800">Assign Member to Committee</h1>

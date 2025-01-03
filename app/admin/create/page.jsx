@@ -119,7 +119,7 @@ export default function CreateCommittee() {
     }, []);
 
     return (
-        <div className="min-h-[100vh] flex justify-center items-center">
+        <div className="min-h-[100vh] flex justify-center items-center mt-20">
             <div className="min-w-[70vw] max-w-3xl mx-auto p-6 bg-white shadow rounded">
                 <div className="flex items-center gap-2 mb-4">
                     <GoBackButton />

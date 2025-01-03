@@ -84,7 +84,7 @@ export default function AdminPage() {
         }
     }, []);
     return (
-        <div className="container mt-20 mx-auto p-6 bg-white rounded-lg shadow-lg">
+        <div className="container mt-[100px] mx-auto p-6 bg-white rounded-lg shadow-lg">
             <div className="flex items-center gap-2 mb-6">
                 <GoBackButton />
                 <h1 className="text-3xl font-semibold text-gray-800">Admin - Committee Announcements</h1>

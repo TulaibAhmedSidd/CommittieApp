@@ -24,9 +24,12 @@ export default function AdminTabs() {
     const adminChecker = checkerForAddAdmin(userLoggedDetails);
     return (
         <header className="fixed top-0 left-0 w-full bg-white shadow-lg z-50">
-            <div className="max-w-screen-xl mx-auto flex items-center justify-between px-4 py-3">
+              <h1 className=" hidden sm:block text-xl font-semibold text-gray-800 cursor-pointer w-full text-center py-2"
+                    onClick={() => router.push('/admin')}
+                >Admin Dashboard</h1>
+            <div className="max-w-screen-xl mx-auto flex items-center justify-between px-2 py-3">
                 {/* Dashboard Title */}
-                <h1 className="text-xl font-semibold text-gray-800 cursor-pointer"
+                <h1 className=" block sm:hidden text-xl font-semibold text-gray-800 cursor-pointer"
                     onClick={() => router.push('/admin')}
                 >Admin Dashboard</h1>
 
