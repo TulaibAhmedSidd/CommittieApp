@@ -55,33 +55,33 @@ export default function AdminTabs() {
                     {
                         adminChecker &&
                         <Link href="/admin/add-admin">
-                            <p className="block lg:inline-block text-blue-600 py-2 px-4 hover:text-blue-700 hover:underline">
+                            <p onClick={()=>{setIsMenuOpen(false)}} className="block lg:inline-block text-blue-600 py-2 px-4 hover:text-blue-700 hover:underline">
                                 Create Organizer
                             </p>
                         </Link>
                     }
                     <Link href="/admin/create">
-                        <p className="block lg:inline-block text-blue-600 py-2 px-4 hover:text-blue-700 hover:underline">
+                        <p onClick={()=>{setIsMenuOpen(false)}} className="block lg:inline-block text-blue-600 py-2 px-4 hover:text-blue-700 hover:underline">
                             Create Committee
                         </p>
                     </Link>
                     <Link href="/admin/members">
-                        <p className="block lg:inline-block text-blue-600 py-2 px-4 hover:text-blue-700 hover:underline">
-                            View Members in Committee
+                        <p onClick={()=>{setIsMenuOpen(false)}} className="block lg:inline-block text-blue-600 py-2 px-4 hover:text-blue-700 hover:underline">
+                            View/ Manage Members in Committee
                         </p>
                     </Link>
                     <Link href="/admin/assign-member">
-                        <p className="block lg:inline-block text-blue-600 py-2 px-4 hover:text-blue-700 hover:underline">
+                        <p onClick={()=>{setIsMenuOpen(false)}} className="block lg:inline-block text-blue-600 py-2 px-4 hover:text-blue-700 hover:underline">
                             Assign Committee to a Member
                         </p>
                     </Link>
                     <Link href="/admin/addmember">
-                        <p className="block lg:inline-block text-blue-600 py-2 px-4 hover:text-blue-700 hover:underline">
+                        <p onClick={()=>{setIsMenuOpen(false)}} className="block lg:inline-block text-blue-600 py-2 px-4 hover:text-blue-700 hover:underline">
                             Add Member
                         </p>
                     </Link>
                     <Link href="/admin/announcement">
-                        <p className="block lg:inline-block text-blue-600 py-2 px-4 hover:text-blue-700 hover:underline pb-2">
+                        <p onClick={()=>{setIsMenuOpen(false)}} className="block lg:inline-block text-blue-600 py-2 px-4 hover:text-blue-700 hover:underline pb-2">
                             Announcements
                         </p>
                     </Link>
