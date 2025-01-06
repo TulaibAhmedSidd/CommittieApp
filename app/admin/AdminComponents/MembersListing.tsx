@@ -71,14 +71,19 @@ export default function MembersListing() {
 
   const handleMemberAction = async (memberId, action, successMessage) => {
     try {
-      const response = await fetch(`/api/member/${action}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          memberId,
-          committeeId: selectedCommittee._id,
-        }),
-      });
+      const response = await fetch(
+        action == "delete"
+          ? "/api/member/unassign-member"
+          : `/api/member/${action}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            memberId,
+            committeeId: selectedCommittee._id,
+          }),
+        }
+      );
 
       if (!response.ok) throw new Error("Action failed.");
 
@@ -129,7 +134,8 @@ export default function MembersListing() {
                 value={committee._id}
                 disabled={isHisOwnCommittie ? false : true}
               >
-                {committee.name}{!isHisOwnCommittie && " (Not your Committie)"}
+                {committee.name}
+                {!isHisOwnCommittie && " (Not your Committie)"}
               </option>
             );
           })}
@@ -164,14 +170,14 @@ export default function MembersListing() {
             onUnapprove={(id) =>
               handleMemberAction(
                 id,
-                "disapprove",
+                "pending",
                 "Member unapproved successfully!"
               )
             }
             onUnassign={(id) =>
               handleMemberAction(
                 id,
-                "unassign",
+                "delete",
                 "Member unassigned successfully!"
               )
             }

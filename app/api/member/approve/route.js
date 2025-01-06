@@ -54,10 +54,10 @@ export async function PATCH(req) {
     await connectToDatabase();
 
     // Parse incoming request data
-    const { memberId, updates, committeeId } = await req.json();
+    const { memberId, committeeId } = await req.json();
 
     // Validate request payload
-    if (!memberId || !updates || !committeeId) {
+    if (!memberId  || !committeeId) {
       return new Response(
         JSON.stringify({ error: "Member ID, updates, and committee ID are required" }),
         { status: 400 }

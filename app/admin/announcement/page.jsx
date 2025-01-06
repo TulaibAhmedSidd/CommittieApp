@@ -5,6 +5,7 @@ import NotAvailText from "@/app/Components/NotAvailText";
 import { checkArrNull } from "@/app/utils/commonFunc";
 import { useRouter } from 'next/navigation';
 import GoBackButton from "../../Components/GoBackButton";
+import { fetchCommitteebyId } from '../apis';
 
 export default function AdminPage() {
     const [committees, setCommittees] = useState([]);
@@ -62,7 +63,8 @@ export default function AdminPage() {
             console.log("committeeData", committeeData)
             setPreviousResults(committeeData.result);
             if (res.ok) {
-                setResults(data.result);
+                setPreviousResults(data.result);
+                // setResults(data.result);
 
             } else {
                 setError(data.error || 'Failed to announce results');
@@ -83,8 +85,18 @@ export default function AdminPage() {
         } else {
         }
     }, []);
+    const loadCommitteById = async (id) => {
+        try {
+            const data = await fetchCommitteebyId(id); // Replace with actual fetch logic
+            setPreviousResults(data?.result);
+            // setResults(data?.result);
+        } catch (err) {
+            setError(err.message);
+        } finally {
+        }
+    };
     return (
-        <div className="container mt-[100px] mx-auto p-6 bg-white rounded-lg shadow-lg">
+        <div className="container mt-[120px] mx-auto p-6 bg-white rounded-lg shadow-lg">
             <div className="flex items-center gap-2 mb-6">
                 <GoBackButton />
                 <h1 className="text-3xl font-semibold text-gray-800">Admin - Committee Announcements</h1>
@@ -98,7 +110,12 @@ export default function AdminPage() {
                 <select
                     id="committee"
                     value={selectedCommittee}
-                    onChange={(e) => setSelectedCommittee(e.target.value)}
+                    onChange={(e) => {
+                        let selectedCommittee = e.target.value;
+                        console.log("selectedCommittee", selectedCommittee)
+                        loadCommitteById(selectedCommittee)
+                        setSelectedCommittee(e.target.value)
+                    }}
                     className="w-full border border-gray-300 rounded-lg p-3 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                     <option value="">-- Select Committee --</option>
@@ -157,7 +174,7 @@ export default function AdminPage() {
                     </div>
 
                     {/* Newly Announced Results */}
-                    {results.length > 0 && (
+                    {/* {results.length > 0 && (
                         <div className="mt-8">
                             <h2 className="text-2xl font-semibold text-gray-800 mb-4">Newly Announced Results</h2>
                             <table className="w-full table-auto border-collapse border border-gray-300 shadow-sm">
@@ -177,7 +194,7 @@ export default function AdminPage() {
                                 </tbody>
                             </table>
                         </div>
-                    )}
+                    )} */}
                 </>
             )}
         </div>

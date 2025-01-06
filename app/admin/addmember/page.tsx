@@ -161,7 +161,7 @@ export default function AddMembers() {
   }, []);
 
   return (
-    <div className="container mt-[100px] mx-auto p-6 bg-white rounded-lg shadow-md">
+    <div className="container mt-[120px] mx-auto p-6 bg-white rounded-lg shadow-md">
       <div className="flex items-center gap-2 mb-6">
         <GoBackButton />
         <h1 className="text-3xl font-semibold text-gray-800">

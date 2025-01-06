@@ -13,12 +13,18 @@ export enum CommonStringData {
   Password = "Password",
   Email = "Email",
   Existing = "Existing",
+  Admin = "Admin",
+  User = "User",
+  Committie = "Committie",
+  Dashboard = "Dashboard",
 }
 export enum AppRoutes {
   adminLogin = "/admin/login",
 }
 export enum LocalKeys {
   admin_token = "admin_token",
+  admin_detail = "admin_detail",
+  member = "member",
 }
 export enum ApiMethod {
   GET = "GET",

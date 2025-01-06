@@ -33,6 +33,10 @@ const CommitteeSchema = new mongoose.Schema({
     ref: "Admin",
     required: true,
   }, // New field
+  announcementDate: {
+    type: Date,
+    required: false,
+  },
 });
 
 export default mongoose.models.Committee ||

@@ -508,6 +508,8 @@ import NotAvailText from "../Components/NotAvailText";
 import MyCommittie2 from "./MyCommittie2";
 import { toast } from "react-toastify";
 import moment from "moment";
+import AdminTabs from "../admin/AdminComponents/AdminTabs";
+import Notifications from '../Components/NotifList'
 
 export default function MainPage() {
   const [committees, setCommittees] = useState([]);
@@ -674,174 +676,191 @@ export default function MainPage() {
     };
   };
   return (
-    <div className="container mx-auto px-6 py-8">
-      <div className="flex justify-between items-center mb-8 p-4 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg shadow-lg">
-        <h1 className="text-xl md:text-3xl font-bold text-white">
-          Welcome, <span className="text-lg font-medium">{userLoggedData?.name}</span>
-        </h1>
-        <button
-          onClick={() => {
-            localStorage?.clear();
-            setTimeout(() => {
-              router.push("/login");
-            }, 800);
-          }}
-          className="bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-600 transition duration-200 transform hover:scale-105"
-        >
-          Logout
-        </button>
-      </div>
+    <>
 
 
-      <div className="flex gap-2 mb-6">
-        <button
-          onClick={() => setmyCommittie(false)}
-          className={`${!myCommittie && "bg-green-500"
-            } ${!myCommittie && "text-white"} px-4 py-2 rounded-lg hover:bg-green-600`}
-        >
-          {"All Committees"}
-        </button>
-        <button
-          onClick={() => setmyCommittie(true)}
-          className={`${myCommittie && "bg-green-500"
-            } ${myCommittie && "text-white"} px-4 py-2 rounded-lg hover:bg-green-600`}
-        >
-          {"See My Committees"}
-        </button>
-      </div>
+      <div className="container mx-auto px-6 py-8 mt-10">
 
-      {myCommittie ? (
-        <MyCommittie2 />
-      ) : (
-        <>
-          <h2 className="text-2xl font-semibold mb-6 text-gray-700">
-            Available Committees
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ">
-            {checkArrNull(committees) ? (
-              <NotAvailText text="No Committees Available Yet!" />
-            ) : (
-              committees.map((committee) => (
-                // <div
-                //   key={committee._id}
-                //   className="bg-white shadow-lg rounded-lg p-6 border border-gray-200 hover:shadow-xl transition-shadow"
-                // >
-                //   <h3 className="text-xl font-semibold text-gray-800">
-                //     {committee.name}
-                //   </h3>
-                //   <p className="text-gray-600">{committee.description}</p>
-                //   <p className="mt-2 text-gray-800">
-                //     <strong>Slots Available:</strong>{" "}
-                //     {committee.maxMembers - committee.members.length} /{" "}
-                //     {committee.maxMembers}
-                //   </p>
-                //   <div className="mt-4">
-                //     <button
-                //       disabled={String(renderText(committee._id))?.includes('Joined')}
-                //       className={`text-white px-4 py-2 rounded-lg 
-                //         ${getButtonStyles(committee._id).bgColor} 
-                //         ${getButtonStyles(committee._id).hoverColor}`}
-                //       onClick={() => registerForCommittee(committee._id)}
-                //     >
-                //       {renderText(committee._id)}
-                //     </button>
-                //     {/* )} */}
-                //   </div>
-                // </div>
-                <div
-                  key={committee._id}
-                  className="mt-4  bg-white shadow-lg rounded-lg p-6 border border-gray-200 hover:shadow-xl transition-shadow relative"
-                >
-                  <div className="absolute top-[-30px] left-0 bg-violet-100 text-violet-600 px-3 py-1 rounded-full text-sm font-semibold shadow">
-                    Created by Organizer: {committee?.adminDetails?.name}
-                  </div>
-                  <div className="absolute top-3 right-4 bg-green-100 text-green-600 px-3 py-1 rounded-full text-sm font-semibold shadow">
-                    Months Duration: {committee.monthDuration}
-                  </div>
-                  {/* Committee Header */}
-                  <h3 className="text-xl font-semibold text-gray-800 my-2 mt-5">
-                    {committee.name}
-                  </h3>
-                  <p className="text-gray-600 mb-2">{committee.description}</p>
 
-                  {/* Slots Available */}
+        <div className="flex justify-between items-center mb-8 p-4 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg shadow-lg">
+          <h1 className="text-xl md:text-3xl font-bold text-white">
+            Welcome, <span className="text-lg font-medium">{userLoggedData?.name}</span>
+          </h1>
+          <button
+            onClick={() => {
+              localStorage?.clear();
+              setTimeout(() => {
+                router.push("/login");
+              }, 800);
+            }}
+            className="bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-600 transition duration-200 transform hover:scale-105"
+          >
+            Logout
+          </button>
+        </div>
 
-                  <p className="text-gray-800 mb-4">
-                    <strong>Slots Available:</strong>{" "}
-                    <span className="font-bold text-gray-700">
-                      {committee.maxMembers - committee.members.length} / {committee.maxMembers}
-                    </span>
-                  </p>
+        <Notifications user={true}
+          userId={userLoggedData?._id} />
+        <div className="flex gap-2 mb-6">
+          <button
+            onClick={() => setmyCommittie(false)}
+            className={`${!myCommittie && "bg-green-500"
+              } ${!myCommittie && "text-white"} px-4 py-2 rounded-lg hover:bg-green-600`}
+          >
+            {"All Committees"}
+          </button>
+          <button
+            onClick={() => setmyCommittie(true)}
+            className={`${myCommittie && "bg-green-500"
+              } ${myCommittie && "text-white"} px-4 py-2 rounded-lg hover:bg-green-600`}
+          >
+            {"See My Committees"}
+          </button>
+        </div>
 
-                  {/* Start and End Dates */}
-                  <div className="flex justify-between mb-4">
-                    <div className="text-center">
-                      <p className="text-sm text-gray-500">Start Date</p>
-                      <p className="text-lg font-semibold text-gray-700">{moment(committee.startDate).format('MMMM YYYY')}</p>
+        {myCommittie ? (
+          <MyCommittie2 />
+        ) : (
+          <>
+            <h2 className="text-2xl font-semibold mb-6 text-gray-700">
+              Available Committees
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ">
+              {checkArrNull(committees) ? (
+                <NotAvailText text="No Committees Available Yet!" />
+              ) : (
+                committees.map((committee) => (
+                  // <div
+                  //   key={committee._id}
+                  //   className="bg-white shadow-lg rounded-lg p-6 border border-gray-200 hover:shadow-xl transition-shadow"
+                  // >
+                  //   <h3 className="text-xl font-semibold text-gray-800">
+                  //     {committee.name}
+                  //   </h3>
+                  //   <p className="text-gray-600">{committee.description}</p>
+                  //   <p className="mt-2 text-gray-800">
+                  //     <strong>Slots Available:</strong>{" "}
+                  //     {committee.maxMembers - committee.members.length} /{" "}
+                  //     {committee.maxMembers}
+                  //   </p>
+                  //   <div className="mt-4">
+                  //     <button
+                  //       disabled={String(renderText(committee._id))?.includes('Joined')}
+                  //       className={`text-white px-4 py-2 rounded-lg 
+                  //         ${getButtonStyles(committee._id).bgColor} 
+                  //         ${getButtonStyles(committee._id).hoverColor}`}
+                  //       onClick={() => registerForCommittee(committee._id)}
+                  //     >
+                  //       {renderText(committee._id)}
+                  //     </button>
+                  //     {/* )} */}
+                  //   </div>
+                  // </div>
+                  <div
+                    key={committee._id}
+                    className="mt-4  bg-white shadow-lg rounded-lg p-6 border border-gray-200 hover:shadow-xl transition-shadow relative"
+                  >
+                    <div className="absolute top-[-30px] left-0 bg-violet-100 text-violet-600 px-3 py-1 rounded-full text-sm font-semibold shadow">
+                      Created by Organizer: {committee?.adminDetails?.name}
                     </div>
-                    <div className="text-center">
-                      <p className="text-sm text-gray-500">End Date</p>
-                      <p className="text-lg font-semibold text-gray-700">{moment(committee.endDate).format('MMMM YYYY')}</p>
+                    {
+                      committee?.result?.length > 0 &&
+                      <div className="absolute top-3 left-5  text-pink-700 px-3 py-1 rounded-full text-sm font-semibold ">
+                        Result Announced
+                      </div>
+                    }
+                    <div className="absolute top-3 right-4 bg-green-100 text-green-600 px-3 py-1 rounded-full text-sm font-semibold shadow">
+                      Months Duration: {committee.monthDuration}
                     </div>
-                  </div>
+                    {/* Committee Header */}
+                    <h3 className="text-xl font-semibold text-gray-800 my-2 mt-5">
+                      {committee.name}
+                    </h3>
+                    <p className="text-gray-600 mb-2">{committee.description}</p>
 
-                  {/* Monthly Amount and Total Amount */}
-                  <div className="bg-blue-50 p-4 rounded-lg shadow-inner border border-blue-200 mb-4 text-center">
-                    <p className="text-sm text-gray-500">Monthly Amount</p>
-                    <p className="text-2xl font-bold text-blue-600">PKR. {formatMoney(committee.monthlyAmount)}</p>
-                    <p className="text-sm text-gray-500 mt-2">Total Amount</p>
-                    <p className="text-xl font-bold text-blue-700">
-                      PKR. {formatMoney(committee.totalAmount)}
+                    {/* Slots Available */}
+
+                    <p className="text-gray-800 mb-4">
+                      <strong>Slots Available:</strong>{" "}
+                      <span className="font-bold text-gray-700">
+                        {committee.maxMembers - committee.members.length} / {committee.maxMembers}
+                      </span>
                     </p>
-                  </div>
 
-                  {/* Registration Button */}
-                  <div className="mt-4">
-                    <button
-                      disabled={String(renderText(committee._id))?.includes("Joined")}
-                      className={`text-white px-4 py-2 rounded-lg w-full
+                    {/* Start and End Dates */}
+                    <div className="flex justify-between mb-4">
+                      <div className="text-center">
+                        <p className="text-sm text-gray-500">Start Date</p>
+                        <p className="text-lg font-semibold text-gray-700">{moment(committee.startDate).format('MMMM YYYY')}</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-sm text-gray-500">End Date</p>
+                        <p className="text-lg font-semibold text-gray-700">{moment(committee.endDate).format('MMMM YYYY')}</p>
+                      </div>
+                    </div>
+
+                    {/* Monthly Amount and Total Amount */}
+                    <div className="bg-blue-50 p-4 rounded-lg shadow-inner border border-blue-200 mb-4 text-center">
+                      <p className="text-sm text-gray-500">Monthly Amount</p>
+                      <p className="text-2xl font-bold text-blue-600">PKR. {formatMoney(committee.monthlyAmount)}</p>
+                      <p className="text-sm text-gray-500 mt-2">Total Amount</p>
+                      <p className="text-xl font-bold text-blue-700">
+                        PKR. {formatMoney(committee.totalAmount)}
+                      </p>
+                    </div>
+
+                    {/* Registration Button */}
+                    <div className="mt-4">
+                      <button
+                        disabled={String(renderText(committee._id))?.includes("Joined")}
+                        className={`text-white px-4 py-2 rounded-lg w-full
                       ${getButtonStyles(committee._id).bgColor} 
                       ${getButtonStyles(committee._id).hoverColor}`}
-                      onClick={() => registerForCommittee(committee._id)}
-                    >
-                      {renderText(committee._id)}
-                    </button>
+                        onClick={() => registerForCommittee(committee._id)}
+                      >
+                        {renderText(committee._id)}
+                      </button>
+                    </div>
                   </div>
-                </div>
 
-              ))
+                ))
+              )}
+            </div>
+          </>
+        )}
+
+
+        <div className="mt-8">
+          <h2 className="text-2xl font-semibold mb-4">Committee Announcements</h2>
+
+          <div className="space-y-4">
+            {committees.map((committee) => {
+              console.log("committee.results", committee?.result)
+              return (
+                checkArrNull(committee?.result) ? (
+                  <NotAvailText text={"No Committees Announcements Yet! For:" + committee?.name} />
+                ) :
+                  committee?.result?.length > 0 && (
+                    <div key={committee?._id} className="bg-white shadow-lg rounded-lg p-6 border border-gray-200">
+                      <h3 className="text-xl font-semibold text-gray-800">{committee?.name}</h3>
+                      <p className="text-gray-600">{committee?.description}</p>
+
+                      <h4 className="mt-4 text-lg font-semibold text-gray-700">Results: Announced at {moment(committee?.announcementDate).format("LLL")}</h4>
+                      {committee?.result?.map((result) => (
+                        <div key={result?._id} className="bg-green-200 p-4 rounded-lg mt-2 flex justify-between  ">
+                          <p className="text-gray-600 max-w-[20px]">{result?.position}</p>
+                          <h5 className="font-semibold text-gray-800">{result?.member?.name}</h5>
+                          <p className="text-sm text-gray-500 hidden md:block">Posted on: {moment(result?.announcementDate).format("LT")}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )
+              )
+            }
             )}
           </div>
-        </>
-      )}
-
-
-      <div className="mt-8">
-        <h2 className="text-2xl font-semibold mb-4">Committee Announcements</h2>
-
-        <div className="space-y-4">
-          {committees.map((committee) => (
-            checkArrNull(committee.results) ? (
-              <NotAvailText text={"No Committees Announcements Yet! For:" + committee?.name} />
-            ) :
-              committee.results?.length > 0 && (
-                <div key={committee._id} className="bg-white shadow-lg rounded-lg p-6 border border-gray-200">
-                  <h3 className="text-xl font-semibold text-gray-800">{committee.name}</h3>
-                  <p className="text-gray-600">{committee.description}</p>
-
-                  <h4 className="mt-4 text-lg font-semibold text-gray-700">Results:</h4>
-                  {committee.results.map((result) => (
-                    <div key={result._id} className="bg-gray-100 p-4 rounded-lg mt-2">
-                      <h5 className="font-semibold text-gray-800">{result.title}</h5>
-                      <p className="text-gray-600">{result.content}</p>
-                      <p className="text-sm text-gray-500">Posted on: {new Date(result.createdAt).toLocaleDateString()}</p>
-                    </div>
-                  ))}
-                </div>
-              )
-          ))}
         </div>
       </div>
-    </div>
+    </>
   );
 }

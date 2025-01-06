@@ -2,17 +2,22 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { checkerForAddAdmin } from '@/app/utils/commonFunc';
+import { checkerForAddAdmin, joinMultipleStringWithSpace } from '@/app/utils/commonFunc';
+import { CommonStringData, LocalKeys } from '@/app/utils/commonData';
+import NotifIcon from '../../Components/NotifIcon';
+import { CommonData } from '@/app/utils/data';
 
-export default function AdminTabs() {
+export default function AdminTabs(props) {
+    const { user = false, userId } = props;
     const router = useRouter();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [userLoggedDetails, setUserLoggedDetails] = useState(null);
-
+    // userId={userLoggedData?._id}
     const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
     let detail = null;
     if (typeof window !== "undefined") {
-        detail = localStorage.getItem("admin_detail");
+        let cherAdminorUser = user ? LocalKeys.member : LocalKeys.admin_detail
+        detail = localStorage.getItem(cherAdminorUser);
     }
     useEffect(() => {
         // Check if user is logged in
@@ -22,16 +27,22 @@ export default function AdminTabs() {
     }, [detail]);
 
     const adminChecker = checkerForAddAdmin(userLoggedDetails);
+    const userTestLogo = user ?
+        CommonStringData.Committie :
+        joinMultipleStringWithSpace([
+            CommonStringData.Admin,
+            CommonStringData.Dashboard,
+        ])
     return (
         <header className="fixed top-0 left-0 w-full bg-white shadow-lg z-50">
-              <h1 className=" hidden sm:block text-xl font-semibold text-gray-800 cursor-pointer w-full text-center py-2"
-                    onClick={() => router.push('/admin')}
-                >Admin Dashboard</h1>
+            <h1 className={` ${user ? "hidden" : 'hidden sm:block'}  text-xl font-semibold text-gray-800 cursor-pointer w-full text-center py-2`}
+                onClick={() => router.push(user?"/userDash":'/admin')}
+            >{userTestLogo}</h1>
             <div className="max-w-screen-xl mx-auto flex items-center justify-between px-2 py-3">
                 {/* Dashboard Title */}
-                <h1 className=" block sm:hidden text-xl font-semibold text-gray-800 cursor-pointer"
-                    onClick={() => router.push('/admin')}
-                >Admin Dashboard</h1>
+                <h1 className={`${user ? "block " : 'block sm:hidden'}   text-xl font-semibold text-gray-800 cursor-pointer`}
+                    onClick={() => router.push(user?"/userDash":'/admin')}
+                >{userTestLogo}</h1>
 
                 {/* Hamburger Menu for Small Screens */}
                 <button
@@ -51,44 +62,59 @@ export default function AdminTabs() {
                 </button>
 
                 {/* Navigation Links */}
-                <nav
-                    className={`${isMenuOpen ? 'block' : 'hidden'
-                        } lg:flex lg:items-center lg:space-x-4 absolute lg:relative bg-white lg:bg-transparent w-full lg:w-auto left-0 top-full lg:top-0 px-4 lg:px-0 border border-b-2 md:border-none`}
-                >
-                    {
-                        adminChecker &&
-                        <Link href="/admin/add-admin">
-                            <p onClick={()=>{setIsMenuOpen(false)}} className="block lg:inline-block text-blue-600 py-2 px-4 hover:text-blue-700 hover:underline">
-                                Create Organizer
-                            </p>
-                        </Link>
-                    }
-                    <Link href="/admin/create">
-                        <p onClick={()=>{setIsMenuOpen(false)}} className="block lg:inline-block text-blue-600 py-2 px-4 hover:text-blue-700 hover:underline">
-                            Create Committee
-                        </p>
-                    </Link>
-                    <Link href="/admin/members">
-                        <p onClick={()=>{setIsMenuOpen(false)}} className="block lg:inline-block text-blue-600 py-2 px-4 hover:text-blue-700 hover:underline">
-                            View/ Manage Members in Committee
-                        </p>
-                    </Link>
-                    <Link href="/admin/assign-member">
-                        <p onClick={()=>{setIsMenuOpen(false)}} className="block lg:inline-block text-blue-600 py-2 px-4 hover:text-blue-700 hover:underline">
-                            Assign Committee to a Member
-                        </p>
-                    </Link>
-                    <Link href="/admin/addmember">
-                        <p onClick={()=>{setIsMenuOpen(false)}} className="block lg:inline-block text-blue-600 py-2 px-4 hover:text-blue-700 hover:underline">
-                            Add Member
-                        </p>
-                    </Link>
-                    <Link href="/admin/announcement">
-                        <p onClick={()=>{setIsMenuOpen(false)}} className="block lg:inline-block text-blue-600 py-2 px-4 hover:text-blue-700 hover:underline pb-2">
-                            Announcements
-                        </p>
-                    </Link>
-                </nav>
+                {
+                    user ?
+                        <nav
+                            className={`${isMenuOpen ? 'block' : 'hidden'
+                                } lg:flex lg:items-center lg:space-x-4 absolute lg:relative bg-white lg:bg-transparent w-full lg:w-auto left-0 top-full lg:top-0 px-4 lg:px-0 border border-b-2 md:border-none`}
+                        >
+                            <Link href="/notification">
+
+                                <NotifIcon
+                                    userId={userLoggedDetails?._id}
+                                />
+                            </Link>
+                        </nav>
+                        :
+                        <nav
+                            className={`${isMenuOpen ? 'block' : 'hidden'
+                                } lg:flex lg:items-center lg:space-x-4 absolute lg:relative bg-white lg:bg-transparent w-full lg:w-auto left-0 top-full lg:top-0 px-4 lg:px-0 border border-b-2 md:border-none`}
+                        >
+                            {
+                                adminChecker &&
+                                <Link href="/admin/add-admin">
+                                    <p onClick={() => { setIsMenuOpen(false) }} className="block lg:inline-block text-blue-600 py-2 px-4 hover:text-blue-700 hover:underline">
+                                        Create Organizer
+                                    </p>
+                                </Link>
+                            }
+                            <Link href="/admin/create">
+                                <p onClick={() => { setIsMenuOpen(false) }} className="block lg:inline-block text-blue-600 py-2 px-4 hover:text-blue-700 hover:underline">
+                                    Create Committee
+                                </p>
+                            </Link>
+                            <Link href="/admin/members">
+                                <p onClick={() => { setIsMenuOpen(false) }} className="block lg:inline-block text-blue-600 py-2 px-4 hover:text-blue-700 hover:underline">
+                                    View/ Manage Members in Committee
+                                </p>
+                            </Link>
+                            <Link href="/admin/assign-member">
+                                <p onClick={() => { setIsMenuOpen(false) }} className="block lg:inline-block text-blue-600 py-2 px-4 hover:text-blue-700 hover:underline">
+                                    Assign Committee to a Member
+                                </p>
+                            </Link>
+                            <Link href="/admin/addmember">
+                                <p onClick={() => { setIsMenuOpen(false) }} className="block lg:inline-block text-blue-600 py-2 px-4 hover:text-blue-700 hover:underline">
+                                    Add Member
+                                </p>
+                            </Link>
+                            <Link href="/admin/announcement">
+                                <p onClick={() => { setIsMenuOpen(false) }} className="block lg:inline-block text-blue-600 py-2 px-4 hover:text-blue-700 hover:underline pb-2">
+                                    Announcements
+                                </p>
+                            </Link>
+                        </nav>
+                }
             </div>
         </header>
     );
