@@ -1,3 +1,17 @@
+
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { checkArrNull, formatMoney } from "../utils/commonFunc";
+import NotAvailText from "../Components/NotAvailText";
+import MyCommittie2 from "./MyCommittie2";
+import { toast } from "react-toastify";
+import moment from "moment";
+import AdminTabs from "../admin/AdminComponents/AdminTabs";
+import Notifications from '../Components/NotifList'
+
+
 // "use client";
 
 // import { useEffect, useState } from "react";
@@ -498,18 +512,6 @@
 //   );
 // }
 
-
-"use client";
-
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { checkArrNull, formatMoney } from "../utils/commonFunc";
-import NotAvailText from "../Components/NotAvailText";
-import MyCommittie2 from "./MyCommittie2";
-import { toast } from "react-toastify";
-import moment from "moment";
-import AdminTabs from "../admin/AdminComponents/AdminTabs";
-import Notifications from '../Components/NotifList'
 
 export default function MainPage() {
   const [committees, setCommittees] = useState([]);

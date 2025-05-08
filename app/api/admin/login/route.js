@@ -37,7 +37,7 @@ export async function POST(req) {
       status: 200,
     });
   } catch (error) {
-    return new Response(JSON.stringify({ message: "Server error" + err }), {
+    return new Response(JSON.stringify({ message: "Server error" + error }), {
       status: 500,
     });
   }
@@ -45,7 +45,7 @@ export async function POST(req) {
 
 export async function GET(req) {
   return new Response(
-    JSON.stringify({ message: "GET method not allowed" + err }),
+    JSON.stringify({ message: "GET method not allowed" + req }),
     { status: 405 }
   );
 }

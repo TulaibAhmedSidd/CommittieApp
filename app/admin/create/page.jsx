@@ -113,6 +113,7 @@ export default function CreateCommittee() {
 
     useEffect(() => {
         const token = localStorage.getItem("admin_token");
+        console.log("token", token)
         if (!token) {
             router.push("/admin/login");
         }

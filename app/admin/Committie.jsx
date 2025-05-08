@@ -84,6 +84,7 @@ export default function Committiee() {
           onClick={() => {
             localStorage?.clear();
             setTimeout(() => {
+              localStorage.clear()
               router.push('/admin/login');
               router.refresh();
             }, 800);
