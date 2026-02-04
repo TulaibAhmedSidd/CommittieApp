@@ -13,7 +13,7 @@ export async function POST(req) {
 
     if (!admin) {
       return new Response(
-        JSON.stringify({ message: "Invalid email or password" + err }),
+        JSON.stringify({ message: "Invalid email or password" }),
         { status: 400 }
       );
     }
@@ -21,7 +21,7 @@ export async function POST(req) {
     const isMatch = await bcrypt.compare(password, admin.password);
     if (!isMatch) {
       return new Response(
-        JSON.stringify({ message: "Invalid email or password" + err }),
+        JSON.stringify({ message: "Invalid email or password" }),
         { status: 400 }
       );
     }

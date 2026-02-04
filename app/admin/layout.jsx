@@ -1,4 +1,4 @@
-import AdminTabs from "./AdminComponents/AdminTabs";
+import AdminLayoutWrapper from "./AdminLayout";
 
 export const metadata = {
     title: "Organizer Portal",
@@ -9,9 +9,8 @@ export default function AdminLayout({
     children,
 }) {
     return (
-        <div>
-            <AdminTabs />
+        <AdminLayoutWrapper>
             {children}
-        </div>
+        </AdminLayoutWrapper>
     );
 }

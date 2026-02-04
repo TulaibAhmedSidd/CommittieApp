@@ -1,58 +1,49 @@
-import Member from "../../models/Member"; // Ensure correct path to your Member model
+import Member from "../../models/Member";
+import Admin from "../../models/Admin";
+import bcrypt from "bcryptjs";
+import connectToDatabase from "../../../utils/db";
 
 // Handle Update (GET)
 export async function GET(req, { params }) {
-  const { id } = params; // Get member ID from URL
-
+  const { id } = params;
   try {
+    await connectToDatabase();
     const member = await Member.findById(id);
     if (!member) return new Response("Member not found", { status: 404 });
     return new Response(JSON.stringify(member), { status: 200 });
   } catch (err) {
-    return new Response("Failed to update member" + err, { status: 500 });
+    return new Response("Failed to fetch member: " + err, { status: 500 });
   }
 }
-// Handle Update (PUT)
-// export async function PUT(req, { params }) {
-//   const { id } = params; // Get member ID from URL
-//   const { name, email } = await req.json();
-
-//   try {
-//     const member = await Member.findByIdAndUpdate(
-//       id,
-//       { name, email },
-//       { new: true }
-//     );
-//     if (!member) return new Response("Member not found", { status: 404 });
-//     return new Response(JSON.stringify(member), { status: 200 });
-//   } catch (err) {
-//     return new Response("Failed to update member" + err, { status: 500 });
-//   }
-// }
 
 export async function PUT(req, { params }) {
-  const { id } = params; // Get member ID from URL
-  const { name, email, userId } = await req.json(); // Include userId of the requester
+  const { id } = params;
+  const { name, email, password, userId, phone } = await req.json();
 
   try {
+    await connectToDatabase();
     const member = await Member.findById(id);
+    if (!member) return new Response("Member not found", { status: 404 });
 
-    if (!member) {
-      return new Response("Member not found", { status: 404 });
+    const requester = await Admin.findById(userId);
+    const isSuperAdmin = requester?.email?.toLowerCase() === "tulaib@gmail.com";
+
+    // Authorization check
+    if (!isSuperAdmin && member.createdBy.toString() !== userId) {
+      return new Response("Unauthorized to update this member", { status: 403 });
     }
 
-    // Check if the user has permission to update the member
-    if (member.createdBy.toString() !== userId) {
-      return new Response("Unauthorized to update this member", {
-        status: 403,
-      });
+    // Update fields
+    if (name) member.name = name;
+    if (email) member.email = email;
+    if (phone) member.phone = phone;
+
+    // Password reset logic
+    if (password && password.length >= 6) {
+      member.password = await bcrypt.hash(password, 10);
     }
 
-    // Update the member
-    member.name = name || member.name;
-    member.email = email || member.email;
     await member.save();
-
     return new Response(JSON.stringify(member), { status: 200 });
   } catch (err) {
     return new Response("Failed to update member: " + err, { status: 500 });
@@ -74,17 +65,21 @@ export async function PUT(req, { params }) {
 
 export async function DELETE(req, { params }) {
   const { id } = params; // Get member ID from URL
-  const { userId = ''  } = await req.json(); // Include userId of the requester
+  const { userId = "" } = await req.json(); // Include userId of the requester
 
   try {
+    await connectToDatabase();
     const member = await Member.findById(id);
 
     if (!member) {
       return new Response("Member not found", { status: 404 });
     }
 
+    const requester = await Admin.findById(userId);
+    const isSuperAdmin = requester?.email?.toLowerCase() === "tulaib@gmail.com";
+
     // Check if the user has permission to delete the member
-    if (member?.createdBy?.toString() !== userId) {
+    if (!isSuperAdmin && member?.createdBy?.toString() !== userId) {
       return new Response("Unauthorized to delete this member", {
         status: 403,
       });

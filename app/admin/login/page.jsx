@@ -3,20 +3,25 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
+import Link from "next/link";
+import { FiLock, FiMail, FiArrowRight, FiShield } from "react-icons/fi";
+
+import Button from "../../Components/Theme/Button";
+import Input from "../../Components/Theme/Input";
+import Card from "../../Components/Theme/Card";
+import { useLanguage } from "../../Components/LanguageContext";
 
 export default function AdminLogin() {
+    const { t } = useLanguage();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
     const router = useRouter();
 
     const handleLogin = async (e) => {
         e.preventDefault();
         setLoading(true);
-        setError("");
 
-        // Send login request to the backend API
         try {
             const res = await fetch("/api/admin/login", {
                 method: "POST",
@@ -24,80 +29,99 @@ export default function AdminLogin() {
                 body: JSON.stringify({ email, password }),
             });
 
+            const dataResponse = await res.json();
+
             if (!res.ok) {
-                const errorData = await res.json();
-                throw new Error(errorData.message || "Failed to log in");
+                throw new Error(dataResponse.message || t("error"));
             }
 
-            const { token,data } = await res.json();
-
-            // Store the token in localStorage
+            const { token, data } = dataResponse;
             localStorage.setItem("admin_token", token);
             localStorage.setItem("admin_detail", JSON.stringify(data));
 
-            // Redirect to the admin dashboard
+            toast.success(t("welcomeBackCommander"));
             router.push("/admin");
         } catch (err) {
-            setError('Login failed maybe password, or check your email.');
-            toast.error("login failed!", {
-                position: "bottom-center",
-            });
+            toast.error(err.message);
         } finally {
             setLoading(false);
         }
     };
+
     useEffect(() => {
-        // Check if user is logged in
         const token = localStorage.getItem("admin_token");
-        if (!token) {
-            router.push("/admin/login"); // Redirect to login page if no token
-        } else {
+        if (token) {
+            router.push("/admin");
         }
-    }, []);
+    }, [router]);
+
     return (
-        <div className="container mx-auto px-4 py-8 mt-20">
-            <h1 className="text-3xl font-bold mb-6 text-center">Admin Login</h1>
-            <form onSubmit={handleLogin} className="max-w-md mx-auto p-6 bg-white shadow-md rounded-lg">
-                <div className="mb-4">
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                        Email
-                    </label>
-                    <input
-                        type="email"
-                        id="email"
-                        name="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                        className="mt-1 px-4 py-2 border border-gray-300 rounded-md w-full"
-                    />
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden">
+            {/* Animated Background Elements */}
+            <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary-500/10 rounded-full blur-[120px] animate-pulse" />
+            <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-indigo-500/10 rounded-full blur-[120px] animate-pulse delay-700" />
+
+            <div className="w-full max-w-md relative z-10 animate-in fade-in zoom-in duration-700">
+                <div className="text-center mb-10 space-y-2">
+                    <div className="inline-flex items-center justify-center w-16 h-16 bg-white dark:bg-slate-900 rounded-2xl shadow-premium border border-primary-100 dark:border-primary-900/30 mb-4 animate-bounce-slow">
+                        <FiShield size={32} className="text-primary-600" />
+                    </div>
+                    <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">
+                        Committie<span className="text-primary-600">App</span>
+                    </h1>
+                    <p className="text-slate-500 dark:text-slate-400 font-black uppercase tracking-widest text-[10px] pt-1">{t("adminAccessTerminal")}</p>
                 </div>
 
-                <div className="mb-6">
-                    <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                        Password
-                    </label>
-                    <input
-                        type="password"
-                        id="password"
-                        name="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                        className="mt-1 px-4 py-2 border border-gray-300 rounded-md w-full"
-                    />
-                </div>
+                <Card className="p-8 backdrop-blur-xl bg-white/70 dark:bg-slate-900/70 border-white/50 dark:border-slate-800/50 shadow-2xl">
+                    <form onSubmit={handleLogin} className="space-y-6">
+                        <div className="space-y-1">
+                            <Input
+                                label={t("workEmail")}
+                                type="email"
+                                placeholder="name@example.com"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                icon={<FiMail />}
+                                required
+                            />
+                        </div>
 
-                {error && <div className="text-red-500 mb-4">{error}</div>}
+                        <div className="space-y-1">
+                            <Input
+                                label={t("accessPassword")}
+                                type="password"
+                                placeholder="••••••••"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                icon={<FiLock />}
+                                required
+                            />
+                        </div>
 
-                <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600"
-                >
-                    {loading ? "Logging in..." : "Login"}
-                </button>
-            </form>
+                        <div className="flex items-center justify-end">
+                            <Link
+                                href="/admin/forgot-password"
+                                className="text-[10px] font-black uppercase tracking-widest text-primary-600 hover:text-primary-700 transition-colors"
+                            >
+                                {t("recoverAccess")}
+                            </Link>
+                        </div>
+
+                        <Button
+                            type="submit"
+                            disabled={loading}
+                            loading={loading}
+                            className="w-full py-4 font-black uppercase tracking-[0.2em] text-xs shadow-lg shadow-primary-500/20"
+                        >
+                            {t("executeLogin")} <FiArrowRight className="ml-2" />
+                        </Button>
+                    </form>
+                </Card>
+
+                <p className="text-center mt-8 text-[10px] text-slate-400 font-black uppercase tracking-widest">
+                    &copy; 2026 {t("copyright")}
+                </p>
+            </div>
         </div>
     );
 }

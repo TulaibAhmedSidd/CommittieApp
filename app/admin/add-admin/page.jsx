@@ -1,140 +1,136 @@
-'use client';
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import GoBackButton from '@/app/Components/GoBackButton';
-import { checkerForAddAdmin } from '@/app/utils/commonFunc';
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import GoBackButton from "../../Components/GoBackButton";
+import { checkerForAddAdmin } from "../../utils/commonFunc";
+import { useLanguage } from "../../Components/LanguageContext";
+import Card from "../../Components/Theme/Card";
+import Input from "../../Components/Theme/Input";
+import Button from "../../Components/Theme/Button";
+import { toast } from "react-toastify";
 
 export default function AddAdmin() {
-    const [formData, setFormData] = useState({ name: '', email: '', password: '' });
-    const [error, setError] = useState(null);
-    const [successMessage, setSuccessMessage] = useState(null);
+    const { t } = useLanguage();
     const router = useRouter();
+    const [formData, setFormData] = useState({ name: "", email: "", password: "" });
+    const [loading, setLoading] = useState(false);
+    const [userLoggedDetails, setUserLoggedDetails] = useState(null);
+
+    useEffect(() => {
+        const detail = localStorage.getItem("admin_detail");
+        const token = localStorage.getItem("admin_token");
+
+        if (!token) {
+            router.push("/admin/login");
+            return;
+        }
+
+        if (detail) {
+            const parsed = JSON.parse(detail);
+            setUserLoggedDetails(parsed);
+            if (!checkerForAddAdmin(parsed)) {
+                router.push("/admin");
+            }
+        }
+    }, [router]);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        setFormData((prevData) => ({ ...prevData, [name]: value }));
+        setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError(null);
-        setSuccessMessage(null);
+        setLoading(true);
 
         try {
-            // Replace this with your API call
-            const response = await fetch('/api/admin', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+            const response = await fetch("/api/admin", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(formData),
             });
 
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Failed to add admin');
+                const data = await response.json();
+                throw new Error(data.message || t("failedToAddOrganizer"));
             }
 
-            setSuccessMessage('Admin added successfully!');
-            setFormData({ name: '', email: '', password: '' });
+            toast.success(t("organizerAddedSuccess"));
+            setFormData({ name: "", email: "", password: "" });
         } catch (err) {
-            setError(err.message);
+            toast.error(err.message);
+        } finally {
+            setLoading(false);
         }
     };
-    const [userLoggedDetails, setUserLoggedDetails] = useState(null);
-    let detail = null;
-    if (typeof window !== "undefined") {
-        detail = localStorage.getItem("admin_detail");
-    }
-    useEffect(() => {
-        // Check if user is logged in
-        if (detail) {
-            setUserLoggedDetails(JSON.parse(detail));
-        }
-    }, [detail]);
-    useEffect(() => {
-        // Check if user is logged in
-        const token = localStorage.getItem("admin_token");
-        if (!token) {
-            router.push("/admin/login"); // Redirect to login page if no token
-        } else {
-        }
-    }, []);
 
-    const adminChecker = checkerForAddAdmin(userLoggedDetails);
+    if (userLoggedDetails && !checkerForAddAdmin(userLoggedDetails)) return null;
 
-    if ((userLoggedDetails && !adminChecker)) {
-        router?.push('/admin')
-    }
     return (
-        <div className="flex items-center justify-center min-h-screen ">
-            <div className="bg-white shadow-lg rounded-lg p-6 w-full max-w-md">
-                <div className='flex items-center gap-2 mb-4' >
-                    <GoBackButton />
-                    <h1 className="text-2xl font-semibold text-center text-gray-800 ">
-                        Add New Committee Organizer
-                    </h1>
-                </div>
-                {error && <p className="text-red-500 text-center mb-4">{error}</p>}
-                {successMessage && <p className="text-green-500 text-center mb-4">{successMessage}</p>}
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <div>
-                        <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                            Full Name
-                        </label>
-                        <input
-                            type="text"
+        <div className="max-w-xl mx-auto p-6 mt-12 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <div className="flex items-center gap-4">
+                <GoBackButton />
+                <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter uppercase italic">
+                    {t("addNewOrganizer")}
+                </h1>
+            </div>
+
+            <Card className="border-none shadow-premium bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl p-8 md:p-12 relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary-500 to-primary-700" />
+
+                <form onSubmit={handleSubmit} className="space-y-8">
+                    <div className="space-y-6">
+                        <Input
+                            label={t("aliasName")}
                             id="name"
                             name="name"
                             value={formData.name}
                             onChange={handleInputChange}
                             required
-                            className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="Enter full name"
+                            placeholder={t("aliasName")}
                         />
-                    </div>
-                    <div>
-                        <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                            Email Address
-                        </label>
-                        <input
+                        <Input
+                            label={t("emailPrimary")}
                             type="email"
                             id="email"
                             name="email"
                             value={formData.email}
                             onChange={handleInputChange}
                             required
-                            className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="Enter email address"
+                            placeholder={t("emailPrimary")}
                         />
-                    </div>
-                    <div>
-                        <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                            Password
-                        </label>
-                        <input
+                        <Input
+                            label={t("initialPassword")}
                             type="password"
                             id="password"
                             name="password"
                             value={formData.password}
                             onChange={handleInputChange}
                             required
-                            className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="Enter password"
+                            placeholder={t("initialPassword")}
                         />
                     </div>
-                    <button
-                        type="submit"
-                        className="w-full bg-blue-600 text-white py-2 rounded-md shadow-md hover:bg-blue-700 transition duration-200"
-                    >
-                        Add Organizer
-                    </button>
+
+                    <div className="flex flex-col gap-4 pt-4">
+                        <Button
+                            type="submit"
+                            loading={loading}
+                            className="w-full py-4 font-black uppercase text-xs tracking-[0.2em] shadow-xl"
+                        >
+                            {t("createOrganizer")}
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="secondary"
+                            onClick={() => router.push("/admin")}
+                            className="w-full py-4 font-black uppercase text-xs tracking-[0.2em]"
+                        >
+                            {t("cancel")}
+                        </Button>
+                    </div>
                 </form>
-                <button
-                    onClick={() => router.push('/admin')}
-                    className="mt-4 w-full bg-gray-500 text-white py-2 rounded-md shadow-md hover:bg-gray-600 transition duration-200"
-                >
-                    Cancel
-                </button>
-            </div>
+            </Card>
         </div>
     );
 }

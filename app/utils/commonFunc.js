@@ -12,7 +12,7 @@ export const checkerForAddAdmin = (userLoggedDetails) => {
   const email = userLoggedDetails?.email?.toLowerCase();
   const Name = userLoggedDetails?.name?.toLowerCase();
 
-  if (email?.includes(CommonData?.tas) || Name?.includes(CommonData?.tas)) {
+  if (email?.includes(CommonData?.tas?.toLowerCase()) || Name?.includes(CommonData?.tas?.toLowerCase()) || email === "Tulaib@gmail.com") {
     return true;
   } else {
     return false;

@@ -25,14 +25,14 @@ export async function GET() {
         path: "createdBy", // Populate admin details
         model: "Admin",
       });
-      const committeesWithDetails = committees.map((committee) => ({
-        ...committee.toObject(), // Convert Mongoose document to plain JS object
-        createdBy: committee.createdBy?._id, // Include `createdBy` ID directly
-        adminDetails: {
-          name: committee.createdBy?.name || "",
-          email: committee.createdBy?.email || "",
-        },
-      }));
+    const committeesWithDetails = committees.map((committee) => ({
+      ...committee.toObject(), // Convert Mongoose document to plain JS object
+      createdBy: committee.createdBy?._id, // Include `createdBy` ID directly
+      adminDetails: {
+        name: committee.createdBy?.name || "",
+        email: committee.createdBy?.email || "",
+      },
+    }));
     return new Response(JSON.stringify(committeesWithDetails), { status: 200 });
   } catch (err) {
     return new Response(
@@ -188,7 +188,7 @@ export async function PATCH(req) {
 
     // Ensure only the creator can update the committee
     const committee = await Committee.findById(id);
-    if (!committee || committee.createdBy !== createdBy) {
+    if (!committee || committee.createdBy?.toString() !== createdBy.toString()) {
       return new Response(
         JSON.stringify({
           error: "You are not authorized to update this committee.",
@@ -248,7 +248,7 @@ export async function DELETE(req) {
 
   try {
     const body = await req.json();
-      const { id, createdBy } = body;
+    const { id, createdBy } = body;
 
     if (!id || !createdBy) {
       return new Response(
@@ -259,7 +259,7 @@ export async function DELETE(req) {
 
     // Ensure only the creator can delete the committee
     const committee = await Committee.findById(id);
-    if (!committee || committee.createdBy !== createdBy) {
+    if (!committee || committee.createdBy?.toString() !== createdBy.toString()) {
       return new Response(
         JSON.stringify({ error: "You are not authorized to delete this committee." }),
         { status: 403 }

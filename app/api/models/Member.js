@@ -17,7 +17,7 @@ const MemberSchema = new mongoose.Schema({
   email: String,
   resetToken: String,
   password: { type: String, required: true }, // Add password field
-  phone: { type: Number, required: false }, 
+  phone: { type: Number, required: false },
   committee: { type: mongoose.Schema.Types.ObjectId, ref: "Committee" },
   status: { type: String, enum: ["pending", "approved"], default: "pending" },
   committees: [
@@ -31,7 +31,7 @@ const MemberSchema = new mongoose.Schema({
     },
   ],
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "Admin", required: true }, // New field
-
+  createdByAdminName: { type: String, required: false }, // Store creator's name for easy lookup
 });
 
 const Member = mongoose.models.Member || mongoose.model("Member", MemberSchema);

@@ -21,6 +21,9 @@ export const metadata: Metadata = {
   description: "Created By TAS, Developer",
 };
 
+import { LanguageProvider } from "./Components/LanguageContext";
+import Navbar from "./Components/Navbar";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -34,13 +37,18 @@ export default function RootLayout({
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
           rel="stylesheet"
         />
+        <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;700&display=swap" rel="stylesheet" />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-slate-200`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-slate-50 dark:bg-slate-950 transition-colors duration-500`}
       >
-        <AdminTabs user={true}  />
-        <ToastContainer autoClose={3000} />
-        {children}
+        <LanguageProvider>
+          <Navbar />
+          <ToastContainer autoClose={3000} />
+          <div className="pt-24 min-h-screen">
+            {children}
+          </div>
+        </LanguageProvider>
       </body>
     </html>
   );

@@ -3,5 +3,6 @@ export const CommonData = {
     pending: "pending",
     approved: "approved",
   },
-  tas:'tulaib'
+  tas: 'Tulaib',
+  admin: 'Admin',
 };

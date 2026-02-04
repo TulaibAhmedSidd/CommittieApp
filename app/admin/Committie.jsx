@@ -1,182 +1,230 @@
-'use client'
-import { useEffect, useState } from 'react';
-import Link from 'next/link';
-import { fetchCommittees, deleteCommittee } from './apis';
-import { useRouter } from 'next/navigation';
-import NotAvailText from "@/app/Components/NotAvailText";
-import { checkArrNull, formatMoney } from "@/app/utils/commonFunc";
-import AdminTabs from "./AdminComponents/AdminTabs";
-import Spinner from './AdminComponents/Spinner';
-import AdminGuide from './AdminComponents/AdminGuide';
-import { CommonData } from '../utils/data';
-import moment from 'moment';
+"use client";
 
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { fetchCommittees, deleteCommittee } from "./apis";
+import { useRouter } from "next/navigation";
+import { FiPlus, FiEdit3, FiTrash2, FiUsers, FiDollarSign, FiCalendar, FiArrowRight, FiActivity, FiLayers, FiInfo } from "react-icons/fi";
+import moment from "moment";
+import { formatMoney } from "@/app/utils/commonFunc";
+import { toast } from "react-toastify";
+
+import Button from "../Components/Theme/Button";
+import Card from "../Components/Theme/Card";
+import { useLanguage } from "../Components/LanguageContext";
+
+export const dynamic = "force-dynamic";
 
 export default function Committiee() {
+  const { t } = useLanguage();
   const [committees, setCommittees] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [userLoggedIn, setUserLoggedIn] = useState(false);
+  const [userLoggedDetails, setUserLoggedDetails] = useState(null);
   const router = useRouter();
 
-  const [userLoggedDetails, setUserLoggedDetails] = useState(null);
-
-  let detail = null;
-  if (typeof window !== "undefined") {
-    detail = localStorage.getItem("admin_detail");
-  }
   useEffect(() => {
-    // Check if user is logged in
+    const detail = localStorage.getItem("admin_detail");
+    const token = localStorage.getItem("admin_token");
+
+    if (!token) {
+      router.push("/admin/login");
+      return;
+    }
+
     if (detail) {
       setUserLoggedDetails(JSON.parse(detail));
     }
-  }, [detail]);
 
-
-  useEffect(() => {
-    // Check if user is logged in
-    const token = localStorage.getItem("admin_token");
-    if (!token) {
-      setUserLoggedIn(false);
-      router.push("/admin/login");  // Redirect to login page if no token
-    } else {
-      setUserLoggedIn(true);
-      fetchCommittees();
-    }
-  }, []);
-
-  useEffect(() => {
-    async function loadCommittees() {
-      try {
-        const data = await fetchCommittees();
-        setCommittees(data);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    }
     loadCommittees();
-  }, []);
+  }, [router]);
+
+  async function loadCommittees() {
+    setLoading(true);
+    try {
+      const data = await fetchCommittees();
+      setCommittees(data);
+    } catch (err) {
+      toast.error(t("error") + ": " + (err.message || "Failed to load"));
+    } finally {
+      setLoading(false);
+    }
+  }
 
   const handleDelete = async (id) => {
-    if (!confirm('Are you sure you want to delete this committee?')) return;
+    if (!confirm(t("confirmDelete"))) return;
     try {
       await deleteCommittee(id);
-      setCommittees(committees.filter((committee) => committee._id !== id));
+      setCommittees(committees.filter((c) => c._id !== id));
+      toast.success(t("deleteSuccess"));
     } catch (err) {
-      alert('Failed to delete committee');
+      toast.error(t("error"));
     }
   };
 
-  if (loading) return <Spinner />
-  if (error) return <p className="text-red-500">Error: {error}</p>;
-  // If the user is not logged in, they are redirected to the login page
-  if (!userLoggedIn) {
-    return <div>Redirecting to admin login...</div>;
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-6">
+        <div className="relative">
+          <div className="w-16 h-16 border-4 border-primary-500/20 rounded-full" />
+          <div className="absolute top-0 w-16 h-16 border-4 border-primary-600 border-t-transparent rounded-full animate-spin" />
+        </div>
+        <p className="text-slate-500 font-black tracking-widest uppercase text-[10px] animate-pulse">{t("loading")}</p>
+      </div>
+    );
   }
 
   return (
-    <div className="p-8 bg-transparent min-h-screen">
-      <div className="flex justify-between items-center mb-8 p-4 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg shadow-lg">
-        <h1 className="text-xl md:text-3xl font-bold text-white">Committee Organizer Dashboard</h1>
-        <button
-          onClick={() => {
-            localStorage?.clear();
-            setTimeout(() => {
-              localStorage.clear()
-              router.push('/admin/login');
-              router.refresh();
-            }, 800);
-          }}
-          className="bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-600 transition duration-200 transform hover:scale-105"
-        >
-          Logout
-        </button>
+    <div className="space-y-12">
+      {/* Summary Panel */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <Card className="bg-slate-900 border-none relative overflow-hidden group">
+            <div className="relative z-10 space-y-4">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-primary-600/20 flex items-center justify-center text-primary-500">
+                  <FiActivity size={18} />
+                </div>
+                <span className="text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase">{t("systemHealth")}</span>
+              </div>
+              <div>
+                <h4 className="text-3xl font-black text-white tracking-tighter uppercase">{t("operational")}</h4>
+                <p className="text-xs text-slate-500 font-medium">{t("activePools")}: {committees.length}</p>
+              </div>
+            </div>
+            <FiActivity size={120} className="absolute -bottom-10 -right-10 text-white/5 group-hover:text-primary-600/10 transition-colors" />
+          </Card>
+
+          <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-premium group cursor-pointer hover:shadow-2xl transition-all">
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center text-green-500">
+                  <FiDollarSign size={18} />
+                </div>
+                <span className="text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase">{t("totalValuation")}</span>
+              </div>
+              <div>
+                <h4 className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">
+                  RS {formatMoney(committees.reduce((acc, c) => acc + (c.totalAmount || 0), 0))}
+                </h4>
+                <p className="text-xs text-slate-500 font-medium">{t("totalValuation")}</p>
+              </div>
+            </div>
+          </Card>
+        </div>
+
+        <Card className="bg-primary-600 border-none shadow-premium-hover flex flex-col justify-between relative overflow-hidden p-6">
+          <div className="relative z-10">
+            <h3 className="text-white text-xl font-black tracking-tighter mb-2 uppercase">{t("newPool")}</h3>
+            <p className="text-white/70 text-xs mb-6 max-w-[200px] font-medium">{t("createPoolDesc")}</p>
+            <Link href="/admin/create">
+              <Button className="w-full bg-white text-primary-600 border-none hover:bg-white/90 shadow-xl shadow-black/10 font-black uppercase text-[10px] tracking-widest py-4">
+                {t("createPool")} <FiPlus className="ml-1" />
+              </Button>
+            </Link>
+          </div>
+          <FiLayers size={140} className="absolute -bottom-10 -right-10 text-white/10 rotate-12" />
+        </Card>
       </div>
 
+      {/* Main List */}
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-2 h-8 bg-primary-600 rounded-full" />
+            <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">{t("operationalPools")}</h2>
+          </div>
+          <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+            {t("totalPools")}: {committees.length}
+          </div>
+        </div>
 
-      <AdminGuide />
+        {committees.length === 0 ? (
+          <Card className="py-24 border-dashed bg-transparent border-slate-300 dark:border-slate-800 flex flex-col items-center justify-center text-center space-y-6">
+            <div className="w-20 h-20 bg-slate-100 dark:bg-slate-900 rounded-3xl flex items-center justify-center text-slate-400">
+              <FiInfo size={40} />
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight uppercase">{t("noData")}</h3>
+              <p className="text-sm text-slate-500 max-w-xs italic">{t("noPoolsYet")}</p>
+            </div>
+            <Link href="/admin/create">
+              <Button variant="outline" className="border-2 font-black uppercase tracking-widest text-[10px]">{t("createPool")}</Button>
+            </Link>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {committees.map((c) => {
+              const isOwner = c.createdBy === userLoggedDetails?._id;
+              return (
+                <Card key={c._id} className="group p-0 border-none bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm overflow-hidden hover:shadow-2xl transition-all duration-500">
+                  <div className="p-8 space-y-8">
+                    {/* Card Header */}
+                    <div className="flex justify-between items-start">
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full bg-primary-500 animate-pulse" />
+                          <span className="text-[9px] font-black text-primary-600 uppercase tracking-[0.3em]">{t("uid")}://{c._id.substring(c._id.length - 8)}</span>
+                        </div>
+                        <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter leading-none group-hover:text-primary-600 transition-colors uppercase">{c.name}</h3>
+                      </div>
+                      <div className="flex gap-2">
+                        <Link href={`/admin/edit?id=${c._id}`}>
+                          <Button variant="ghost" size="sm" className={`h-10 w-10 p-0 rounded-xl ${isOwner ? "text-slate-400 hover:text-primary-600 hover:bg-primary-50" : "opacity-20 cursor-not-allowed"}`} disabled={!isOwner}>
+                            <FiEdit3 size={18} />
+                          </Button>
+                        </Link>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(c._id)}
+                          className={`h-10 w-10 p-0 rounded-xl ${isOwner ? "text-slate-400 hover:text-red-600 hover:bg-red-50" : "opacity-20 cursor-not-allowed"}`}
+                          disabled={!isOwner}
+                        >
+                          <FiTrash2 size={18} />
+                        </Button>
+                      </div>
+                    </div>
 
-      {/* Committees List */}
-      <div className="bg-white shadow rounded-lg p-6">
-        <h2 className="text-2xl font-semibold text-gray-800 mb-9">Showing All Committees</h2>
-        <ul className="space-y-12 ">
-          {checkArrNull(committees) ? (
-            <NotAvailText text="No Committees available yet!" />
-          ) : (
-            committees.map((committee) => (
-              <li
-                key={committee._id}
-                className="bg-white p-6 rounded-lg shadow-lg border border-gray-200 relative "
-              >
-                {/* Max Members */}
-                <div className="absolute top-[-30px] left-4 bg-pink-100 text-pink-600 px-3 py-1 rounded-full text-sm font-semibold shadow">
-                  Created by Organizer: {committee?.adminDetails?.name}
-                </div>
-                <div className="absolute top-4 right-4 bg-green-100 text-green-600 px-3 py-1 rounded-full text-sm font-semibold shadow">
-                  Max Members: {committee.maxMembers}
-                </div>
-
-                {/* Committee Header */}
-                <div className="mb-4">
-                  <h3 className="text-2xl font-bold text-gray-800">{committee.name}</h3>
-                  <p className="text-gray-600">{committee.description}</p>
-                </div>
-
-                {/* Date Box */}
-                <div className="flex justify-between bg-gray-50 p-4 rounded-lg shadow-inner border border-gray-200 mb-4">
-                  <div className="text-center">
-                    <p className="text-sm text-gray-500">Start Date</p>
-                    <p className="text-lg font-bold text-gray-700">{moment(committee.startDate).format('MMMM YYYY')}</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-sm text-gray-500">End Date</p>
-                    <p className="text-lg font-bold text-gray-700">{moment(committee.endDate).format('MMMM YYYY')}</p>
-                  </div>
-                </div>
-
-                {/* Financial Details */}
-                <div className="bg-blue-50 p-4 rounded-lg shadow-inner border border-blue-200 mb-4">
-                  <div className="text-center mb-2">
-                    <p className="text-sm text-gray-500">Monthly Amount</p>
-                    <p className="text-2xl font-bold text-blue-600">
-                      PKR. {formatMoney(committee.monthlyAmount)}
+                    <p className="text-sm text-slate-500 dark:text-slate-400 font-medium line-clamp-2 leading-relaxed h-10 italic">
+                      {c.description || t("noDescription")}
                     </p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-sm text-gray-500">Total Amount</p>
-                    <p className="text-xl font-bold text-blue-700">
-                      PKR. {formatMoney(committee.totalAmount)}
-                    </p>
-                  </div>
-                </div>
 
-                {/* Buttons */}
-                <div className="flex justify-end gap-3">
-                  <Link href={`/admin/edit?id=${committee._id}`}>
-                    <button
-                      disabled={
-                        committee?.createdBy == userLoggedDetails?._id ? false : true
-                      }
-                      className="bg-yellow-500 text-white py-2 px-4 rounded-lg shadow hover:bg-yellow-600 transition duration-200 disabled:bg-slate-400">
-                      Edit
-                    </button>
-                  </Link>
-                  <button
-                    disabled={
-                      committee?.createdBy == userLoggedDetails?._id ? false : true
-                    }
-                    onClick={() => handleDelete(committee._id)}
-                    className="bg-red-500 text-white py-2 px-4 rounded-lg shadow hover:bg-red-600 transition duration-200 disabled:bg-slate-400"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </li>
-            ))
-          )}
-        </ul>
+                    {/* Info Grid */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/50 border border-slate-100 dark:border-slate-800 space-y-1">
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{t("cycleDuration")}</p>
+                        <div className="flex items-center gap-2 text-slate-900 dark:text-white">
+                          <FiCalendar className="text-primary-500" size={14} />
+                          <span className="text-xs font-black uppercase">{moment(c.startDate).format("MMM 'YY")} - {moment(c.endDate).format("MMM 'YY")}</span>
+                        </div>
+                      </div>
+                      <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/50 border border-slate-100 dark:border-slate-800 space-y-1">
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{t("members")}</p>
+                        <div className="flex items-center gap-2 text-slate-900 dark:text-white">
+                          <FiUsers className="text-primary-500" size={14} />
+                          <span className="text-xs font-black">{c.members?.length || 0} / {c.maxMembers}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Card Footer */}
+                    <div className="flex items-center justify-between pt-6 border-t border-slate-100 dark:border-slate-800">
+                      <div className="space-y-1">
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{t("monthlyPulse")}</p>
+                        <p className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">
+                          RS {formatMoney(c.monthlyAmount)}
+                        </p>
+                      </div>
+                      <Link href={`/admin/announcement?id=${c._id}`} className="w-12 h-12 rounded-2xl bg-slate-900 dark:bg-white flex items-center justify-center text-white dark:text-slate-900 group-hover:bg-primary-600 group-hover:text-white transition-all cursor-pointer shadow-lg">
+                        <FiArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                      </Link>
+                    </div>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

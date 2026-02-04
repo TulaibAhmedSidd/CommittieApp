@@ -154,15 +154,17 @@ export async function GET() {
 export async function POST(req) {
   try {
     await connectToDatabase();
-    const { name, email, password, createdBy  } = await req.json();
+    const { name, email, password, createdBy, createdByAdminName } = await req.json();
     const hashedPassword = await bcrypt.hash(password, 10); // 10 is the salt rounds
 
     const newMember = new Member({
       name,
       email,
       password: hashedPassword,
+      status: "approved", // Set to approved by default for manual creation
       resetToken: "",
-      createdBy 
+      createdBy,
+      createdByAdminName
     });
     await newMember.save();
 

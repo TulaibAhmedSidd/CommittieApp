@@ -78,6 +78,10 @@ export default function AdminLogin() {
 
                 {error && <div className="text-red-500 mb-4">{error}</div>}
 
+                <a href="/admin/forgot-password" className="text-sm font-bold text-blue-500 hover:text-blue-600">
+                    Forgot Password?
+                </a>
+
                 <button
                     type="submit"
                     disabled={loading}
