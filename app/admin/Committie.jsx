@@ -39,9 +39,10 @@ export default function Committiee() {
   }, [router]);
 
   async function loadCommittees() {
+    if (!userLoggedDetails?._id) return;
     setLoading(true);
     try {
-      const data = await fetchCommittees();
+      const data = await fetchCommittees(userLoggedDetails._id);
       setCommittees(data);
     } catch (err) {
       toast.error(t("error") + ": " + (err.message || "Failed to load"));
@@ -49,6 +50,11 @@ export default function Committiee() {
       setLoading(false);
     }
   }
+
+  // Re-load when user details are available
+  useEffect(() => {
+    if (userLoggedDetails?._id) loadCommittees();
+  }, [userLoggedDetails]);
 
   const handleDelete = async (id) => {
     if (!confirm(t("confirmDelete"))) return;
@@ -154,23 +160,29 @@ export default function Committiee() {
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {committees.map((c) => {
-              const adminData = JSON.parse(localStorage.getItem("admin_detail"));
-              const isOwner = c.createdBy === adminData?._id || c.createdBy?.toString() === adminData?._id?.toString() || (adminData?.email === "Tulaib@gmail.com");
+              const isOwner = true; // Since we filter by API now
+              const isReadyToAnnounce = c.status === "open" && c.members.length >= c.maxMembers;
+
               return (
-                <Card key={c._id} className="group p-0 border-none bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm overflow-hidden hover:shadow-2xl transition-all duration-500">
+                <Card key={c._id} className={`group p-0 border-none bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm overflow-hidden hover:shadow-2xl transition-all duration-500 ${isReadyToAnnounce ? "ring-2 ring-primary-500" : ""}`}>
+                  {isReadyToAnnounce && (
+                    <div className="bg-primary-600 text-white text-[10px] font-black uppercase tracking-widest py-2 text-center animate-pulse">
+                      ⚠️ Action Required: Ready to Announce Result
+                    </div>
+                  )}
                   <div className="p-8 space-y-8">
                     {/* Card Header */}
                     <div className="flex justify-between items-start">
                       <div className="space-y-2">
                         <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 rounded-full bg-primary-500 animate-pulse" />
+                          <div className={`w-2 h-2 rounded-full animate-pulse ${isReadyToAnnounce ? 'bg-red-500' : 'bg-green-500'}`} />
                           <span className="text-[9px] font-black text-primary-600 uppercase tracking-[0.3em]">{t("uid")}://{c._id.substring(c._id.length - 8)}</span>
                         </div>
                         <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter leading-none group-hover:text-primary-600 transition-colors uppercase">{c.name}</h3>
                       </div>
                       <div className="flex gap-2">
                         <Link href={`/admin/edit?id=${c._id}`}>
-                          <Button variant="ghost" size="sm" className={`h-10 w-10 p-0 rounded-xl ${isOwner ? "text-slate-400 hover:text-primary-600 hover:bg-primary-50" : "opacity-20 cursor-not-allowed"}`} disabled={!isOwner}>
+                          <Button variant="ghost" size="sm" className="h-10 w-10 p-0 rounded-xl text-slate-400 hover:text-primary-600 hover:bg-primary-50">
                             <FiEdit3 size={18} />
                           </Button>
                         </Link>
@@ -178,8 +190,7 @@ export default function Committiee() {
                           variant="ghost"
                           size="sm"
                           onClick={() => handleDelete(c._id)}
-                          className={`h-10 w-10 p-0 rounded-xl ${isOwner ? "text-slate-400 hover:text-red-600 hover:bg-red-50" : "opacity-20 cursor-not-allowed"}`}
-                          disabled={!isOwner}
+                          className="h-10 w-10 p-0 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50"
                         >
                           <FiTrash2 size={18} />
                         </Button>
@@ -200,7 +211,7 @@ export default function Committiee() {
                         </div>
                       </div>
                       <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/50 border border-slate-100 dark:border-slate-800 space-y-1">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t("members")}</p>
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{t("members")}</p>
                         <div className="flex items-center gap-2 text-slate-900 dark:text-white">
                           <FiUsers className="text-primary-500" size={14} />
                           <span className="text-xs font-black">{c.members?.length || 0} / {c.maxMembers}</span>
@@ -217,11 +228,9 @@ export default function Committiee() {
                         </p>
                       </div>
                       <div className="flex gap-2">
-                        {isOwner && (
-                          <Link href={`/admin/manage?id=${c._id}`} className="px-6 h-12 rounded-2xl bg-primary-600 flex items-center justify-center text-white font-black uppercase text-[10px] tracking-widest cursor-pointer shadow-lg hover:bg-primary-700 transition-all">
-                            {t("manage") || "Manage"}
-                          </Link>
-                        )}
+                        <Link href={`/admin/manage?id=${c._id}`} className="px-6 h-12 rounded-2xl bg-primary-600 flex items-center justify-center text-white font-black uppercase text-[10px] tracking-widest cursor-pointer shadow-lg hover:bg-primary-700 transition-all">
+                          {t("manage") || "Manage"}
+                        </Link>
                         <Link href={`/admin/announcement?id=${c._id}`} className="w-12 h-12 rounded-2xl bg-slate-900 dark:bg-white flex items-center justify-center text-white dark:text-slate-900 group-hover:bg-primary-600 group-hover:text-white transition-all cursor-pointer shadow-lg">
                           <FiArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
                         </Link>

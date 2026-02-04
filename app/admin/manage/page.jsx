@@ -4,7 +4,7 @@ import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
     FiArrowLeft, FiCheckCircle, FiXCircle, FiBell,
-    FiEye, FiCalendar, FiDollarSign, FiZap, FiActivity
+    FiEye, FiCalendar, FiDollarSign, FiZap, FiActivity, FiMessageSquare
 } from "react-icons/fi";
 import { toast } from "react-toastify";
 import moment from "moment";
@@ -12,13 +12,17 @@ import {
     fetchCommitteebyId,
     pingMember,
     updatePaymentStatus,
-    updateCommitteeStatus
+    updateCommitteeStatus,
+    manageComRequest
 } from "../apis";
 
 import Card from "../../Components/Theme/Card";
 import Button from "../../Components/Theme/Button";
+import Input from "../../Components/Theme/Input";
 import Table, { TableRow, TableCell } from "../../Components/Theme/Table";
 import { useLanguage } from "../../Components/LanguageContext";
+import { FiUploadCloud } from "react-icons/fi";
+import ChatBox from "../../Components/ChatBox";
 
 function ManageContent() {
     const { t } = useLanguage();
@@ -31,6 +35,15 @@ function ManageContent() {
     const [actionLoading, setActionLoading] = useState(false);
     const [admin, setAdmin] = useState(null);
     const [viewingPayment, setViewingPayment] = useState(null);
+    const [payoutModalOpen, setPayoutModalOpen] = useState(false);
+    const [payoutData, setPayoutData] = useState({
+        memberId: "",
+        memberName: "",
+        amount: 0,
+        transactionId: "",
+        screenshot: ""
+    });
+    const [chatConfig, setChatConfig] = useState(null);
 
     useEffect(() => {
         const token = localStorage.getItem("admin_token");
@@ -57,10 +70,10 @@ function ManageContent() {
         }
     };
 
-    const handlePing = async (memberId) => {
+    const handlePing = async (memberId, customMessage) => {
         setActionLoading(true);
         try {
-            await pingMember(committeeId, memberId, admin._id);
+            await pingMember(committeeId, memberId, admin._id, customMessage);
             toast.success("Ping sent to member");
         } catch (err) {
             toast.error(err.message);
@@ -111,6 +124,61 @@ function ManageContent() {
         }
     };
 
+    const openPayoutModal = (member) => {
+        // Calculate total amount (monthly amount * total members)
+        const totalAmount = committee.monthlyAmount * committee.members.length;
+        setPayoutData({
+            memberId: member._id,
+            memberName: member.name,
+            amount: totalAmount,
+            transactionId: "",
+            screenshot: ""
+        });
+        setPayoutModalOpen(true);
+    };
+
+    const handleRecordPayout = async (e) => {
+        e.preventDefault();
+        setActionLoading(true);
+        try {
+            const res = await fetch(`/api/committee/${committeeId}/payout`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    adminId: admin._id,
+                    memberId: payoutData.memberId,
+                    amount: payoutData.amount,
+                    month: committee.currentMonth,
+                    transactionId: payoutData.transactionId,
+                    screenshot: payoutData.screenshot
+                })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error);
+
+            toast.success("Payout recorded successfully");
+            setPayoutModalOpen(false);
+            loadCommittee();
+        } catch (err) {
+            toast.error(err.message);
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const handleRequest = async (memberId, action) => {
+        setActionLoading(true);
+        try {
+            await manageComRequest(committeeId, memberId, action, admin._id);
+            toast.success(`Request ${action}ed`);
+            loadCommittee();
+        } catch (err) {
+            toast.error(err.message);
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
     if (loading) return <div className="p-10 text-center uppercase font-black tracking-widest animate-pulse">Initializing Data...</div>;
     if (!committee) return <div className="p-10 text-center">Committee not found</div>;
 
@@ -141,14 +209,63 @@ function ManageContent() {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-2 space-y-8">
+                    {/* Pending Requests */}
+                    {committee.pendingMembers?.length > 0 && (
+                        <Card title="Pending Join Requests" className="border-amber-200 bg-amber-50/50 dark:bg-amber-900/10 dark:border-amber-900/30">
+                            <div className="overflow-hidden rounded-2xl border border-amber-200 dark:border-amber-900/50 shadow-sm mt-4 bg-white dark:bg-slate-900">
+                                <Table headers={["Member Name", "Actions"]}>
+                                    {committee.pendingMembers.map((member) => (
+                                        <TableRow key={member._id}>
+                                            <TableCell className="font-black uppercase text-slate-900 dark:text-white">
+                                                {member.name}
+                                                <span className="block text-[9px] text-slate-400 normal-case font-medium">{member.email}</span>
+                                            </TableCell>
+                                            <TableCell className="flex gap-2">
+                                                <Button
+                                                    size="sm"
+                                                    loading={actionLoading}
+                                                    onClick={() => handleRequest(member._id, "approve")}
+                                                    className="bg-green-600 hover:bg-green-700 text-white font-black uppercase text-[10px] tracking-widest px-4 py-2"
+                                                >
+                                                    <FiCheckCircle className="mr-1" /> Approve
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    loading={actionLoading}
+                                                    onClick={() => handleRequest(member._id, "reject")}
+                                                    className="bg-red-600 hover:bg-red-700 text-white font-black uppercase text-[10px] tracking-widest px-4 py-2"
+                                                >
+                                                    <FiXCircle className="mr-1" /> Reject
+                                                </Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </Table>
+                            </div>
+                        </Card>
+                    )}
+
                     <Card title={`${committee.name} - ${t("month") || "Month"} ${committee.currentMonth}`} description="Payment status for all members this month">
                         <div className="overflow-hidden rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm mt-4">
                             <Table headers={[t("memberName") || "Member Name", t("status") || "Status", t("actions") || "Actions"]}>
                                 {committee.members.map((member) => {
                                     const payment = committee.payments.find(p => p.month === committee.currentMonth && (p.member._id === member._id || p.member === member._id));
+
+                                    // Highlight if beneficiary this month
+                                    const turn = committee.result.find(r => r.position === committee.currentMonth);
+                                    const isBeneficiary = (turn?.member === member._id || turn?.member?._id === member._id);
+
+                                    const totalDue = committee.monthlyAmount + (committee.isFeeMandatory ? (committee.organizerFee || 0) : 0);
+
                                     return (
-                                        <TableRow key={member._id}>
-                                            <TableCell className="font-black uppercase text-slate-900 dark:text-white">{member.name}</TableCell>
+                                        <TableRow key={member._id} className={isBeneficiary ? "bg-primary-50 dark:bg-primary-900/10 border-l-4 border-primary-500" : ""}>
+                                            <TableCell className="font-black uppercase text-slate-900 dark:text-white">
+                                                {member.name}
+                                                {isBeneficiary && <span className="ml-2 px-2 py-0.5 bg-primary-600 text-white text-[9px] rounded-full">BENEFICIARY</span>}
+                                                <div className="text-[9px] text-slate-400 font-medium normal-case mt-1">
+                                                    Due: RS {totalDue.toLocaleString()} {committee.isFeeMandatory && committee.organizerFee > 0 && `(Inc. Fee)`}
+                                                </div>
+                                            </TableCell>
                                             <TableCell>
                                                 <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${payment?.status === "verified" ? "bg-green-500/10 text-green-600 border-green-500/20" :
                                                     payment?.status === "pending" ? "bg-amber-500/10 text-amber-600 border-amber-500/20" :
@@ -159,13 +276,27 @@ function ManageContent() {
                                                 </span>
                                             </TableCell>
                                             <TableCell className="flex gap-2">
-                                                {payment?.status === "pending" && (
-                                                    <Button variant="ghost" size="sm" onClick={() => setViewingPayment(payment)} className="h-8 w-8 p-0 text-primary-600 bg-primary-50 hover:bg-primary-100 rounded-lg">
+                                                {payment?.submission && (
+                                                    <Button variant="ghost" size="sm" onClick={() => setViewingPayment(payment)} className="h-8 w-8 p-0 text-primary-600 bg-primary-50 hover:bg-primary-100 rounded-lg" title="View Proof">
                                                         <FiEye size={14} />
                                                     </Button>
                                                 )}
-                                                <Button variant="ghost" size="sm" onClick={() => handlePing(member._id)} className="h-8 w-8 p-0 text-slate-400 hover:text-primary-600 bg-slate-50 hover:bg-primary-50 rounded-lg">
+                                                <Button variant="ghost" size="sm" onClick={() => handlePing(member._id)} className="h-8 w-8 p-0 text-slate-400 hover:text-primary-600 bg-slate-50 hover:bg-primary-50 rounded-lg" title="Ping Member">
                                                     <FiBell size={14} />
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => setChatConfig({
+                                                        committeeId: committee._id,
+                                                        otherUserId: member._id,
+                                                        otherUserName: member.name,
+                                                        otherUserModel: "Member"
+                                                    })}
+                                                    className="h-8 w-8 p-0 text-slate-400 hover:text-blue-600 bg-slate-50 hover:bg-blue-50 rounded-lg"
+                                                    title="Message Member"
+                                                >
+                                                    <FiMessageSquare size={14} />
                                                 </Button>
                                             </TableCell>
                                         </TableRow>
@@ -200,27 +331,47 @@ function ManageContent() {
                                 {(() => {
                                     const turn = committee.result.find(r => r.position === committee.currentMonth);
                                     const member = committee.members.find(m => m._id === turn?.member || m._id === turn?.member?._id);
-                                    return member ? (
-                                        <div className="space-y-2">
+                                    if (!member) return <p className="text-xs text-slate-500 italic">No drawing result found</p>;
+
+                                    const alreadyPaid = committee.payouts?.some(p => p.month === committee.currentMonth && (p.member === member._id || p.member?._id === member._id));
+
+                                    return (
+                                        <div className="space-y-4">
                                             <p className="text-sm font-black uppercase text-white">{member.name}</p>
-                                            <div className="p-4 bg-white/5 rounded-xl border border-white/10 space-y-1">
-                                                <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Payout Account</p>
-                                                {member.payoutDetails?.iban ? (
-                                                    <>
-                                                        <p className="text-[11px] font-bold text-slate-200">{member.payoutDetails.accountTitle}</p>
-                                                        <p className="text-[10px] text-slate-400">{member.payoutDetails.bankName}</p>
-                                                        <p className="text-[10px] font-mono text-primary-400 mt-1 break-all">{member.payoutDetails.iban}</p>
-                                                    </>
-                                                ) : (
-                                                    <p className="text-[10px] italic text-red-400 uppercase font-black">Member hasn't updated details</p>
-                                                )}
-                                            </div>
-                                            <Button variant="ghost" size="sm" onClick={() => handlePing(member._id)} className="w-full text-[9px] font-black uppercase tracking-widest bg-primary-600/20 text-primary-500 border-none">
-                                                Ping for Details
-                                            </Button>
+
+                                            {alreadyPaid ? (
+                                                <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-xl flex items-center gap-3">
+                                                    <FiCheckCircle className="text-green-500" />
+                                                    <p className="text-[10px] font-black uppercase tracking-widest text-green-500">Payout Complete</p>
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    <div className="p-4 bg-white/5 rounded-xl border border-white/10 space-y-1">
+                                                        <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Payout Account</p>
+                                                        {member.payoutDetails?.iban ? (
+                                                            <>
+                                                                <p className="text-[11px] font-bold text-slate-200">{member.payoutDetails.accountTitle}</p>
+                                                                <p className="text-[10px] text-slate-400">{member.payoutDetails.bankName}</p>
+                                                                <p className="text-[10px] font-mono text-primary-400 mt-1 break-all">{member.payoutDetails.iban}</p>
+                                                            </>
+                                                        ) : (
+                                                            <div className="space-y-2">
+                                                                <p className="text-[10px] italic text-red-400 uppercase font-black">Member hasn't updated details</p>
+                                                                <Button variant="ghost" size="sm" onClick={() => handlePing(member._id, "URGENT: Please update your bank details for payout.")} className="w-full text-[9px] font-black uppercase tracking-widest bg-red-500/20 text-red-400 border-none hover:bg-red-500/30">
+                                                                    Ping for Details
+                                                                </Button>
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    {member.payoutDetails?.iban && (
+                                                        <Button onClick={() => openPayoutModal(member)} className="w-full py-4 bg-primary-600 hover:bg-primary-700 text-white font-black uppercase text-[10px] tracking-widest shadow-xl shadow-primary-500/20">
+                                                            <FiDollarSign className="mr-2" /> Record Payout
+                                                        </Button>
+                                                    )}
+                                                </>
+                                            )}
                                         </div>
-                                    ) : (
-                                        <p className="text-xs text-slate-500 italic">No drawing result found</p>
                                     );
                                 })()}
                             </div>
@@ -236,7 +387,7 @@ function ManageContent() {
                 </div>
             </div>
 
-            {/* Payment Verification Modal */}
+            {/* Payment Verification Modal (Existing) */}
             {viewingPayment && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/90 backdrop-blur-sm p-4">
                     <Card className="max-w-xl w-full bg-white dark:bg-slate-900 overflow-hidden animate-in zoom-in-95 duration-300">
@@ -292,6 +443,71 @@ function ManageContent() {
                         </div>
                     </Card>
                 </div>
+            )}
+
+            {/* Payout Recording Modal (New) */}
+            {payoutModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/90 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+                    <Card className="max-w-lg w-full bg-white dark:bg-slate-900 overflow-hidden shadow-2xl border-none p-0">
+                        <div className="p-8 bg-slate-900 text-white border-b border-white/10">
+                            <p className="text-[10px] font-black uppercase tracking-widest text-primary-500 mb-1">Official Disbursement</p>
+                            <h3 className="text-2xl font-black uppercase tracking-tight">Record Payout</h3>
+                            <p className="text-xs text-slate-400 mt-2">To: <span className="text-white font-bold uppercase">{payoutData.memberName}</span></p>
+                        </div>
+                        <form onSubmit={handleRecordPayout} className="p-8 space-y-6">
+                            <div className="space-y-4">
+                                <Input
+                                    label="Amount Sent (PKR)"
+                                    type="number"
+                                    value={payoutData.amount}
+                                    onChange={(e) => setPayoutData({ ...payoutData, amount: e.target.value })}
+                                    required
+                                    className="font-mono font-black"
+                                />
+                                <Input
+                                    label="Transaction ID / Ref"
+                                    value={payoutData.transactionId}
+                                    onChange={(e) => setPayoutData({ ...payoutData, transactionId: e.target.value })}
+                                    required
+                                    className="font-mono uppercase font-black tracking-tighter"
+                                    placeholder="e.g. 882910022"
+                                />
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Evidence (Base64/URL)</label>
+                                    <div className="relative group">
+                                        <textarea
+                                            placeholder="Paste screenshot data..."
+                                            value={payoutData.screenshot}
+                                            onChange={(e) => setPayoutData({ ...payoutData, screenshot: e.target.value })}
+                                            required
+                                            rows={3}
+                                            className="w-full bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 text-xs font-mono resize-none focus:ring-2 focus:ring-primary-500/20 outline-none"
+                                        />
+                                        <FiUploadCloud className="absolute right-4 top-4 text-slate-300" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="flex gap-4 pt-4">
+                                <Button type="button" variant="ghost" onClick={() => setPayoutModalOpen(false)} className="flex-1 text-slate-500 uppercase text-[10px] tracking-widest font-black">Cancel</Button>
+                                <Button type="submit" loading={actionLoading} className="flex-[2] bg-primary-600 hover:bg-primary-700 font-black uppercase text-[10px] tracking-widest py-4 shadow-xl shadow-primary-500/20">
+                                    Confirm Transfer
+                                </Button>
+                            </div>
+                        </form>
+                    </Card>
+                </div>
+            )}
+            {/* Chat Box */}
+            {chatConfig && admin && (
+                <ChatBox
+                    committeeId={chatConfig.committeeId}
+                    currentUserId={admin._id}
+                    currentUserModel="Admin"
+                    otherUserId={chatConfig.otherUserId}
+                    otherUserName={chatConfig.otherUserName}
+                    otherUserModel="Member"
+                    onClose={() => setChatConfig(null)}
+                />
             )}
         </div>
     );

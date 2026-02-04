@@ -13,18 +13,33 @@ export async function PATCH(req, { params }) {
         if (!committee) return new Response(JSON.stringify({ error: "Committee not found" }), { status: 404 });
 
         if (action === "advance_month") {
-            committee.currentMonth += 1;
+            // Logic: All members must have 'verified' status for the currentMonth
+            // EXCEPT for the member whose turn it is in the currentMonth.
 
-            // Notify turn member
-            const turnMember = committee.result.find(r => r.position === committee.currentMonth);
-            if (turnMember) {
-                const notification = new Notification({
-                    userId: turnMember.member,
-                    message: `Congratulations! It is your turn to receive the payout for ${committee.name} (Month ${committee.currentMonth}).`,
-                    details: "Payout Alert",
-                });
-                await notification.save();
+            const currentTurn = committee.result.find(r => r.position === committee.currentMonth);
+            const beneficiaryId = currentTurn?.member?.toString();
+
+            const pendingPayments = committee.members.filter(member => {
+                // Skip the beneficiary
+                if (member._id.toString() === beneficiaryId) return false;
+
+                // Find payment for this member for current month
+                const payment = committee.payments.find(p =>
+                    p.month === committee.currentMonth &&
+                    (p.member.toString() === member._id.toString())
+                );
+
+                return payment?.status !== "verified";
+            });
+
+            if (pendingPayments.length > 0) {
+                const names = pendingPayments.map(m => m.name).join(", ");
+                return new Response(JSON.stringify({
+                    error: `Advance blocked. Missing verified payments from: ${names}`
+                }), { status: 400 });
             }
+
+            committee.currentMonth += 1;
 
             await committee.save();
             await createLog({

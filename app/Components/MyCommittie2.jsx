@@ -7,9 +7,10 @@ import {
   FiLayers, FiCheckCircle, FiClock, FiAlertCircle,
   FiCalendar, FiDollarSign, FiInfo, FiUploadCloud,
   FiXCircle, FiArrowRight, FiActivity, FiSearch,
-  FiUser, FiTable, FiCreditCard
+  FiUser, FiTable, FiCreditCard, FiMessageSquare
 } from "react-icons/fi";
 import Card from "./Theme/Card";
+import ChatBox from "./ChatBox";
 import Button from "./Theme/Button";
 import Input from "./Theme/Input";
 import Table, { TableRow, TableCell } from "./Theme/Table";
@@ -31,6 +32,7 @@ export default function MyCommittie2() {
   });
   const [submitting, setSubmitting] = useState(false);
   const [view, setView] = useState("active"); // active, pending, history
+  const [chatConfig, setChatConfig] = useState(null);
 
   useEffect(() => {
     const userData = localStorage.getItem("member");
@@ -180,11 +182,16 @@ export default function MyCommittie2() {
                         <div className="p-6 bg-slate-900 text-white rounded-[2rem] shadow-2xl relative overflow-hidden group/box min-w-[200px]">
                           <FiDollarSign className="absolute -bottom-4 -right-4 text-white/5 group-hover/box:scale-110 transition-transform" size={80} />
                           <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1">{t("myInstallment")}</p>
-                          <p className="text-2xl font-black tracking-tighter">RS {formatMoney(c.monthlyAmount)}</p>
+                          <p className="text-2xl font-black tracking-tighter">
+                            RS {formatMoney(c.monthlyAmount + (c.isFeeMandatory ? (c.organizerFee || 0) : 0))}
+                          </p>
+                          {c.isFeeMandatory && c.organizerFee > 0 && (
+                            <p className="text-[9px] text-primary-400 font-bold uppercase mt-1">Inc. {formatMoney(c.organizerFee)} Fee</p>
+                          )}
                         </div>
                         <div className={`p-6 rounded-[2rem] shadow-xl relative overflow-hidden group/box min-w-[200px] border-2 ${myPayment?.status === "verified" ? "bg-green-500/5 border-green-500/20 text-green-600" :
-                            myPayment?.status === "pending" ? "bg-amber-500/10 border-amber-500/20 text-amber-600" :
-                              "bg-red-500/5 border-red-500/20 text-red-500"
+                          myPayment?.status === "pending" ? "bg-amber-500/10 border-amber-500/20 text-amber-600" :
+                            "bg-red-500/5 border-red-500/20 text-red-500"
                           }`}>
                           <FiCheckCircle className="absolute -bottom-4 -right-4 opacity-10 group-hover/box:rotate-12 transition-transform" size={80} />
                           <p className="text-[9px] font-black uppercase tracking-widest mb-1">Month {c.currentMonth} Status</p>
@@ -210,8 +217,8 @@ export default function MyCommittie2() {
                                 <TableCell className="font-black text-slate-900 dark:text-white">RS {formatMoney(c.monthlyAmount)}</TableCell>
                                 <TableCell>
                                   <span className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest ${p.status === "verified" ? "bg-green-100 text-green-600" :
-                                      p.status === "pending" ? "bg-amber-100 text-amber-600" :
-                                        "bg-red-100 text-red-600"
+                                    p.status === "pending" ? "bg-amber-100 text-amber-600" :
+                                      "bg-red-100 text-red-600"
                                     }`}>
                                     {p.status}
                                   </span>
@@ -225,7 +232,9 @@ export default function MyCommittie2() {
                             {!myPayment && (
                               <TableRow className="animate-pulse">
                                 <TableCell className="font-black text-primary-600 uppercase text-[10px]">Month {c.currentMonth}</TableCell>
-                                <TableCell className="font-black text-slate-900 dark:text-white">RS {formatMoney(c.monthlyAmount)}</TableCell>
+                                <TableCell className="font-black text-slate-900 dark:text-white">
+                                  RS {formatMoney(c.monthlyAmount + (c.isFeeMandatory ? (c.organizerFee || 0) : 0))}
+                                </TableCell>
                                 <TableCell>
                                   <span className="px-3 py-1 bg-red-100 text-red-600 rounded-lg text-[9px] font-black uppercase tracking-widest animate-bounce">REQUIRED</span>
                                 </TableCell>
@@ -234,6 +243,49 @@ export default function MyCommittie2() {
                             )}
                           </Table>
                         </div>
+
+                        {/* Payout Evidence Card - If Payout Received */}
+                        {c.payouts?.filter(p => p.member === userId || p.member?._id === userId).map((payout, idx) => (
+                          <Card key={idx} className="bg-green-600 text-white border-none shadow-premium relative overflow-hidden">
+                            <FiCheckCircle className="absolute -top-10 -right-10 text-white/10" size={180} />
+                            <div className="relative z-10 space-y-6">
+                              <div className="flex items-center gap-3">
+                                <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+                                  <FiDollarSign size={24} />
+                                </div>
+                                <div>
+                                  <p className="text-[10px] font-black uppercase tracking-widest text-green-200">Payout Received</p>
+                                  <h4 className="text-2xl font-black uppercase tracking-tight">Month {payout.month} Complete</h4>
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-2 gap-4">
+                                <div className="p-4 bg-black/20 rounded-xl space-y-1">
+                                  <p className="text-[9px] font-black text-green-200 uppercase tracking-widest">Transaction ID</p>
+                                  <p className="text-sm font-mono break-all">{payout.transactionId || "N/A"}</p>
+                                </div>
+                                <div className="p-4 bg-black/20 rounded-xl space-y-1">
+                                  <p className="text-[9px] font-black text-green-200 uppercase tracking-widest">Amount Received</p>
+                                  <p className="text-xl font-black">RS {formatMoney(payout.amount)}</p>
+                                </div>
+                              </div>
+
+                              {payout.screenshot && (
+                                <div className="pt-4 border-t border-white/10">
+                                  <p className="text-[9px] font-black text-green-200 uppercase tracking-widest mb-2">Proof of Transfer</p>
+                                  <a href={payout.screenshot} target="_blank" rel="noopener noreferrer">
+                                    <div className="h-32 w-full rounded-xl bg-black/20 overflow-hidden relative group cursor-pointer">
+                                      <img src={payout.screenshot} alt="Payout Proof" className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
+                                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40">
+                                        <FiUploadCloud size={24} />
+                                      </div>
+                                    </div>
+                                  </a>
+                                </div>
+                              )}
+                            </div>
+                          </Card>
+                        ))}
                       </div>
 
                       {/* Action Sidebar */}
@@ -241,6 +293,27 @@ export default function MyCommittie2() {
                         <div className="p-8 bg-slate-100 dark:bg-slate-800 rounded-[2.5rem] space-y-6 relative overflow-hidden border border-slate-200 dark:border-slate-700">
                           <FiInfo className="absolute -bottom-8 -right-8 text-black/5" size={160} />
                           <div className="relative z-10 space-y-6">
+                            {/* Assigned Position Display */}
+                            {(() => {
+                              const myResult = c.result?.find(r => r.member === userId || r.member?._id === userId);
+                              return myResult ? (
+                                <div className="p-6 bg-white dark:bg-slate-900 rounded-[2rem] shadow-xl text-center space-y-2 border border-slate-100 dark:border-slate-700">
+                                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Assigned Position</p>
+                                  <h3 className="text-5xl font-black text-primary-600">#{myResult.position}</h3>
+                                  <div className="space-y-1">
+                                    <p className="text-[10px] font-medium text-slate-500 italic">Expected Payout:</p>
+                                    <p className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">
+                                      {moment(c.startDate).add(myResult.position - 1, 'months').format("MMMM YYYY")}
+                                    </p>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="p-6 bg-slate-200 dark:bg-slate-900/50 rounded-[2rem] text-center">
+                                  <p className="text-[10px] font-black uppercase text-slate-400">Position Pending</p>
+                                </div>
+                              );
+                            })()}
+
                             <div className="space-y-2">
                               <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{t("quickTransfer") || "Deposit Destination"}</p>
                               <div className="space-y-1">
@@ -252,8 +325,8 @@ export default function MyCommittie2() {
 
                             <Button
                               className={`w-full py-5 font-black uppercase tracking-[0.2em] text-xs shadow-2xl ${myPayment?.status === "pending" || myPayment?.status === "verified"
-                                  ? "bg-slate-200 text-slate-400 cursor-not-allowed border-none"
-                                  : "bg-primary-600 hover:bg-primary-700 shadow-primary-500/20"
+                                ? "bg-slate-200 text-slate-400 cursor-not-allowed border-none"
+                                : "bg-primary-600 hover:bg-primary-700 shadow-primary-500/20"
                                 }`}
                               disabled={myPayment?.status === "verified" || myPayment?.status === "pending"}
                               onClick={() => handlePayNow(c)}
@@ -261,6 +334,18 @@ export default function MyCommittie2() {
                               {myPayment?.status === "pending" ? "Sync Under Review" :
                                 myPayment?.status === "verified" ? "Authenticated" : "Initiate Transfer"}
                               <FiArrowRight className="ml-2" />
+                            </Button>
+
+                            <Button
+                              className="w-full py-5 font-black uppercase tracking-[0.2em] text-xs shadow-xl bg-slate-900 text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600 shadow-slate-500/20"
+                              onClick={() => setChatConfig({
+                                committeeId: c._id,
+                                otherUserId: c.createdBy, // The Admin
+                                otherUserName: "Committee Admin",
+                                otherUserModel: "Admin"
+                              })}
+                            >
+                              <FiMessageSquare className="mr-2" /> Chat with Admin
                             </Button>
 
                             {isMyTurn && (
@@ -334,8 +419,20 @@ export default function MyCommittie2() {
                   </div>
                   <div className="space-y-4">
                     <div className="space-y-1">
-                      <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Installment</p>
+                      <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Base Installment</p>
                       <p className="text-2xl font-black tracking-tighter">RS {formatMoney(selectedCommittee?.monthlyAmount)}</p>
+                    </div>
+                    {selectedCommittee?.isFeeMandatory && selectedCommittee?.organizerFee > 0 && (
+                      <div className="space-y-1">
+                        <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Organizer Fee</p>
+                        <p className="text-xl font-black text-primary-500">RS {formatMoney(selectedCommittee?.organizerFee)}</p>
+                      </div>
+                    )}
+                    <div className="pt-4 border-t border-white/10">
+                      <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Total Required</p>
+                      <p className="text-3xl font-black text-white">
+                        RS {formatMoney(selectedCommittee?.monthlyAmount + (selectedCommittee?.isFeeMandatory ? (selectedCommittee?.organizerFee || 0) : 0))}
+                      </p>
                     </div>
                     <div className="space-y-1">
                       <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Cycle</p>
@@ -406,6 +503,19 @@ export default function MyCommittie2() {
             </form>
           </Card>
         </div>
+      )}
+
+      {/* Chat Window */}
+      {chatConfig && (
+        <ChatBox
+          committeeId={chatConfig.committeeId}
+          currentUserId={userId}
+          currentUserModel="Member"
+          otherUserId={chatConfig.otherUserId}
+          otherUserName={chatConfig.otherUserName}
+          otherUserModel={chatConfig.otherUserModel}
+          onClose={() => setChatConfig(null)}
+        />
       )}
     </div>
   );

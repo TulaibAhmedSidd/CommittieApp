@@ -14,6 +14,8 @@ const CommitteeSchema = new mongoose.Schema({
     bankName: String,
     iban: String,
   },
+  organizerFee: { type: Number, default: 0 },
+  isFeeMandatory: { type: Boolean, default: false },
   currentMonth: { type: Number, default: 1 },
   members: [
     {
@@ -21,19 +23,19 @@ const CommitteeSchema = new mongoose.Schema({
       ref: "Member",
     },
   ],
-  status: { 
-    type: String, 
-    enum: ["open", "full", "ongoing", "finished"], 
-    default: "open" 
+  status: {
+    type: String,
+    enum: ["open", "full", "ongoing", "finished"],
+    default: "open"
   },
   payments: [
     {
       month: Number,
       member: { type: mongoose.Schema.Types.ObjectId, ref: "Member" },
-      status: { 
-        type: String, 
-        enum: ["unpaid", "pending", "verified", "rejected"], 
-        default: "unpaid" 
+      status: {
+        type: String,
+        enum: ["unpaid", "pending", "verified", "rejected"],
+        default: "unpaid"
       },
       submission: {
         screenshot: String,
@@ -49,7 +51,9 @@ const CommitteeSchema = new mongoose.Schema({
       month: Number,
       member: { type: mongoose.Schema.Types.ObjectId, ref: "Member" },
       amount: Number,
-      paidAt: Date,
+      transactionId: String,
+      screenshot: String,
+      paidAt: { type: Date, default: Date.now },
     },
   ],
   result: [

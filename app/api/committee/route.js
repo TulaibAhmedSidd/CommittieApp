@@ -5,11 +5,21 @@ import Member from "../models/Member";
 import { createLog } from "../../utils/logger";
 
 // Handle GET requests (fetch all committees)
-export async function GET() {
+export async function GET(req) {
   await connectToDatabase();
+  const { searchParams } = new URL(req.url);
+  const adminId = searchParams.get("adminId");
 
   try {
-    const committees = await Committee.find()
+    let query = {};
+    if (adminId) {
+      const requester = await Admin.findById(adminId);
+      // If requester is NOT super admin, filter by createdBy
+      if (!requester?.isSuperAdmin) {
+        query = { createdBy: adminId };
+      }
+    }
+    const committees = await Committee.find(query)
       .populate({
         path: "members",
         model: "Member",
@@ -58,6 +68,8 @@ export async function POST(req) {
       startDate,
       createdBy,
       bankDetails,
+      organizerFee,
+      isFeeMandatory,
     } = body;
 
     // Validate required fields
@@ -100,6 +112,8 @@ export async function POST(req) {
       totalAmount,
       createdBy,
       bankDetails,
+      organizerFee: organizerFee || 0,
+      isFeeMandatory: isFeeMandatory || false,
     });
 
     await newCommittee.save();
@@ -151,7 +165,9 @@ export async function PATCH(req) {
     }
 
     const committee = await Committee.findById(id);
-    if (!committee || committee.createdBy?.toString() !== createdBy.toString()) {
+    const requester = await Admin.findById(createdBy);
+
+    if (!committee || (committee.createdBy?.toString() !== createdBy.toString() && !requester?.isSuperAdmin)) {
       return new Response(
         JSON.stringify({
           error: "You are not authorized to update this committee.",
@@ -229,7 +245,9 @@ export async function DELETE(req) {
     }
 
     const committee = await Committee.findById(id);
-    if (!committee || committee.createdBy?.toString() !== createdBy.toString()) {
+    const requester = await Admin.findById(createdBy);
+
+    if (!committee || (committee.createdBy?.toString() !== createdBy.toString() && !requester?.isSuperAdmin)) {
       return new Response(
         JSON.stringify({ error: "You are not authorized to delete this committee." }),
         { status: 403 }

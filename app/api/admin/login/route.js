@@ -18,6 +18,13 @@ export async function POST(req) {
       );
     }
 
+    if (admin.status === "pending") {
+      return new Response(
+        JSON.stringify({ message: "Registration pending Super Admin approval." }),
+        { status: 403 }
+      );
+    }
+
     const isMatch = await bcrypt.compare(password, admin.password);
     if (!isMatch) {
       return new Response(
@@ -28,7 +35,7 @@ export async function POST(req) {
 
     // Create JWT token for admin
     const token = jwt.sign(
-      { userId: admin._id, email: admin.email, isAdmin: true },
+      { userId: admin._id, email: admin.email, isAdmin: true, isSuperAdmin: admin.isSuperAdmin },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );

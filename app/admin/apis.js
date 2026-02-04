@@ -1,6 +1,7 @@
-export async function fetchCommittees() {
+export async function fetchCommittees(adminId) {
   try {
-    const res = await fetch("/api/committee");
+    const url = adminId ? `/api/committee?adminId=${adminId}` : "/api/committee";
+    const res = await fetch(url);
     if (!res.ok) throw new Error("Failed to fetch committees");
     return res.json();
 
@@ -102,4 +103,15 @@ export async function deleteMember(memberId) {
   });
   if (!res.ok) throw new Error("Failed to delete member");
   return res.json();
+}
+
+export async function manageComRequest(committeeId, memberId, action, adminId) {
+  const res = await fetch(`/api/committee/${committeeId}/request`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ memberId, action, adminId })
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Failed to update request");
+  return data;
 }

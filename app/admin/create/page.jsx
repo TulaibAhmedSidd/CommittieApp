@@ -44,7 +44,9 @@ export default function CreateCommittee() {
             accountTitle: "",
             bankName: "",
             iban: ""
-        }
+        },
+        organizerFee: 0,
+        isFeeMandatory: false,
     });
 
     const steps = [t("coreParameters"), t("financialSchema"), t("bankInformation"), t("finalCalibration")];
@@ -267,12 +269,41 @@ export default function CreateCommittee() {
                                 </div>
                             </div>
 
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <Input
+                                    label="Organizer Fee (Optional)"
+                                    name="organizerFee"
+                                    type="number"
+                                    placeholder="500"
+                                    value={formData.organizerFee}
+                                    onChange={handleChange}
+                                    className="h-14 text-lg font-black tracking-tight"
+                                />
+                                <div className="flex items-center gap-4 px-6 h-14 bg-slate-50 dark:bg-slate-950/50 rounded-2xl border border-slate-200 dark:border-slate-800">
+                                    <input
+                                        type="checkbox"
+                                        id="isFeeMandatory"
+                                        checked={formData.isFeeMandatory}
+                                        onChange={(e) => setFormData({ ...formData, isFeeMandatory: e.target.checked })}
+                                        className="w-5 h-5 accent-primary-600"
+                                    />
+                                    <label htmlFor="isFeeMandatory" className="text-xs font-black uppercase text-slate-500 tracking-widest cursor-pointer">
+                                        Mandatory for all members?
+                                    </label>
+                                </div>
+                            </div>
+
                             <div className="p-8 rounded-[2rem] bg-slate-900 dark:bg-white text-white dark:text-slate-900 flex justify-between items-center shadow-2xl relative overflow-hidden group">
                                 <div className="relative z-10">
                                     <p className="text-[10px] uppercase font-black tracking-[0.3em] opacity-60 mb-2 underline decoration-primary-500 decoration-2">{t("totalPoolValuation") || "Total Pool Valuation"}</p>
                                     <h4 className="text-4xl md:text-5xl font-black tracking-tighter uppercase">
                                         PKR {formData.totalAmount ? parseInt(formData.totalAmount).toLocaleString() : "0"}
                                     </h4>
+                                    {formData.organizerFee > 0 && (
+                                        <p className="text-[10px] font-bold mt-2 text-primary-400">
+                                            + {formData.organizerFee} PKR Organizer Fee {formData.isFeeMandatory ? "(Mandatory)" : "(Optional)"}
+                                        </p>
+                                    )}
                                 </div>
                                 <FiDollarSign size={80} className="absolute -bottom-4 -right-4 opacity-10 group-hover:scale-110 transition-transform duration-700" />
                             </div>

@@ -14,7 +14,8 @@ import {
     FiChevronRight,
     FiUserPlus,
     FiShield,
-    FiActivity
+    FiActivity,
+    FiMessageSquare
 } from "react-icons/fi";
 
 import { useLanguage } from "../Components/LanguageContext";
@@ -25,6 +26,7 @@ export default function AdminLayout({ children }) {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
     const [isAdmin, setIsAdmin] = useState(false);
+    const [isSuperAdmin, setIsSuperAdmin] = useState(false);
     const pathname = usePathname();
     const router = useRouter();
 
@@ -34,7 +36,9 @@ export default function AdminLayout({ children }) {
 
         const adminData = localStorage.getItem("admin_detail");
         if (adminData) {
-            setIsAdmin(checkerForAddAdmin(JSON.parse(adminData)));
+            const parsed = JSON.parse(adminData);
+            setIsAdmin(checkerForAddAdmin(parsed));
+            setIsSuperAdmin(parsed.isSuperAdmin || false);
         }
 
         return () => window.removeEventListener("scroll", handleScroll);
@@ -47,7 +51,12 @@ export default function AdminLayout({ children }) {
         { name: t("memberRegistry"), icon: FiUsers, path: "/admin/members" },
         { name: t("committeeHub"), icon: FiGrid, path: "/admin/assign-member" },
         { name: t("broadcaster"), icon: FiBell, path: "/admin/announcement" },
-        ...(isAdmin ? [{ name: "Audit Logs", icon: FiActivity, path: "/admin/logs" }] : []),
+        { name: "Inbox", icon: FiMessageSquare, path: "/admin/inbox" },
+        ...(isSuperAdmin ? [
+            { name: "Approvals", icon: FiUserPlus, path: "/admin/approvals" },
+            { name: "Audit Logs", icon: FiActivity, path: "/admin/logs" }
+        ] : []),
+        ...(isAdmin && !isSuperAdmin ? [{ name: "Audit Logs", icon: FiActivity, path: "/admin/logs" }] : []),
     ];
 
     const handleLogout = () => {

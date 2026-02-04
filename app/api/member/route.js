@@ -161,7 +161,7 @@ export async function POST(req) {
       name,
       email,
       password: hashedPassword,
-      status: "approved", // Set to approved by default for manual creation
+      status: "approved", // Members are approved by default as per latest requirement
       resetToken: "",
       createdBy,
       createdByAdminName

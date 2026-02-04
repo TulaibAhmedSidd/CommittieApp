@@ -54,6 +54,13 @@ export async function POST(req) {
       );
     }
 
+    if (member.status === "pending") {
+      return new Response(
+        JSON.stringify({ message: "Account pending approval from Super Admin." }),
+        { status: 403 }
+      );
+    }
+
     // Compare the password with the stored hash
     const isMatch = await bcrypt.compare(password, member.password);
     if (!isMatch) {

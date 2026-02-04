@@ -22,7 +22,7 @@ export const metadata: Metadata = {
 };
 
 import { LanguageProvider } from "./Components/LanguageContext";
-import Navbar from "./Components/Navbar";
+import ClientNavbar from "./Components/ClientNavbar";
 
 export default function RootLayout({
   children,
@@ -43,7 +43,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-slate-50 dark:bg-slate-950 transition-colors duration-500`}
       >
         <LanguageProvider>
-          <Navbar />
+          <ClientNavbar />
           <ToastContainer autoClose={3000} />
           <div className=" min-h-screen">
             {children}

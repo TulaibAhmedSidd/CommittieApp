@@ -89,12 +89,20 @@ export default function Navbar() {
                             </button>
                         </div>
                     ) : (
-                        <Link
-                            href="/login"
-                            className="px-8 py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:scale-105 transition-all rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-xl"
-                        >
-                            {t("loginAsMember")}
-                        </Link>
+                        <div className="flex items-center gap-3">
+                            <Link
+                                href="/login"
+                                className="px-6 py-3 text-slate-600 dark:text-slate-300 hover:text-primary-600 font-black uppercase text-[10px] tracking-widest transition-all"
+                            >
+                                Login
+                            </Link>
+                            <Link
+                                href="/register"
+                                className="px-8 py-3 bg-primary-600 text-white hover:scale-105 transition-all rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-primary-500/20"
+                            >
+                                Join Now
+                            </Link>
+                        </div>
                     )}
                 </div>
 
@@ -140,13 +148,22 @@ export default function Navbar() {
                             <FiLogOut size={18} /> {t("logout")}
                         </button>
                     ) : (
-                        <Link
-                            href="/login"
-                            onClick={() => setIsMenuOpen(false)}
-                            className="flex items-center gap-4 p-4 bg-slate-900 dark:bg-white rounded-2xl font-black uppercase text-xs tracking-widest text-white dark:text-slate-900 justify-center"
-                        >
-                            {t("loginAsMember")}
-                        </Link>
+                        <div className="flex flex-col gap-2">
+                            <Link
+                                href="/login"
+                                onClick={() => setIsMenuOpen(false)}
+                                className="flex items-center gap-4 p-4 bg-slate-100 dark:bg-slate-800 rounded-2xl font-black uppercase text-xs tracking-widest text-slate-600 dark:text-white justify-center"
+                            >
+                                Login
+                            </Link>
+                            <Link
+                                href="/register"
+                                onClick={() => setIsMenuOpen(false)}
+                                className="flex items-center gap-4 p-4 bg-primary-600 rounded-2xl font-black uppercase text-xs tracking-widest text-white justify-center shadow-lg shadow-primary-500/20"
+                            >
+                                Join Now
+                            </Link>
+                        </div>
                     )}
                 </div>
             </div>

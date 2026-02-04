@@ -6,11 +6,12 @@ import { createLog } from "../../../utils/logger";
 export async function PATCH(req) {
   try {
     await connectToDatabase();
-    const { memberIds, committeeId, adminId } = await req.json();
+    const body = await req.json();
+    const { memberIds, committeeId, adminId } = body;
 
     if (!Array.isArray(memberIds) || memberIds.length === 0) {
       // Fallback for single memberId if still used
-      const { memberId } = await req.json().catch(() => ({}));
+      const { memberId } = body;
       if (memberId) return handleSingleAssignment(memberId, committeeId, adminId);
       return new Response(JSON.stringify({ error: "No members provided" }), { status: 400 });
     }
