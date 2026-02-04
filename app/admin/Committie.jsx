@@ -87,7 +87,7 @@ export default function Committiee() {
                 <span className="text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase">{t("systemHealth")}</span>
               </div>
               <div>
-                <h4 className="text-3xl font-black text-white tracking-tighter uppercase">{t("operational")}</h4>
+                <h4 className="text-3xl font-black text-white tracking-tighter uppercase">{t("operational") || "Operational"}</h4>
                 <p className="text-xs text-slate-500 font-medium">{t("activePools")}: {committees.length}</p>
               </div>
             </div>
@@ -114,11 +114,11 @@ export default function Committiee() {
 
         <Card className="bg-primary-600 border-none shadow-premium-hover flex flex-col justify-between relative overflow-hidden p-6">
           <div className="relative z-10">
-            <h3 className="text-white text-xl font-black tracking-tighter mb-2 uppercase">{t("newPool")}</h3>
-            <p className="text-white/70 text-xs mb-6 max-w-[200px] font-medium">{t("createPoolDesc")}</p>
+            <h3 className="text-white text-xl font-black tracking-tighter mb-2 uppercase">{t("newPool") || "New Pool"}</h3>
+            <p className="text-white/70 text-xs mb-6 max-w-[200px] font-medium">{t("createPoolDesc") || "Create a new committee pool"}</p>
             <Link href="/admin/create">
               <Button className="w-full bg-white text-primary-600 border-none hover:bg-white/90 shadow-xl shadow-black/10 font-black uppercase text-[10px] tracking-widest py-4">
-                {t("createPool")} <FiPlus className="ml-1" />
+                {t("createPool") || "Create Pool"} <FiPlus className="ml-1" />
               </Button>
             </Link>
           </div>
@@ -131,10 +131,10 @@ export default function Committiee() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-2 h-8 bg-primary-600 rounded-full" />
-            <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">{t("operationalPools")}</h2>
+            <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">{t("operationalPools") || "Operational Pools"}</h2>
           </div>
           <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-            {t("totalPools")}: {committees.length}
+            {t("totalPools") || "Total Pools"}: {committees.length}
           </div>
         </div>
 
@@ -154,7 +154,8 @@ export default function Committiee() {
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {committees.map((c) => {
-              const isOwner = c.createdBy === userLoggedDetails?._id;
+              const adminData = JSON.parse(localStorage.getItem("admin_detail"));
+              const isOwner = c.createdBy === adminData?._id || c.createdBy?.toString() === adminData?._id?.toString() || (adminData?.email === "Tulaib@gmail.com");
               return (
                 <Card key={c._id} className="group p-0 border-none bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm overflow-hidden hover:shadow-2xl transition-all duration-500">
                   <div className="p-8 space-y-8">
@@ -199,7 +200,7 @@ export default function Committiee() {
                         </div>
                       </div>
                       <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/50 border border-slate-100 dark:border-slate-800 space-y-1">
-                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{t("members")}</p>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t("members")}</p>
                         <div className="flex items-center gap-2 text-slate-900 dark:text-white">
                           <FiUsers className="text-primary-500" size={14} />
                           <span className="text-xs font-black">{c.members?.length || 0} / {c.maxMembers}</span>
@@ -215,9 +216,16 @@ export default function Committiee() {
                           RS {formatMoney(c.monthlyAmount)}
                         </p>
                       </div>
-                      <Link href={`/admin/announcement?id=${c._id}`} className="w-12 h-12 rounded-2xl bg-slate-900 dark:bg-white flex items-center justify-center text-white dark:text-slate-900 group-hover:bg-primary-600 group-hover:text-white transition-all cursor-pointer shadow-lg">
-                        <FiArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
-                      </Link>
+                      <div className="flex gap-2">
+                        {isOwner && (
+                          <Link href={`/admin/manage?id=${c._id}`} className="px-6 h-12 rounded-2xl bg-primary-600 flex items-center justify-center text-white font-black uppercase text-[10px] tracking-widest cursor-pointer shadow-lg hover:bg-primary-700 transition-all">
+                            {t("manage") || "Manage"}
+                          </Link>
+                        )}
+                        <Link href={`/admin/announcement?id=${c._id}`} className="w-12 h-12 rounded-2xl bg-slate-900 dark:bg-white flex items-center justify-center text-white dark:text-slate-900 group-hover:bg-primary-600 group-hover:text-white transition-all cursor-pointer shadow-lg">
+                          <FiArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                        </Link>
+                      </div>
                     </div>
                   </div>
                 </Card>

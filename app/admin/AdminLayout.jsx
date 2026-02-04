@@ -13,7 +13,8 @@ import {
     FiMenu,
     FiChevronRight,
     FiUserPlus,
-    FiShield
+    FiShield,
+    FiActivity
 } from "react-icons/fi";
 
 import { useLanguage } from "../Components/LanguageContext";
@@ -46,6 +47,7 @@ export default function AdminLayout({ children }) {
         { name: t("memberRegistry"), icon: FiUsers, path: "/admin/members" },
         { name: t("committeeHub"), icon: FiGrid, path: "/admin/assign-member" },
         { name: t("broadcaster"), icon: FiBell, path: "/admin/announcement" },
+        ...(isAdmin ? [{ name: "Audit Logs", icon: FiActivity, path: "/admin/logs" }] : []),
     ];
 
     const handleLogout = () => {

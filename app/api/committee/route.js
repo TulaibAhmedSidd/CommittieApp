@@ -2,6 +2,7 @@ import connectToDatabase from "../../utils/db";
 import Committee from "../models/Committee";
 import Admin from "../models/Admin";
 import Member from "../models/Member";
+import { createLog } from "../../utils/logger";
 
 // Handle GET requests (fetch all committees)
 export async function GET() {
@@ -10,24 +11,24 @@ export async function GET() {
   try {
     const committees = await Committee.find()
       .populate({
-        path: "members", // Field name in your Committee schema
-        model: "Member", // Model name that is referenced
-      })
-      .populate({
-        path: "result.member", // Populating the `member` inside the `result` array
+        path: "members",
         model: "Member",
       })
       .populate({
-        path: "pendingMembers", // Populating the `member` inside the `result` array
+        path: "result.member",
         model: "Member",
       })
       .populate({
-        path: "createdBy", // Populate admin details
+        path: "pendingMembers",
+        model: "Member",
+      })
+      .populate({
+        path: "createdBy",
         model: "Admin",
       });
     const committeesWithDetails = committees.map((committee) => ({
-      ...committee.toObject(), // Convert Mongoose document to plain JS object
-      createdBy: committee.createdBy?._id, // Include `createdBy` ID directly
+      ...committee.toObject(),
+      createdBy: committee.createdBy?._id,
       adminDetails: {
         name: committee.createdBy?.name || "",
         email: committee.createdBy?.email || "",
@@ -36,52 +37,11 @@ export async function GET() {
     return new Response(JSON.stringify(committeesWithDetails), { status: 200 });
   } catch (err) {
     return new Response(
-      JSON.stringify({ error: "Failed to fetch committees =>", err }),
+      JSON.stringify({ error: "Failed to fetch committees", details: err.message }),
       { status: 500 }
     );
   }
 }
-
-// Handle POST requests (create a new committee)
-// export async function POST(req) {
-//     await connectToDatabase();
-
-//     try {
-//         const body = await req.json();
-//         const { name, description, maxMembers } = body;
-
-//         const newCommittee = new Committee({ name, description, maxMembers });
-//         await newCommittee.save();
-
-//         return new Response(JSON.stringify(newCommittee), { status: 201 });
-//     } catch (err) {
-//         return new Response(JSON.stringify({ error: 'Failed to create committee'+ err  }), { status: 400 });
-//     }
-// }
-
-// // Handle PATCH requests (update a committee)
-// export async function PATCH(req) {
-//     await connectToDatabase();
-
-//     try {
-//         const body = await req.json();
-//         const { id, name, description, maxMembers, status } = body;
-
-//         const updatedCommittee = await Committee.findByIdAndUpdate(
-//             id,
-//             { name, description, maxMembers, status },
-//             { new: true }
-//         );
-
-//         if (!updatedCommittee) {
-//             return new Response(JSON.stringify({ error: 'Committee not found' }), { status: 404 });
-//         }
-
-//         return new Response(JSON.stringify(updatedCommittee), { status: 200 });
-//     } catch (err) {
-//         return new Response(JSON.stringify({ error: 'Failed to update committee'+ err  }), { status: 400 });
-//     }
-// }
 
 // Handle POST requests (create a new committee)
 export async function POST(req) {
@@ -97,6 +57,7 @@ export async function POST(req) {
       monthDuration,
       startDate,
       createdBy,
+      bankDetails,
     } = body;
 
     // Validate required fields
@@ -106,7 +67,8 @@ export async function POST(req) {
       !maxMembers ||
       !monthlyAmount ||
       !monthDuration ||
-      !startDate
+      !startDate ||
+      !createdBy
     ) {
       return new Response(
         JSON.stringify({ error: "All fields are required." }),
@@ -134,12 +96,21 @@ export async function POST(req) {
       monthlyAmount,
       monthDuration,
       startDate,
-      endDate: calculatedEndDate.toISOString().split("T")[0], // Format date
+      endDate: calculatedEndDate.toISOString().split("T")[0],
       totalAmount,
       createdBy,
+      bankDetails,
     });
 
     await newCommittee.save();
+
+    await createLog({
+      action: "CREATE_COMMITTEE",
+      performedBy: createdBy,
+      onModel: "Admin",
+      targetId: newCommittee._id,
+      details: { name: newCommittee.name },
+    });
 
     return new Response(JSON.stringify(newCommittee), { status: 201 });
   } catch (err) {
@@ -168,17 +139,10 @@ export async function PATCH(req) {
       monthlyAmount,
       monthDuration,
       startDate,
-      createdBy
+      createdBy,
+      bankDetails,
     } = body;
 
-    // Validate required fields
-    // if (!id) {
-    //   return new Response(
-    //     JSON.stringify({ error: "Committee ID is required." }),
-    //     { status: 400 }
-    //   );
-    // }
-    // Validate required fields
     if (!id || !createdBy) {
       return new Response(
         JSON.stringify({ error: "Committee ID and createdBy are required." }),
@@ -186,7 +150,6 @@ export async function PATCH(req) {
       );
     }
 
-    // Ensure only the creator can update the committee
     const committee = await Committee.findById(id);
     if (!committee || committee.createdBy?.toString() !== createdBy.toString()) {
       return new Response(
@@ -205,9 +168,9 @@ export async function PATCH(req) {
       monthlyAmount,
       monthDuration,
       startDate,
+      bankDetails,
     };
 
-    // Calculate endDate and totalAmount if required fields are present
     if (startDate && monthDuration) {
       const calculatedEndDate = new Date(startDate);
       calculatedEndDate.setMonth(calculatedEndDate.getMonth() + monthDuration);
@@ -229,6 +192,14 @@ export async function PATCH(req) {
         status: 404,
       });
     }
+
+    await createLog({
+      action: "UPDATE_COMMITTEE",
+      performedBy: createdBy,
+      onModel: "Admin",
+      targetId: updatedCommittee._id,
+      details: { status: updatedCommittee.status },
+    });
 
     return new Response(JSON.stringify(updatedCommittee), { status: 200 });
   } catch (err) {
@@ -257,7 +228,6 @@ export async function DELETE(req) {
       );
     }
 
-    // Ensure only the creator can delete the committee
     const committee = await Committee.findById(id);
     if (!committee || committee.createdBy?.toString() !== createdBy.toString()) {
       return new Response(
@@ -274,13 +244,21 @@ export async function DELETE(req) {
       });
     }
 
+    await createLog({
+      action: "DELETE_COMMITTEE",
+      performedBy: createdBy,
+      onModel: "Admin",
+      targetId: id,
+      details: { name: committee.name },
+    });
+
     return new Response(
       JSON.stringify({ message: "Committee deleted successfully" }),
       { status: 200 }
     );
   } catch (err) {
     return new Response(
-      JSON.stringify({ error: "Failed to delete committee" + err }),
+      JSON.stringify({ error: "Failed to delete committee", details: err.message }),
       { status: 400 }
     );
   }

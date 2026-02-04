@@ -9,13 +9,49 @@ const CommitteeSchema = new mongoose.Schema({
   totalAmount: Number,
   startDate: Date, // Added start date field
   endDate: Date, // Added end date field
+  bankDetails: {
+    accountTitle: String,
+    bankName: String,
+    iban: String,
+  },
+  currentMonth: { type: Number, default: 1 },
   members: [
     {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Member",
     },
   ],
-  status: { type: String, enum: ["open", "full"], default: "open" },
+  status: { 
+    type: String, 
+    enum: ["open", "full", "ongoing", "finished"], 
+    default: "open" 
+  },
+  payments: [
+    {
+      month: Number,
+      member: { type: mongoose.Schema.Types.ObjectId, ref: "Member" },
+      status: { 
+        type: String, 
+        enum: ["unpaid", "pending", "verified", "rejected"], 
+        default: "unpaid" 
+      },
+      submission: {
+        screenshot: String,
+        description: String,
+        transactionId: String,
+        submittedAt: Date,
+      },
+      updatedAt: { type: Date, default: Date.now },
+    },
+  ],
+  payouts: [
+    {
+      month: Number,
+      member: { type: mongoose.Schema.Types.ObjectId, ref: "Member" },
+      amount: Number,
+      paidAt: Date,
+    },
+  ],
   result: [
     {
       member: { type: mongoose.Schema.Types.ObjectId, ref: "Member" },
@@ -32,7 +68,7 @@ const CommitteeSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Admin",
     required: true,
-  }, // New field
+  },
   announcementDate: {
     type: Date,
     required: false,

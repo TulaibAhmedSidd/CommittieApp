@@ -4,7 +4,11 @@ import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { fetchMembers, fetchCommittees } from "../apis";
 import { useRouter } from "next/navigation";
-import { FiUserPlus, FiLayers, FiUsers, FiCheckCircle, FiChevronRight, FiChevronLeft, FiAlertCircle, FiShield, FiLink } from "react-icons/fi";
+import {
+    FiUserPlus, FiLayers, FiUsers, FiCheckCircle,
+    FiChevronRight, FiChevronLeft, FiAlertCircle,
+    FiShield, FiLink, FiPlusSquare, FiMinusSquare, FiTrash2
+} from "react-icons/fi";
 import { formatMoney } from "@/app/utils/commonFunc";
 
 import Button from "../../Components/Theme/Button";
@@ -20,7 +24,7 @@ const AssignMembers = () => {
     const [step, setStep] = useState(0);
     const [members, setMembers] = useState([]);
     const [committees, setCommittees] = useState([]);
-    const [selectedMember, setSelectedMember] = useState("");
+    const [selectedMembers, setSelectedMembers] = useState([]);
     const [selectedCommittee, setSelectedCommittee] = useState("");
     const [loading, setLoading] = useState(false);
     const [fetching, setFetching] = useState(true);
@@ -59,18 +63,20 @@ const AssignMembers = () => {
         try {
             const res = await fetch("/api/member/assign-members", {
                 method: "PATCH",
-                body: JSON.stringify({ memberId: selectedMember, committeeId: selectedCommittee }),
+                body: JSON.stringify({
+                    memberIds: selectedMembers,
+                    committeeId: selectedCommittee,
+                    adminId: userLoggedDetails?._id
+                }),
                 headers: { "Content-Type": "application/json" },
             });
 
-            if (!res.ok) {
-                const errorData = await res.json();
-                throw new Error(errorData.error || "Failed to assign member");
-            }
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || "Failed to assign members");
 
-            toast.success(t("assignSuccess"));
+            toast.success(data.message);
             setStep(0);
-            setSelectedMember("");
+            setSelectedMembers([]);
             setSelectedCommittee("");
             loadData();
         } catch (err) {
@@ -81,17 +87,36 @@ const AssignMembers = () => {
     };
 
     const currentCommittee = committees.find(c => c._id === selectedCommittee);
-    const currentMember = members.find(m => m._id === selectedMember);
 
-    const isCommitteeAllowed = (c) => c.createdBy?.toString() === userLoggedDetails?._id?.toString();
+    const isCommitteeAllowed = (c) => c.createdBy?.toString() === userLoggedDetails?._id?.toString() || c.createdBy === userLoggedDetails?._id;
+
     const isMemberAllowed = (m) => {
         if (!currentCommittee) return false;
         const isAlreadyIn = currentCommittee.members?.some(am => (am._id || am)?.toString() === m._id?.toString()) ||
             currentCommittee.pendingMembers?.some(pm => (pm._id || pm)?.toString() === m._id?.toString());
 
-        const createdByMe = m.createdBy?.toString() === userLoggedDetails?._id?.toString();
+        const createdByMe = m.createdBy?.toString() === userLoggedDetails?._id?.toString() || m.createdBy === userLoggedDetails?._id;
         const isApproved = m.status === "approved" || !m.status;
-        return !isAlreadyIn && createdByMe && isApproved;
+        return !isAlreadyIn && createdByMe && isApproved && !selectedMembers.includes(m._id);
+    };
+
+    const toggleMember = (id) => {
+        if (selectedMembers.includes(id)) {
+            setSelectedMembers(selectedMembers.filter(mid => mid !== id));
+        } else {
+            if (currentCommittee && (currentCommittee.members.length + currentCommittee.pendingMembers.length + selectedMembers.length >= currentCommittee.maxMembers)) {
+                toast.warning(`Committee limit reached (${currentCommittee.maxMembers})`);
+                return;
+            }
+            setSelectedMembers([...selectedMembers, id]);
+        }
+    };
+
+    const handleSelectAll = () => {
+        const allowed = members.filter(isMemberAllowed);
+        const limitStr = currentCommittee.maxMembers - (currentCommittee.members.length + currentCommittee.pendingMembers.length + selectedMembers.length);
+        const toAdd = allowed.slice(0, Math.max(0, limitStr));
+        setSelectedMembers([...selectedMembers, ...toAdd.map(m => m._id)]);
     };
 
     const handleNext = () => setStep(s => Math.min(s + 1, steps.length - 1));
@@ -104,8 +129,8 @@ const AssignMembers = () => {
                     <div className="flex items-center gap-2 text-primary-600 font-black tracking-[0.2em] text-[10px] uppercase">
                         <FiLink className="animate-pulse" /> {t("committeeHub")}
                     </div>
-                    <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">{t("bindParticipant")}</h1>
-                    <p className="text-slate-500 font-medium italic">{t("assignmentInstructions")}</p>
+                    <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">Bulk Assignment</h1>
+                    <p className="text-slate-500 font-medium italic">Bind multiple participants to your committee at once.</p>
                 </div>
             </div>
 
@@ -130,13 +155,8 @@ const AssignMembers = () => {
                             <div className="grid grid-cols-1 gap-4">
                                 {fetching ? (
                                     <div className="text-center py-24 animate-pulse">
-                                        <div className="flex flex-col items-center gap-6">
-                                            <div className="relative">
-                                                <div className="w-12 h-12 border-4 border-primary-500/10 rounded-full" />
-                                                <div className="absolute top-0 w-12 h-12 border-4 border-primary-600 border-t-transparent rounded-full animate-spin" />
-                                            </div>
-                                            <p className="text-slate-400 font-black tracking-widest uppercase text-[9px]">{t("loading")}</p>
-                                        </div>
+                                        <div className="w-12 h-12 border-4 border-primary-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                                        <p className="text-slate-400 font-black tracking-widest uppercase text-[9px]">{t("loading")}</p>
                                     </div>
                                 ) : committees.filter(isCommitteeAllowed).length === 0 ? (
                                     <div className="text-center py-20 bg-slate-50 dark:bg-slate-950/50 rounded-3xl border border-dashed border-slate-300 dark:border-slate-800">
@@ -148,12 +168,15 @@ const AssignMembers = () => {
                                         {committees.filter(isCommitteeAllowed).map((c) => (
                                             <div
                                                 key={c._id}
-                                                onClick={() => setSelectedCommittee(c._id)}
+                                                onClick={() => {
+                                                    setSelectedCommittee(c._id);
+                                                    setSelectedMembers([]); // Reset on change
+                                                }}
                                                 className={`
                                                     p-6 rounded-3xl border-2 transition-all duration-300 cursor-pointer flex justify-between items-center group
                                                     ${selectedCommittee === c._id
                                                         ? "border-primary-500 bg-primary-500/5 shadow-xl shadow-primary-500/10 scale-[1.01]"
-                                                        : "border-slate-100 dark:border-slate-800 hover:border-primary-200 dark:hover:border-primary-800 hover:translate-x-1"}
+                                                        : "border-slate-100 dark:border-slate-800 hover:border-primary-200 dark:hover:border-primary-800 h-16 md:h-20"}
                                                 `}
                                             >
                                                 <div className="flex items-center gap-6">
@@ -166,7 +189,7 @@ const AssignMembers = () => {
                                                     <div>
                                                         <p className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tighter">{c.name}</p>
                                                         <p className="text-xs text-slate-500 font-medium">
-                                                            {c.members?.length || 0} / {c.maxMembers} {t("capacity")} • PKR {formatMoney(c.monthlyAmount)} / {t("cycle")}
+                                                            {c.members?.length + c.pendingMembers?.length} / {c.maxMembers} 已派定 • PKR {formatMoney(c.monthlyAmount)}
                                                         </p>
                                                     </div>
                                                 </div>
@@ -183,48 +206,62 @@ const AssignMembers = () => {
 
                     {step === 1 && (
                         <div className="space-y-8 animate-in slide-in-from-right-8 duration-500">
-                            <div className="flex items-center gap-4 p-5 bg-amber-500/5 rounded-2xl border border-amber-500/10">
-                                <div className="p-3 bg-amber-500 text-white rounded-xl shadow-lg shadow-amber-500/20">
-                                    <FiUsers size={22} />
-                                </div>
-                                <div>
-                                    <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest">{t("step")} 2</p>
-                                    <p className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tighter italic">{t("selectMember")}</p>
-                                </div>
-                            </div>
-
-                            <div className="space-y-4">
-                                <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">{t("selectionProxy")}</label>
-                                <select
-                                    value={selectedMember}
-                                    onChange={(e) => setSelectedMember(e.target.value)}
-                                    className="w-full h-16 bg-slate-800 dark:bg-slate-100 border border-slate-200 dark:border-slate-800 rounded-2xl px-6 text-lg font-black tracking-tight focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all appearance-none cursor-pointer text-white dark:text-slate-900"
-                                >
-                                    <option value="">{t("selectMember")}...</option>
-                                    {members.filter(isMemberAllowed).map((m) => (
-                                        <option key={m._id} value={m._id}>{m.name} [{m.email}]</option>
-                                    ))}
-                                </select>
-                                <p className="text-[10px] text-slate-400 font-medium mt-2 px-1 flex items-center gap-2">
-                                    <FiShield size={12} className="text-primary-500" /> {t("verifiedOnly")}
-                                </p>
-                            </div>
-
-                            {currentMember && (
-                                <div className="p-8 bg-slate-50 dark:bg-slate-950/50 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 flex items-center gap-6 shadow-inner animate-in zoom-in duration-500">
-                                    <div className="w-20 h-20 bg-primary-600 text-white rounded-[1.5rem] flex items-center justify-center text-3xl font-black shadow-xl shadow-primary-500/20 rotate-3">
-                                        {currentMember.name.substring(0, 2).toUpperCase()}
+                            <div className="flex items-center justify-between gap-4 p-5 bg-amber-500/5 rounded-2xl border border-amber-500/10">
+                                <div className="flex items-center gap-4">
+                                    <div className="p-3 bg-amber-500 text-white rounded-xl shadow-lg shadow-amber-500/20">
+                                        <FiUsers size={22} />
                                     </div>
-                                    <div className="space-y-1">
-                                        <h4 className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">{currentMember.name}</h4>
-                                        <p className="text-slate-500 font-black uppercase text-[10px] tracking-widest opacity-60">{currentMember.email}</p>
-                                        <div className="pt-2 flex items-center gap-2">
-                                            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                                            <span className="text-[10px] font-black text-green-600 uppercase tracking-widest bg-green-500/10 px-2 py-0.5 rounded-full">{t("approved")}</span>
+                                    <div>
+                                        <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest">{t("step")} 2</p>
+                                        <p className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tighter italic">Bulk Selection</p>
+                                    </div>
+                                </div>
+                                <div className="flex gap-2">
+                                    <Button variant="ghost" onClick={handleSelectAll} className="text-xs font-black uppercase tracking-widest text-amber-600 bg-amber-500/10 border-none">Select All</Button>
+                                    <Button variant="ghost" onClick={() => setSelectedMembers([])} className="text-xs font-black uppercase tracking-widest text-red-500 bg-red-500/10 border-none">Clear</Button>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {members.filter(m => m.createdBy === userLoggedDetails?._id || m.createdBy?.toString() === userLoggedDetails?._id?.toString()).map((m) => {
+                                    const allowed = isMemberAllowed(m) || selectedMembers.includes(m._id);
+                                    const isSelected = selectedMembers.includes(m._id);
+                                    const inCommittee = currentCommittee?.members?.some(am => (am._id || am) === m._id) || currentCommittee?.pendingMembers?.some(pm => (pm._id || pm) === m._id);
+
+                                    return (
+                                        <div
+                                            key={m._id}
+                                            onClick={() => allowed && !inCommittee && toggleMember(m._id)}
+                                            className={`
+                                                relative p-5 rounded-2xl border-2 transition-all flex items-center gap-4 cursor-pointer
+                                                ${inCommittee ? "opacity-30 grayscale cursor-not-allowed border-slate-100" :
+                                                    isSelected ? "border-primary-500 bg-primary-50 shadow-md" : "border-slate-100 hover:border-slate-300"}
+                                            `}
+                                        >
+                                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-black ${isSelected ? "bg-primary-600 text-white" : "bg-slate-100 text-slate-400"}`}>
+                                                {m.name.substring(0, 2).toUpperCase()}
+                                            </div>
+                                            <div className="flex-1 overflow-hidden">
+                                                <p className="text-sm font-black text-slate-900 dark:text-white uppercase truncate">{m.name}</p>
+                                                <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">{m.email}</p>
+                                            </div>
+                                            {isSelected && <FiCheckCircle className="text-primary-600" />}
+                                            {inCommittee && <FiAlertCircle className="text-slate-400" title="Already in committee" />}
                                         </div>
-                                    </div>
+                                    );
+                                })}
+                            </div>
+
+                            <div className="p-6 bg-slate-900 rounded-3xl text-white flex justify-between items-center shadow-2xl">
+                                <div>
+                                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1">Queue Status</p>
+                                    <p className="text-2xl font-black">{selectedMembers.length} Participants <span className="text-primary-500 text-lg">Selected</span></p>
                                 </div>
-                            )}
+                                <div className="text-right">
+                                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1">Max Capacity</p>
+                                    <p className="text-2xl font-black text-slate-400 italic">/ {currentCommittee?.maxMembers}</p>
+                                </div>
+                            </div>
                         </div>
                     )}
 
@@ -236,44 +273,47 @@ const AssignMembers = () => {
                                 </div>
                                 <div>
                                     <p className="text-[10px] font-black text-green-600 uppercase tracking-widest">{t("step")} 3</p>
-                                    <p className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tighter italic">{t("finalBinding")}</p>
+                                    <p className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tighter italic">Batch Sync Review</p>
                                 </div>
                             </div>
 
-                            <Card className="border-none bg-slate-900 dark:bg-white p-10 rounded-[3rem] shadow-2xl relative overflow-hidden group">
-                                <div className="relative z-10 flex flex-col items-center text-center space-y-8">
-                                    <div className="flex items-center gap-12 md:gap-20">
-                                        <div className="space-y-3">
-                                            <div className="w-24 h-24 bg-white/10 dark:bg-slate-50 rounded-3xl flex items-center justify-center text-white dark:text-slate-900 shadow-2xl scale-110">
-                                                <FiUsers size={40} />
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <Card className="bg-slate-900 text-white border-none p-8 rounded-[2.5rem] shadow-xl relative overflow-hidden">
+                                    <FiLayers className="absolute -bottom-4 -right-4 text-white/5" size={140} />
+                                    <div className="relative z-10 space-y-4">
+                                        <p className="text-[9px] font-black uppercase tracking-widest text-primary-500">Target Committee</p>
+                                        <h3 className="text-3xl font-black tracking-tighter uppercase">{currentCommittee?.name}</h3>
+                                        <div className="grid grid-cols-2 gap-4 pt-4">
+                                            <div className="space-y-1">
+                                                <p className="text-[9px] font-bold text-slate-500 uppercase">Monthly Pulse</p>
+                                                <p className="text-sm font-black">PKR {formatMoney(currentCommittee?.monthlyAmount)}</p>
                                             </div>
-                                            <p className="text-[10px] font-black text-white dark:text-slate-400 uppercase tracking-widest">{currentMember?.name}</p>
-                                        </div>
-
-                                        <div className="flex flex-col items-center gap-2">
-                                            <div className="h-0.5 w-16 md:w-32 bg-primary-500/40" />
-                                            <FiChevronRight className="text-primary-500" />
-                                        </div>
-
-                                        <div className="space-y-3">
-                                            <div className="w-24 h-24 bg-white/10 dark:bg-slate-50 rounded-3xl flex items-center justify-center text-white dark:text-slate-900 shadow-2xl scale-110">
-                                                <FiLayers size={40} />
+                                            <div className="space-y-1">
+                                                <p className="text-[9px] font-bold text-slate-500 uppercase">Total Members</p>
+                                                <p className="text-sm font-black">{currentCommittee?.members.length + currentCommittee?.pendingMembers.length + selectedMembers.length} / {currentCommittee?.maxMembers}</p>
                                             </div>
-                                            <p className="text-[10px] font-black text-white dark:text-slate-400 uppercase tracking-widest">{currentCommittee?.name}</p>
                                         </div>
                                     </div>
+                                </Card>
 
-                                    <div className="space-y-3 max-w-sm">
-                                        <p className="text-white/60 dark:text-slate-500 text-sm font-medium">
-                                            Adding <span className="text-white dark:text-slate-900 font-black">{currentMember?.name}</span> to the <span className="text-white dark:text-slate-900 font-black">{currentCommittee?.name}</span>.
-                                        </p>
-                                        <div className="px-6 py-3 bg-primary-600 rounded-2xl inline-block shadow-lg">
-                                            <p className="text-xs font-black text-white tracking-widest uppercase italic">Monthly Amount: PKR {formatMoney(currentCommittee?.monthlyAmount)}</p>
-                                        </div>
-                                    </div>
+                                <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">Selected Batch ({selectedMembers.length})</p>
+                                    {selectedMembers.map(mid => {
+                                        const m = members.find(mem => mem._id === mid);
+                                        return (
+                                            <div key={mid} className="p-4 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl flex items-center justify-between shadow-sm">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-8 h-8 rounded-lg bg-primary-100 text-primary-600 flex items-center justify-center font-black text-[10px]">
+                                                        {m?.name.substring(0, 2).toUpperCase()}
+                                                    </div>
+                                                    <p className="text-xs font-black uppercase text-slate-700 dark:text-slate-200">{m?.name}</p>
+                                                </div>
+                                                <button onClick={() => toggleMember(mid)} className="text-red-400 hover:text-red-600 p-2"><FiTrash2 size={14} /></button>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
-                                <FiLink size={180} className="absolute -bottom-10 -right-10 text-white/5 dark:text-slate-900/5 group-hover:scale-110 transition-transform duration-1000" />
-                            </Card>
+                            </div>
                         </div>
                     )}
                 </div>
@@ -284,12 +324,12 @@ const AssignMembers = () => {
                     </button>
 
                     {step < steps.length - 1 ? (
-                        <Button onClick={handleNext} disabled={(step === 0 && !selectedCommittee) || (step === 1 && !selectedMember)} className="px-10 py-4 font-black uppercase text-xs tracking-[0.2em] shadow-xl shadow-primary-500/20">
+                        <Button onClick={handleNext} disabled={(step === 0 && !selectedCommittee) || (step === 1 && selectedMembers.length === 0)} className="px-10 py-4 font-black uppercase text-xs tracking-[0.2em] shadow-xl shadow-primary-500/20">
                             {t("next")} <FiChevronRight className="ml-2" />
                         </Button>
                     ) : (
                         <Button onClick={handleAssign} loading={loading} className="px-10 py-4 font-black uppercase text-xs tracking-[0.2em] bg-green-600 hover:bg-green-700 shadow-xl shadow-green-500/20 border-none">
-                            {t("establishLink")} <FiLink className="ml-2" />
+                            Establish Links <FiLink className="ml-2" />
                         </Button>
                     )}
                 </div>

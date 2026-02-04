@@ -13,7 +13,8 @@ import {
     FiUser,
     FiActivity,
     FiShield,
-    FiChevronRight
+    FiChevronRight,
+    FiCreditCard
 } from "react-icons/fi";
 
 export default function UserLayout({ children }) {
@@ -38,6 +39,7 @@ export default function UserLayout({ children }) {
         { name: "My Activity", icon: FiHome, path: "/userDash" },
         { name: "Committee Participation", icon: FiGrid, path: "/userDash?view=my" },
         { name: "Inbox / Alerts", icon: FiBell, path: "/userDash#notifications" },
+        { name: "Receiving Vault", icon: FiCreditCard, path: "/userDash/profile" },
     ];
 
     const handleLogout = () => {

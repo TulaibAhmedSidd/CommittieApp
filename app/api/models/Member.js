@@ -32,6 +32,11 @@ const MemberSchema = new mongoose.Schema({
   ],
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "Admin", required: true }, // New field
   createdByAdminName: { type: String, required: false }, // Store creator's name for easy lookup
+  payoutDetails: {
+    accountTitle: String,
+    bankName: String,
+    iban: String,
+  },
 });
 
 const Member = mongoose.models.Member || mongoose.model("Member", MemberSchema);

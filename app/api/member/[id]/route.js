@@ -91,3 +91,23 @@ export async function DELETE(req, { params }) {
     return new Response("Failed to delete member: " + err, { status: 500 });
   }
 }
+
+export async function PATCH(req, { params }) {
+  const { id } = params;
+  const { payoutDetails } = await req.json();
+
+  try {
+    await connectToDatabase();
+    const member = await Member.findById(id);
+    if (!member) return new Response("Member not found", { status: 404 });
+
+    if (payoutDetails) {
+      member.payoutDetails = payoutDetails;
+    }
+
+    await member.save();
+    return new Response(JSON.stringify(member), { status: 200 });
+  } catch (err) {
+    return new Response("Failed to update member: " + err, { status: 500 });
+  }
+}
