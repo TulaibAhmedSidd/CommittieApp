@@ -170,7 +170,7 @@ export default function AdminLayout({ children }) {
 
             {/* Main Content */}
             <main className="flex-1 min-h-screen relative overflow-x-hidden pt-4 md:pt-0">
-                <div className="p-4 md:p-8 lg:p-12 max-w-[1400px] mx-auto animate-in fade-in slide-in-from-bottom-6 duration-1000">
+                <div className=" max-w-[1400px] mx-auto animate-in fade-in slide-in-from-bottom-6 duration-1000">
                     {children}
                 </div>
             </main>

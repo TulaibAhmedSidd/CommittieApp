@@ -81,7 +81,7 @@ export default function AnnouncementPage() {
     }
 
     return (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 py-8">
             <div className="flex flex-col gap-2">
                 <h1 className="text-3xl font-bold text-slate-900 dark:text-white flex items-center gap-3 tracking-tighter uppercase">
                     <FiBell className="text-primary-600" /> {t("announcements")}

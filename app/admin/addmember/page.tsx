@@ -167,7 +167,7 @@ export default function AddMembers() {
     : members.filter(m => m.createdBy === userLoggedDetails?._id);
 
   return (
-    <div className="space-y-12">
+    <div className="space-y-12 py-8">
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-slate-200 dark:border-slate-800">
         <div className="space-y-1">

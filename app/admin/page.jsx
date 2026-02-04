@@ -26,7 +26,7 @@ export default function AmdinPanel() {
     ];
 
     return (
-        <div className="space-y-10">
+        <div className="space-y-10 p-8">
             {/* Header Section */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-4 border-b border-slate-200 dark:border-slate-800">
                 <div className="space-y-2">

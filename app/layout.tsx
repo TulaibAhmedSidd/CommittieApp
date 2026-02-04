@@ -45,7 +45,7 @@ export default function RootLayout({
         <LanguageProvider>
           <Navbar />
           <ToastContainer autoClose={3000} />
-          <div className="pt-24 min-h-screen">
+          <div className=" min-h-screen">
             {children}
           </div>
         </LanguageProvider>

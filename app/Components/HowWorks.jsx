@@ -82,7 +82,7 @@ const HowItWorks = () => {
                         </div>
                         <Button
                             onClick={() => router.push("/admin/login")}
-                            className="bg-white text-indigo-600 hover:bg-slate-100 px-12 py-5 text-sm font-black uppercase tracking-widest shadow-xl"
+                            className=" text-slate-900 hover:bg-slate-900 px-12 py-5 text-sm font-black uppercase tracking-widest shadow-xl"
                         >
                             {t("getStarted")}
                         </Button>
@@ -100,9 +100,8 @@ const HowItWorks = () => {
                         </p>
                     </div>
                     <Button
-                        variant="secondary"
                         onClick={() => router.push("/userDash")}
-                        className="bg-primary-600 hover:bg-primary-700 text-white px-10 py-4 font-black uppercase tracking-widest text-xs shadow-lg shadow-primary-500/20"
+                        className="bg-primary-600 hover:bg-primary-700 text-white px-10 py-4 font-black uppercase tracking-widest text-sm shadow-lg shadow-primary-500/20"
                     >
                         {t("loginAsMember")}
                     </Button>
