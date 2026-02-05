@@ -118,7 +118,7 @@ export default function Home() {
                 Start Saving <FiArrowRight className="ml-2" />
               </Button>
             </Link>
-            <Link href="/admin/register">
+            <Link href="/register">
               <button className="h-14 px-10 text-sm font-black uppercase tracking-widest bg-white dark:bg-slate-900 border-2 border-primary-600 text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/10 transition-all rounded-xl shadow-lg">
                 Become an Organizer
               </button>

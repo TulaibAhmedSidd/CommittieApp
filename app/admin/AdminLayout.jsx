@@ -15,8 +15,15 @@ import {
     FiUserPlus,
     FiShield,
     FiActivity,
-    FiMessageSquare
+    FiMessageSquare,
+    FiZap,
+    FiWind,
+    FiLink,
+    FiUser,
+    FiX,
+    FiLayers
 } from "react-icons/fi";
+
 
 import { useLanguage } from "../Components/LanguageContext";
 import { checkerForAddAdmin } from "../utils/commonFunc";
@@ -37,7 +44,8 @@ export default function AdminLayout({ children }) {
         const adminData = localStorage.getItem("admin_detail");
         if (adminData) {
             const parsed = JSON.parse(adminData);
-            setIsAdmin(checkerForAddAdmin(parsed));
+            // Every logged in admin/organizer should see basic admin features
+            setIsAdmin(parsed.isAdmin || parsed.isSuperAdmin || false);
             setIsSuperAdmin(parsed.isSuperAdmin || false);
         }
 
@@ -46,14 +54,22 @@ export default function AdminLayout({ children }) {
 
     const navItems = [
         { name: t("dashboard"), icon: FiHome, path: "/admin" },
-        ...(isAdmin ? [{ name: t("createOrganizer"), icon: FiUserPlus, path: "/admin/add-admin" }] : []),
-        { name: t("createPool"), icon: FiPlusSquare, path: "/admin/create" },
-        { name: t("memberRegistry"), icon: FiUsers, path: "/admin/members" },
-        { name: t("committeeHub"), icon: FiGrid, path: "/admin/assign-member" },
-        { name: t("broadcaster"), icon: FiBell, path: "/admin/announcement" },
-        { name: "Inbox", icon: FiMessageSquare, path: "/admin/inbox" },
         ...(isSuperAdmin ? [
-            { name: "Approvals", icon: FiUserPlus, path: "/admin/approvals" },
+            { name: "Create Organizer", icon: FiUserPlus, path: "/admin/add-admin" },
+        ] : []),
+        { name: "Referral Center", icon: FiZap, path: "/admin/referrals" },
+        { name: "Identity Verification", icon: FiShield, path: "/admin/verify-identities" },
+        { name: "Manage Committees", icon: FiLayers, path: "/admin/manage-committie" },
+        { name: "Create Committee", icon: FiPlusSquare, path: "/admin/create" },
+        { name: "Member Pool", icon: FiGrid, path: "/admin/all-members" },
+        { name: "Member in Committee", icon: FiUsers, path: "/admin/members" },
+        { name: "Bulk Assignment", icon: FiLink, path: "/admin/assign-member" },
+        { name: "Notifications", icon: FiBell, path: "/admin/notifications" },
+        { name: t("broadcaster"), icon: FiActivity, path: "/admin/announcement" },
+        { name: "My Profile", icon: FiUser, path: "/admin/profile" },
+        ...(isSuperAdmin ? [
+            { name: "Approvals", icon: FiShield, path: "/admin/approvals" },
+            { name: "System Control", icon: FiWind, path: "/admin/theme" },
             { name: "Audit Logs", icon: FiActivity, path: "/admin/logs" }
         ] : []),
         ...(isAdmin && !isSuperAdmin ? [{ name: "Audit Logs", icon: FiActivity, path: "/admin/logs" }] : []),

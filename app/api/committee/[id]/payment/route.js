@@ -1,8 +1,8 @@
-import connectToDatabase from "../../../../utils/db";
-import Committee from "../../../models/Committee";
-import Notification from "../../../models/Notification";
-import Asset from "../../../models/Asset";
-import { createLog } from "../../../../utils/logger";
+import connectToDatabase from "@/app/utils/db";
+import Committee from "@/app/api/models/Committee";
+import Notification from "@/app/api/models/Notification";
+import Asset from "@/app/api/models/Asset";
+import { createLog } from "@/app/utils/logger";
 
 export async function POST(req, { params }) {
     await connectToDatabase();
@@ -60,23 +60,47 @@ export async function POST(req, { params }) {
 export async function PATCH(req, { params }) {
     await connectToDatabase();
     const { id } = await params;
-    const { paymentId, status, adminId } = await req.json();
+    const { paymentId, status, adminId, memberId } = await req.json();
 
     try {
         const committee = await Committee.findById(id);
-        const payment = committee.payments.id(paymentId);
+        if (!committee) return new Response(JSON.stringify({ error: "Committee not found" }), { status: 404 });
 
-        if (!payment) return new Response(JSON.stringify({ error: "Payment not found" }), { status: 404 });
+        let payment = paymentId && paymentId !== "FORCE_RECONCILE" ? committee.payments.id(paymentId) : null;
 
-        payment.status = status;
-        payment.updatedAt = new Date();
+        if (!payment) {
+            // Check if a payment for this month already exists even if paymentId wasn't provided
+            payment = committee.payments.find(p => p.month === committee.currentMonth && p.member.toString() === memberId);
+
+            if (!payment && status === "verified") {
+                // Force reconcile: Create a dummy payment object with manual verification
+                const forcePayment = {
+                    month: committee.currentMonth,
+                    member: memberId,
+                    status: "verified",
+                    updatedAt: new Date(),
+                    submission: {
+                        description: "Force verified by Admin (Manual Reconciliation)",
+                        submittedAt: new Date()
+                    }
+                };
+                committee.payments.push(forcePayment);
+                payment = committee.payments[committee.payments.length - 1];
+            }
+        } else {
+            payment.status = status;
+            payment.updatedAt = new Date();
+        }
+
+        if (!payment) return new Response(JSON.stringify({ error: "Payment reconciliation failed" }), { status: 400 });
+
         await committee.save();
 
         // Notify member
         const notification = new Notification({
             userId: payment.member,
-            message: `Your payment for ${committee.name} (Month ${payment.month}) has been ${status}.`,
-            details: `Status Update: ${status}`,
+            message: `Your payment status for ${committee.name} (Month ${payment.month}) has been set to ${status}.`,
+            details: `Admin Action: ${status === 'verified' ? 'Force Verified / Approved' : status}`,
         });
         await notification.save();
 
@@ -85,7 +109,7 @@ export async function PATCH(req, { params }) {
             performedBy: adminId,
             onModel: "Admin",
             targetId: payment.member,
-            details: { committeeId: id, status, month: payment.month }
+            details: { committeeId: id, status, month: payment.month, isForced: !paymentId || paymentId === "FORCE_RECONCILE" }
         });
 
         return new Response(JSON.stringify({ message: "Status updated" }), { status: 200 });

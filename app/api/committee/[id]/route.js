@@ -1,5 +1,5 @@
-import connectToDatabase from "../../../utils/db";
-import Committee from "../../models/Committee";
+import connectToDatabase from "@/app/utils/db";
+import Committee from "@/app/api/models/Committee";
 
 export async function GET(req, { params }) {
   await connectToDatabase();

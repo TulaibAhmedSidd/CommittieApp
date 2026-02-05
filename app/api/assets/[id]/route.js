@@ -1,5 +1,5 @@
-import connectToDatabase from "../../../utils/db";
-import Asset from "../../models/Asset";
+import connectToDatabase from "@/app/utils/db";
+import Asset from "@/app/api/models/Asset";
 
 export async function GET(req, { params }) {
     await connectToDatabase();

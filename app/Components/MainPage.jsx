@@ -11,6 +11,10 @@ import Button from "./Theme/Button";
 import Card from "./Theme/Card";
 import Notifications from "./NotifList";
 import MyCommittie2 from "./MyCommittie2";
+import AssociationRequests from "./AssociationRequests";
+import AssociationTransparency from "./AssociationTransparency";
+import DiscoveryPanel from "./DiscoveryPanel";
+import ChatBox from "./ChatBox";
 import { useLanguage } from "./LanguageContext";
 
 export const dynamic = "force-dynamic";
@@ -23,6 +27,7 @@ export default function MainPage() {
   const [loading, setLoading] = useState(true);
   const [userLoggedData, setUserLoggedData] = useState(null);
   const [view, setView] = useState(searchParams.get("view") || "all");
+  const [activeChat, setActiveChat] = useState(null);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -68,8 +73,27 @@ export default function MainPage() {
     }
   };
 
-  const registerForCommittee = async (committeeId) => {
+  const registerForCommittee = async (committee) => {
+    const committeeId = committee._id;
+    const adminId = committee.createdBy?._id || committee.createdBy;
+
     try {
+      // Check if already associated
+      const isAssociated = userLoggedData?.organizers?.some(org => (org._id || org) === adminId);
+      const isPending = userLoggedData?.pendingOrganizers?.includes(adminId);
+
+      if (!isAssociated && !isPending) {
+        // Trigger auto-association
+        await fetch("/api/member/pool", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            memberId: userLoggedData?._id,
+            adminId: adminId
+          }),
+        });
+      }
+
       const res = await fetch("/api/member/assign-members", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -111,6 +135,26 @@ export default function MainPage() {
             <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">{t("discoverPools")}</h1>
             <p className="text-slate-500 font-medium italic">{t("browseParticipateDesc")}</p>
           </div>
+
+          <DiscoveryPanel onChatClick={(other) => setActiveChat(other)} />
+
+          {userLoggedData?.createdByAdminName && (
+            <div className="flex items-center gap-4 p-6 bg-primary-500/5 rounded-[2rem] border border-primary-500/10">
+              <div className="w-12 h-12 rounded-2xl bg-primary-600 flex items-center justify-center text-white shadow-lg shadow-primary-500/20">
+                <FiLayers size={22} />
+              </div>
+              <div>
+                <p className="text-[10px] font-black text-primary-600 uppercase tracking-widest">Primary Organizer</p>
+                <p className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tighter italic">
+                  Associated with: <span className="text-primary-600">{userLoggedData.createdByAdminName}</span>
+                </p>
+              </div>
+            </div>
+          )}
+
+          <AssociationTransparency member={userLoggedData} />
+
+          <AssociationRequests memberId={userLoggedData?._id} />
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {committees.length === 0 ? (
@@ -158,7 +202,7 @@ export default function MainPage() {
                         <Button
                           className="w-full py-4 font-black uppercase tracking-widest text-[10px] shadow-lg shadow-primary-500/20"
                           disabled={spotsLeft <= 0}
-                          onClick={() => registerForCommittee(c._id)}
+                          onClick={() => registerForCommittee(c)}
                         >
                           {t("applyToJoin")}
                         </Button>
@@ -167,9 +211,12 @@ export default function MainPage() {
                           <FiClock className="animate-pulse" /> {t("applicationPending")}
                         </div>
                       ) : (
-                        <div className="w-full flex items-center justify-center gap-3 py-4 bg-green-500/10 text-green-600 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-green-500/20 shadow-sm">
-                          <FiCheckCircle /> {t("memberStatusLocked")}
-                        </div>
+                        <button
+                          onClick={() => router.push(`/userDash/committee/${c._id}`)}
+                          className="w-full flex items-center justify-center gap-3 py-4 bg-green-500/10 text-green-600 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-green-500/20 shadow-sm hover:bg-green-500/20 transition-all"
+                        >
+                          <FiCheckCircle /> {t("memberStatusLocked")} — View Details
+                        </button>
                       )}
                     </div>
                   </div>
@@ -181,6 +228,7 @@ export default function MainPage() {
       ) : (
         <MyCommittie2 />
       )}
+
 
       {/* Announcements */}
       <div id="notifications" className="pt-12 scroll-mt-24 space-y-8">
@@ -229,6 +277,19 @@ export default function MainPage() {
           ))}
         </div>
       </div>
-    </div>
+
+      {
+        activeChat && (
+          <ChatBox
+            currentUserId={userLoggedData?._id}
+            currentUserModel="Member"
+            otherUserId={activeChat._id}
+            otherUserName={activeChat.name}
+            otherUserModel={activeChat.isAdmin ? "Admin" : "Member"}
+            onClose={() => setActiveChat(null)}
+          />
+        )
+      }
+    </div >
   );
 }

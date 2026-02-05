@@ -2,14 +2,19 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { FiUser, FiMail, FiLock, FiPhone, FiArrowRight, FiCheckCircle, FiShield, FiBriefcase } from "react-icons/fi";
+import { useSearchParams } from "next/navigation";
+import { FiUser, FiMail, FiLock, FiPhone, FiArrowRight, FiCheckCircle, FiShield, FiBriefcase, FiLink } from "react-icons/fi";
 import Button from "../Components/Theme/Button";
 import Input from "../Components/Theme/Input";
 import Card from "../Components/Theme/Card";
 import { toast } from "react-toastify";
 
-export default function RegisterPage() {
-    const [role, setRole] = useState("member"); // "member" or "organizer"
+import { Suspense } from "react";
+
+function RegisterContent() {
+    const searchParams = useSearchParams();
+    const referralCode = searchParams.get("ref");
+    const [role, setRole] = useState("member");
     const [formData, setFormData] = useState({
         name: "",
         email: "",
@@ -31,7 +36,7 @@ export default function RegisterPage() {
             const res = await fetch(endpoint, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(formData),
+                body: JSON.stringify({ ...formData, referralCode }),
             });
 
             const data = await res.json();
@@ -159,5 +164,13 @@ export default function RegisterPage() {
                 </Card>
             </div>
         </div>
+    );
+}
+
+export default function RegisterPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center uppercase font-black tracking-widest text-xs opacity-50">Initializing Core...</div>}>
+            <RegisterContent />
+        </Suspense>
     );
 }

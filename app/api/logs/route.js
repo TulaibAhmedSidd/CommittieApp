@@ -1,6 +1,6 @@
-import connectToDatabase from "../../utils/db";
-import Log from "../models/Log";
-import Admin from "../models/Admin";
+import connectToDatabase from "@/app/utils/db";
+import Log from "@/app/api/models/Log";
+import Admin from "@/app/api/models/Admin";
 
 export async function GET(req) {
     await connectToDatabase();

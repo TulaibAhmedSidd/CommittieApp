@@ -95,9 +95,11 @@ const AssignMembers = () => {
         const isAlreadyIn = currentCommittee.members?.some(am => (am._id || am)?.toString() === m._id?.toString()) ||
             currentCommittee.pendingMembers?.some(pm => (pm._id || pm)?.toString() === m._id?.toString());
 
-        const createdByMe = m.createdBy?.toString() === userLoggedDetails?._id?.toString() || m.createdBy === userLoggedDetails?._id;
+        const isLinkedToMe = m.organizers?.some(oid => (oid._id || oid)?.toString() === userLoggedDetails?._id?.toString()) ||
+            m.createdBy?.toString() === userLoggedDetails?._id?.toString();
+
         const isApproved = m.status === "approved" || !m.status;
-        return !isAlreadyIn && createdByMe && isApproved && !selectedMembers.includes(m._id);
+        return !isAlreadyIn && isLinkedToMe && isApproved && !selectedMembers.includes(m._id);
     };
 
     const toggleMember = (id) => {
@@ -223,7 +225,11 @@ const AssignMembers = () => {
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {members.filter(m => m.createdBy === userLoggedDetails?._id || m.createdBy?.toString() === userLoggedDetails?._id?.toString()).map((m) => {
+                                {members.filter(m => {
+                                    const isLinked = m.organizers?.some(oid => (oid._id || oid)?.toString() === userLoggedDetails?._id?.toString()) ||
+                                        m.createdBy?.toString() === userLoggedDetails?._id?.toString();
+                                    return isLinked;
+                                }).map((m) => {
                                     const allowed = isMemberAllowed(m) || selectedMembers.includes(m._id);
                                     const isSelected = selectedMembers.includes(m._id);
                                     const inCommittee = currentCommittee?.members?.some(am => (am._id || am) === m._id) || currentCommittee?.pendingMembers?.some(pm => (pm._id || pm) === m._id);
@@ -290,7 +296,11 @@ const AssignMembers = () => {
                                             </div>
                                             <div className="space-y-1">
                                                 <p className="text-[9px] font-bold text-slate-500 uppercase">Total Members</p>
-                                                <p className="text-sm font-black">{currentCommittee?.members.length + currentCommittee?.pendingMembers.length + selectedMembers.length} / {currentCommittee?.maxMembers}</p>
+                                                <p className="text-sm font-black">
+                                                    {(Array.isArray(currentCommittee?.members) ? currentCommittee.members.length : 0) +
+                                                        (Array.isArray(currentCommittee?.pendingMembers) ? currentCommittee.pendingMembers.length : 0) +
+                                                        selectedMembers.length} / {currentCommittee?.maxMembers || 0}
+                                                </p>
                                             </div>
                                         </div>
                                     </div>

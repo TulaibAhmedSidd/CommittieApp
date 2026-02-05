@@ -39,7 +39,7 @@ export default function UserLayout({ children }) {
         { name: "My Activity", icon: FiHome, path: "/userDash" },
         { name: "Committee Participation", icon: FiGrid, path: "/userDash?view=my" },
         { name: "Inbox / Alerts", icon: FiBell, path: "/userDash#notifications" },
-        { name: "Receiving Vault", icon: FiCreditCard, path: "/userDash/profile" },
+        { name: "My Profile", icon: FiUser, path: "/userDash/profile" },
     ];
 
     const handleLogout = () => {
@@ -94,7 +94,7 @@ export default function UserLayout({ children }) {
                     </div>
 
                     {/* Member Profile Card */}
-                    <div className="px-6 mb-4">
+                    <Link href="/userDash/profile" className="px-6 mb-4 block">
                         <div className="p-5 rounded-3xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-premium flex items-center gap-4 group hover:border-primary-500/50 transition-colors">
                             <div className="w-12 h-12 bg-primary-600 text-white rounded-2xl flex items-center justify-center font-black shadow-lg shadow-primary-500/20 group-hover:rotate-6 transition-transform">
                                 {user?._id ? user.name.substring(0, 2).toUpperCase() : <FiUser />}
@@ -107,7 +107,7 @@ export default function UserLayout({ children }) {
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </Link>
 
                     {/* Navigation */}
                     <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">

@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import Member from "../models/Member";
-import connectToDatabase from "../../utils/db"; // Create a utility to connect to your DB
+import Member from "@/app/api/models/Member";
+import connectToDatabase from "@/app/utils/db";
 
 connectToDatabase();
 

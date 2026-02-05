@@ -19,14 +19,15 @@ async function connectToDatabase() {
   }
 
   if (!cached.promise) {
-    mongoose.set("strictPopulate", false); // Add this line here
+    mongoose.set("strictPopulate", false);
 
-    cached.promise = mongoose
-      .connect(MONGODB_URI, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-      })
-      .then((mongoose) => mongoose);
+    const opts = {
+      bufferCommands: false,
+    };
+
+    cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
+      return mongoose;
+    });
   }
 
   cached.conn = await cached.promise;

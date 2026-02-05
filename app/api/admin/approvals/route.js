@@ -1,6 +1,6 @@
 import connectToDatabase from "@/app/utils/db";
-import Admin from "../../models/Admin";
-import Member from "../../models/Member";
+import Admin from "@/app/api/models/Admin";
+import Member from "@/app/api/models/Member";
 
 export async function GET(req) {
     try {

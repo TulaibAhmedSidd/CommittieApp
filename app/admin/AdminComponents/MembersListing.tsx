@@ -173,7 +173,7 @@ export default function MembersListing() {
             <div className="space-y-6">
               <div className="flex items-center gap-3">
                 <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800" />
-                <h3 className="text-xs font-black text-slate-800 dark:text-white uppercase tracking-[0.2em]">{t("pendingIdentifiers")}</h3>
+                <h3 className="text-xs font-black text-slate-800 dark:text-white uppercase tracking-[0.2em]">Add Member Requests</h3>
                 <span className="text-[10px] font-black px-3 py-1 bg-amber-500/10 text-amber-600 rounded-full border border-amber-500/20 uppercase">
                   {t("pending")}: {selectedCommittee.pendingMembers?.length || 0}
                 </span>
@@ -210,8 +210,11 @@ export default function MembersListing() {
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={3} className="py-16 text-center text-slate-400 font-bold italic text-sm">
-                          {t("noPendingSubjects")}
+                        <TableCell colSpan={3} className="py-16 text-center">
+                          <div className="flex flex-col items-center gap-2 opacity-40">
+                            <FiUsers size={32} />
+                            <p className="font-black uppercase text-[10px] tracking-widest italic text-slate-400">No Pending Requests</p>
+                          </div>
                         </TableCell>
                       </TableRow>
                     )}
@@ -224,7 +227,7 @@ export default function MembersListing() {
             <div className="space-y-6">
               <div className="flex items-center gap-3">
                 <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800" />
-                <h3 className="text-xs font-black text-slate-800 dark:text-white uppercase tracking-[0.2em]">{t("operationalParticipants")}</h3>
+                <h3 className="text-xs font-black text-slate-800 dark:text-white uppercase tracking-[0.2em]">Member in Committee</h3>
                 <span className="text-[10px] font-black px-3 py-1 bg-green-500/10 text-green-600 rounded-full border border-green-500/20 uppercase">
                   {t("approved")}: {selectedCommittee.members?.length || 0}
                 </span>
@@ -272,8 +275,11 @@ export default function MembersListing() {
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={3} className="py-16 text-center text-slate-400 font-bold italic text-sm">
-                          {t("zeroOperationalMembers")}
+                        <TableCell colSpan={3} className="py-16 text-center">
+                          <div className="flex flex-col items-center gap-2 opacity-40">
+                            <FiShield size={32} />
+                            <p className="font-black uppercase text-[10px] tracking-widest italic text-slate-400">Zero Active Nodes Found</p>
+                          </div>
                         </TableCell>
                       </TableRow>
                     )}

@@ -1,7 +1,7 @@
-import Member from "../../models/Member";
-import Admin from "../../models/Admin";
+import Member from "@/app/api/models/Member";
+import Admin from "@/app/api/models/Admin";
 import bcrypt from "bcryptjs";
-import connectToDatabase from "../../../utils/db";
+import connectToDatabase from "@/app/utils/db";
 
 // Handle Update (GET)
 export async function GET(req, { params }) {

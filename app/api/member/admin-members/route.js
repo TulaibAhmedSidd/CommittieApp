@@ -1,4 +1,4 @@
-import Member from "../../models/Member"; // Ensure correct path to your Member model
+import Member from "@/app/api/models/Member";
 
 export async function GET(req) {
   try {

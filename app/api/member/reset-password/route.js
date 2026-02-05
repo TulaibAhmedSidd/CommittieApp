@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs';
-import Member from '../../models/Member'; // Update with your actual path
-import connectToDatabase from '../../../utils/db'; // Update with your actual path
+import Member from '@/app/api/models/Member';
+import connectToDatabase from '@/app/utils/db';
 
 export async function POST(req) {
   try {
@@ -9,7 +9,7 @@ export async function POST(req) {
 
     // Find the member by the reset token
     const member = await Member.findOne({ resetToken: token });
-    console.log("member found:",member)
+    console.log("member found:", member)
     if (!member) {
       return new Response(JSON.stringify({ error: 'Invalid or expired token' }), { status: 400 });
     }

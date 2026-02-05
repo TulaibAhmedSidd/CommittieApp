@@ -1,5 +1,5 @@
-import Admin from "../../models/Admin";
-import connectToDatabase from "../../../utils/db";
+import Admin from "@/app/api/models/Admin";
+import connectToDatabase from "@/app/utils/db";
 import bcrypt from "bcryptjs";
 
 export async function PATCH(req) {

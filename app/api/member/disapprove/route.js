@@ -1,6 +1,6 @@
-import connectToDatabase from "../../../utils/db";
-import Member from "../../models/Member";
-import Committee from "../../models/Committee"; // Assuming you have a Committee model
+import connectToDatabase from "@/app/utils/db";
+import Member from "@/app/api/models/Member";
+import Committee from "@/app/api/models/Committee";
 
 export async function PATCH(req) {
   try {

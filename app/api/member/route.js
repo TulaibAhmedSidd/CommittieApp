@@ -1,6 +1,7 @@
-import connectToDatabase from "../../utils/db";
-import Committee from "../models/Committee";
-import Member from "../models/Member";
+import connectToDatabase from "@/app/utils/db";
+import Committee from "@/app/api/models/Committee";
+import Member from "@/app/api/models/Member";
+import Admin from "@/app/api/models/Admin";
 import bcrypt from "bcryptjs";
 import nodemailer from "nodemailer";
 
@@ -154,15 +155,29 @@ export async function GET() {
 export async function POST(req) {
   try {
     await connectToDatabase();
-    const { name, email, password, createdBy, createdByAdminName } = await req.json();
-    const hashedPassword = await bcrypt.hash(password, 10); // 10 is the salt rounds
+    const body = await req.json();
+    const { name, email, password, referralCode, createdBy, createdByAdminName } = body;
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    let referringAdminId = null;
+    if (referralCode) {
+      const parentAdmin = await Admin.findOne({ referralCode });
+      if (parentAdmin) {
+        referringAdminId = parentAdmin._id;
+        // Increment admin's referral score
+        parentAdmin.referralScore = (parentAdmin.referralScore || 0) + 1;
+        await parentAdmin.save();
+      }
+    }
 
     const newMember = new Member({
       name,
       email,
       password: hashedPassword,
-      status: "approved", // Members are approved by default as per latest requirement
+      status: "approved",
       resetToken: "",
+      referredBy: referringAdminId,
+      organizers: referringAdminId ? [referringAdminId] : (createdBy ? [createdBy] : []),
       createdBy,
       createdByAdminName
     });

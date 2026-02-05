@@ -10,19 +10,48 @@ import { useLanguage } from '../Components/LanguageContext';
 export default function AmdinPanel() {
     const { t } = useLanguage();
     const [greeting, setGreeting] = useState("Greetings");
+    const [statsData, setStatsData] = useState({
+        activeCommittees: "0",
+        totalMembers: "0",
+        pendingApprovals: "0",
+        systemStatus: "Operational"
+    });
 
     useEffect(() => {
         const hour = new Date().getHours();
         if (hour < 12) setGreeting("Good Morning");
         else if (hour < 18) setGreeting("Good Afternoon");
         else setGreeting("Good Evening");
+
+        const adminDetail = localStorage.getItem("admin_detail");
+        if (adminDetail) {
+            const admin = JSON.parse(adminDetail);
+            fetchStats(admin._id);
+        }
     }, []);
 
+    const fetchStats = async (adminId) => {
+        try {
+            const res = await fetch(`/api/admin/stats?adminId=${adminId}`);
+            if (res.ok) {
+                const data = await res.json();
+                setStatsData({
+                    activeCommittees: data.activeCommittees.toString(),
+                    totalMembers: data.totalMembers.toString(),
+                    pendingApprovals: data.pendingApprovals.toString(),
+                    systemStatus: data.systemStatus
+                });
+            }
+        } catch (err) {
+            console.error("Failed to fetch stats", err);
+        }
+    };
+
     const stats = [
-        { label: t("activePools"), value: "12", icon: FiLayers, color: "text-blue-500", bg: "bg-blue-500/5" },
-        { label: t("totalMembers"), value: "154", icon: FiUsers, color: "text-indigo-500", bg: "bg-indigo-500/5" },
-        { label: t("pendingApprovals"), value: "8", icon: FiClock, color: "text-amber-500", bg: "bg-amber-500/5" },
-        { label: t("systemHealth"), value: "99.9%", icon: FiActivity, color: "text-green-500", bg: "bg-green-500/5" },
+        { label: t("activePools"), value: statsData.activeCommittees, icon: FiLayers, color: "text-blue-500", bg: "bg-blue-500/5" },
+        { label: t("totalMembers"), value: statsData.totalMembers, icon: FiUsers, color: "text-indigo-500", bg: "bg-indigo-500/5" },
+        { label: t("pendingApprovals"), value: statsData.pendingApprovals, icon: FiClock, color: "text-amber-500", bg: "bg-amber-500/5" },
+        { label: t("systemStatus"), value: statsData.systemStatus, icon: FiActivity, color: "text-green-500", bg: "bg-green-500/5" },
     ];
 
     return (

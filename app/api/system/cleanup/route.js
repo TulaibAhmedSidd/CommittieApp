@@ -1,6 +1,6 @@
-import connectToDatabase from "../../../utils/db";
-import Member from "../../models/Member";
-import Admin from "../../models/Admin";
+import connectToDatabase from "@/app/utils/db";
+import Member from "@/app/api/models/Member";
+import Admin from "@/app/api/models/Admin";
 
 export async function POST(req) {
     await connectToDatabase();

@@ -77,11 +77,11 @@ export async function pingMember(committeeId, memberId, adminId, message) {
   return res.json();
 }
 
-export async function updatePaymentStatus(committeeId, paymentId, status, adminId) {
+export async function updatePaymentStatus(committeeId, paymentId, status, adminId, memberId) {
   const res = await fetch(`/api/committee/${committeeId}/payment`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ paymentId, status, adminId }),
+    body: JSON.stringify({ paymentId, status, adminId, memberId }),
   });
   if (!res.ok) throw new Error("Failed to update payment status");
   return res.json();

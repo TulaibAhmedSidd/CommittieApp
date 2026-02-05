@@ -118,18 +118,27 @@ export default function Committiee() {
           </Card>
         </div>
 
-        <Card className="bg-primary-600 border-none shadow-premium-hover flex flex-col justify-between relative overflow-hidden p-6">
-          <div className="relative z-10">
-            <h3 className="text-white text-xl font-black tracking-tighter mb-2 uppercase">{t("newPool") || "New Pool"}</h3>
-            <p className="text-white/70 text-xs mb-6 max-w-[200px] font-medium">{t("createPoolDesc") || "Create a new committee pool"}</p>
-            <Link href="/admin/create">
-              <Button className="w-full bg-white text-primary-600 border-none hover:bg-white/90 shadow-xl shadow-black/10 font-black uppercase text-[10px] tracking-widest py-4">
-                {t("createPool") || "Create Pool"} <FiPlus className="ml-1" />
-              </Button>
-            </Link>
-          </div>
-          <FiLayers size={140} className="absolute -bottom-10 -right-10 text-white/10 rotate-12" />
-        </Card>
+        <div className="relative group">
+          <div className="absolute -inset-1 bg-gradient-to-r from-primary-600 to-indigo-600 rounded-[2.5rem] blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200" />
+          <Card className="bg-white dark:bg-slate-900 border-none shadow-2xl flex flex-col justify-center items-center text-center relative overflow-hidden py-16 px-10 min-h-[300px]">
+            <div className="relative z-10 space-y-8 max-w-md mx-auto">
+              <div className="w-20 h-20 bg-primary-600 rounded-3xl flex items-center justify-center text-white shadow-2xl shadow-primary-600/30 mx-auto rotate-3 group-hover:rotate-0 transition-transform duration-500">
+                <FiPlus size={40} />
+              </div>
+              <div className="space-y-3">
+                <h3 className="text-slate-900 dark:text-white text-4xl font-black tracking-tighter uppercase italic">{t("newPool") || "Inaugurate Pool"}</h3>
+                <p className="text-slate-500 font-medium italic text-sm">{t("createPoolDesc") || "Initialize a new financial circuit and start building your network."}</p>
+              </div>
+              <Link href="/admin/create">
+                <Button className="px-16 bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-none hover:scale-105 shadow-2xl font-black uppercase text-xs tracking-[0.2em] py-6 rounded-[2rem] transition-all">
+                  {t("createPool") || "Launch Committee"}
+                </Button>
+              </Link>
+            </div>
+            <FiLayers size={220} className="absolute -bottom-20 -right-20 text-slate-100 dark:text-slate-800/20 rotate-12 group-hover:scale-110 transition-transform duration-700" />
+            <FiActivity size={120} className="absolute -top-10 -left-10 text-primary-500/5 -rotate-12" />
+          </Card>
+        </div>
       </div>
 
       {/* Main List */}

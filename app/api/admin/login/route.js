@@ -1,12 +1,12 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import Admin from "../../models/Admin";
-import connectToDatabase from "../../../utils/db";
+import Admin from "@/app/api/models/Admin";
+import connectToDatabase from "@/app/utils/db";
 
-connectToDatabase();
 
 export async function POST(req) {
   const { email, password } = await req.json();
+  await connectToDatabase();
 
   try {
     const admin = await Admin.findOne({ email });

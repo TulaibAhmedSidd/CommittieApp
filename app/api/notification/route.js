@@ -1,5 +1,5 @@
-import connectToDatabase from "../../utils/db";
-import Notification from "../models/Notification";
+import connectToDatabase from "@/app/utils/db";
+import Notification from "@/app/api/models/Notification";
 
 export async function GET(req) {
   await connectToDatabase();

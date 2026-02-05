@@ -82,10 +82,10 @@ function ManageContent() {
         }
     };
 
-    const handleUpdatePayment = async (paymentId, status) => {
+    const handleUpdatePayment = async (paymentId, status, memberId = null) => {
         setActionLoading(true);
         try {
-            await updatePaymentStatus(committeeId, paymentId, status, admin._id);
+            await updatePaymentStatus(committeeId, paymentId, status, admin._id, memberId);
             toast.success(`Payment ${status}`);
             loadCommittee();
             setViewingPayment(null);
@@ -298,6 +298,21 @@ function ManageContent() {
                                                 >
                                                     <FiMessageSquare size={14} />
                                                 </Button>
+                                                {(!payment || payment.status !== "verified") && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() => {
+                                                            if (confirm(`Force mark ${member.name} as PAID for Month ${committee.currentMonth}?`)) {
+                                                                handleUpdatePayment(payment?._id || "FORCE_RECONCILE", "verified", member._id);
+                                                            }
+                                                        }}
+                                                        className="h-8 w-8 p-0 text-green-600 bg-green-50 hover:bg-green-100 rounded-lg"
+                                                        title="Force Verify (No Proof)"
+                                                    >
+                                                        <FiCheckCircle size={14} />
+                                                    </Button>
+                                                )}
                                             </TableCell>
                                         </TableRow>
                                     );

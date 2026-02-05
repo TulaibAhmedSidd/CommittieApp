@@ -6,19 +6,136 @@
   --background: #f8fafc;
   --foreground: #0f172a;
   --primary: #6366f1;
+  --primary-rgb: 99, 102, 241;
   --primary-hover: #4f46e5;
   --secondary: #64748b;
   --card-background: #ffffff;
   --border-color: #e2e8f0;
+  --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0f172a;
-    --foreground: #f8fafc;
-    --card-background: #1e293b;
-    --border-color: #334155;
-  }
+/* Base Dark Mode (Midnight) */
+.dark {
+  --background: #0f172a;
+  --foreground: #f8fafc;
+  --primary: #6366f1;
+  --primary-rgb: 99, 102, 241;
+  --card-background: #1e293b;
+  --border-color: #334155;
+}
+
+/* 1. Forest Theme */
+.theme-forest {
+  --primary: #10b981;
+  --primary-rgb: 16, 185, 129;
+  --primary-hover: #059669;
+}
+.theme-forest.dark {
+  --background: #064e3b;
+  --card-background: #065f46;
+  --border-color: #047857;
+}
+
+/* 2. Solar Theme */
+.theme-solar {
+  --primary: #f59e0b;
+  --primary-rgb: 245, 158, 11;
+}
+.theme-solar.dark {
+  --background: #451a03;
+  --card-background: #78350f;
+  --border-color: #92400e;
+}
+
+/* 3. Royal Theme */
+.theme-royal {
+  --primary: #8b5cf6;
+  --primary-rgb: 139, 92, 246;
+}
+.theme-royal.dark {
+  --background: #2e1065;
+  --card-background: #4c1d95;
+  --border-color: #5b21b6;
+}
+
+/* 4. Crimson Theme */
+.theme-crimson {
+  --primary: #ef4444;
+  --primary-rgb: 239, 68, 68;
+}
+.theme-crimson.dark {
+  --background: #450a0a;
+  --card-background: #7f1d1d;
+  --border-color: #991b1b;
+}
+
+/* 5. Ocean Theme */
+.theme-ocean {
+  --primary: #06b6d4;
+  --primary-rgb: 6, 182, 212;
+}
+.theme-ocean.dark {
+  --background: #083344;
+  --card-background: #164e63;
+  --border-color: #155e75;
+}
+
+/* 6. Sunset Theme */
+.theme-sunset {
+  --primary: #f97316;
+  --primary-rgb: 249, 115, 22;
+}
+.theme-sunset.dark {
+  --background: #431407;
+  --card-background: #7c2d12;
+  --border-color: #9a3412;
+}
+
+/* 7. Rose Theme */
+.theme-rose {
+  --primary: #f43f5e;
+  --primary-rgb: 244, 63, 94;
+}
+.theme-rose.dark {
+  --background: #4c0519;
+  --card-background: #881337;
+  --border-color: #9f1239;
+}
+
+/* 8. Onyx Theme */
+.theme-onyx.dark {
+  --background: #000000;
+  --card-background: #111111;
+  --border-color: #222222;
+  --primary: #ffffff;
+  --primary-rgb: 255, 255, 255;
+  --foreground: #ffffff;
+}
+
+/* 9. Steel Theme */
+.theme-steel {
+  --primary: #475569;
+  --primary-rgb: 71, 85, 105;
+}
+.theme-steel.dark {
+  --background: #0f172a;
+  --card-background: #1e293b;
+  --border-color: #334155;
+  --primary: #94a3b8;
+  --primary-rgb: 148, 163, 184;
+}
+
+/* 10. Cyber Theme */
+.theme-cyber {
+  --primary: #d946ef;
+  --primary-rgb: 217, 70, 239;
+}
+.theme-cyber.dark {
+  --background: #2e1065;
+  --card-background: #1e1b4b;
+  --border-color: #312e81;
+  --primary: #6ee7b7;
+  --primary-rgb: 110, 231, 183;
 }
 
 body {

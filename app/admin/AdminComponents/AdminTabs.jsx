@@ -36,12 +36,12 @@ export default function AdminTabs(props) {
     return (
         <header className="fixed top-0 left-0 w-full bg-white shadow-lg z-50">
             <h1 className={` ${user ? "hidden" : 'hidden sm:block'}  text-xl font-semibold text-gray-800 cursor-pointer w-full text-center py-2`}
-                onClick={() => router.push(user?"/userDash":'/admin')}
+                onClick={() => router.push(user ? "/userDash" : '/admin')}
             >{userTestLogo}</h1>
             <div className="max-w-screen-xl mx-auto flex items-center justify-between px-2 py-3">
                 {/* Dashboard Title */}
                 <h1 className={`${user ? "block " : 'block sm:hidden'}   text-xl font-semibold text-gray-800 cursor-pointer`}
-                    onClick={() => router.push(user?"/userDash":'/admin')}
+                    onClick={() => router.push(user ? "/userDash" : '/admin')}
                 >{userTestLogo}</h1>
 
                 {/* Hamburger Menu for Small Screens */}
@@ -98,21 +98,46 @@ export default function AdminTabs(props) {
                                     View/ Manage Members in Committee
                                 </p>
                             </Link>
-                            <Link href="/admin/assign-member">
-                                <p onClick={() => { setIsMenuOpen(false) }} className="block lg:inline-block text-blue-600 py-2 px-4 hover:text-blue-700 hover:underline">
-                                    Assign Committee to a Member
+                            <Link href="/admin/all-members">
+                                <p onClick={() => { setIsMenuOpen(false) }} className="block lg:inline-block text-blue-600 py-2 px-4 font-bold hover:text-blue-700 hover:underline">
+                                    Member Pool
                                 </p>
                             </Link>
-                            <Link href="/admin/addmember">
+                            <Link href="/admin/referrals">
                                 <p onClick={() => { setIsMenuOpen(false) }} className="block lg:inline-block text-blue-600 py-2 px-4 hover:text-blue-700 hover:underline">
-                                    Add Member
+                                    Referral Center
+                                </p>
+                            </Link>
+                            <Link href="/admin/approvals">
+                                <p onClick={() => { setIsMenuOpen(false) }} className="block lg:inline-block text-blue-600 py-2 px-4 hover:text-blue-700 hover:underline">
+                                    Approvals
+                                </p>
+                            </Link>
+                            <Link href="/admin/notifications">
+                                <p onClick={() => { setIsMenuOpen(false) }} className="block lg:inline-block text-blue-600 py-2 px-4 hover:text-blue-700 hover:underline">
+                                    Notifications
                                 </p>
                             </Link>
                             <Link href="/admin/announcement">
-                                <p onClick={() => { setIsMenuOpen(false) }} className="block lg:inline-block text-blue-600 py-2 px-4 hover:text-blue-700 hover:underline pb-2">
+                                <p onClick={() => { setIsMenuOpen(false) }} className="block lg:inline-block text-blue-600 py-2 px-4 hover:text-blue-700 hover:underline">
                                     Announcements
                                 </p>
                             </Link>
+                            {userLoggedDetails?.isSuperAdmin && (
+                                <>
+                                    <div className="hidden lg:block w-[1px] h-6 bg-slate-200 mx-2"></div>
+                                    <Link href="/admin/manage">
+                                        <p onClick={() => { setIsMenuOpen(false) }} className="block lg:inline-block text-primary-600 font-black py-2 px-4 hover:text-primary-700 hover:underline italic uppercase text-xs tracking-widest">
+                                            Manage Admins
+                                        </p>
+                                    </Link>
+                                    <Link href="/admin/theme">
+                                        <p onClick={() => { setIsMenuOpen(false) }} className="block lg:inline-block text-primary-600 font-black py-2 px-4 hover:text-primary-700 hover:underline italic uppercase text-xs tracking-widest">
+                                            Theme Settings
+                                        </p>
+                                    </Link>
+                                </>
+                            )}
                         </nav>
                 }
             </div>

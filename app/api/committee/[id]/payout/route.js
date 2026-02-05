@@ -1,8 +1,8 @@
-import connectToDatabase from "../../../../utils/db";
-import Committee from "../../../models/Committee";
-import Notification from "../../../models/Notification";
-import Asset from "../../../models/Asset";
-import { createLog } from "../../../../utils/logger";
+import connectToDatabase from "@/app/utils/db";
+import Committee from "@/app/api/models/Committee";
+import Notification from "@/app/api/models/Notification";
+import Asset from "@/app/api/models/Asset";
+import { createLog } from "@/app/utils/logger";
 
 export async function POST(req, { params }) {
     await connectToDatabase();

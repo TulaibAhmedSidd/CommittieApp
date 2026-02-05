@@ -1,8 +1,8 @@
-import connectToDatabase from "../../utils/db";
-import Message from "../models/Message";
-import Committee from "../models/Committee";
-import Member from "../models/Member";
-import Admin from "../models/Admin";
+import connectToDatabase from "@/app/utils/db";
+import Message from "@/app/api/models/Message";
+import Committee from "@/app/api/models/Committee";
+import Member from "@/app/api/models/Member";
+import Admin from "@/app/api/models/Admin";
 
 export async function POST(req) {
     await connectToDatabase();

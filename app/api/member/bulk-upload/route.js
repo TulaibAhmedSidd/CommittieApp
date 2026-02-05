@@ -1,5 +1,5 @@
-import connectToDatabase from "../../../utils/db";
-import Member from "../../models/Member";
+import connectToDatabase from "@/app/utils/db";
+import Member from "@/app/api/models/Member";
 import bcrypt from "bcryptjs";
 
 export async function POST(req) {

@@ -41,8 +41,14 @@ CommittieApp is a digital platform for managing "Committies" (Rotating Savings a
 ### Registration & Approval
 1. **Self-Reg (Member)**: User selects "Start Saving". Account is **Auto-Approved**. They can log in immediately.
 2. **Self-Reg (Organizer)**: User selects "Become an Organizer". Account is **Pending**.
-3. **Super Admin Action**: Super Admin reviews pending Organizers in the **Approvals** tab.
-4. **Activation**: Super Admin clicks "Approve". Top-level organizers can now log in and create committees.
+3. **Association**: Members can be associated with multiple Organizers. When a member joins a committee, they are automatically "Associated" with that committee's Organizer.
+4. **Super Admin Action**: Super Admin reviews pending Organizers in the **Approvals** tab.
+5. **Activation**: Super Admin clicks "Approve". Top-level organizers can now log in and create committees.
+
+### Referral System
+- **Invite Codes**: Organizers can generate unique referral codes.
+- **Analytics**: Organizers can track their network performance via the Referral Center, viewing counts of both Members and other Admins onboarded via their link.
+- **Auto-Linking**: New users signing up via a referral link are automatically linked to the referring Organizer.
 
 ### Committee Lifecycle
 1. **Creation**: Organizer creates a committee with parameters (Monthly Amount, Duration, Max Members, Fees).

@@ -175,6 +175,12 @@ export default function MyCommittie2() {
                           <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest ${isMyTurn ? "bg-primary-600 text-white" : "bg-slate-900 text-white dark:bg-white dark:text-slate-900"}`}>
                             <FiUser /> Current Turn: {turnMemberName}
                           </div>
+                          <button
+                            onClick={() => router.push(`/userDash/committee/${c._id}`)}
+                            className="flex items-center gap-2 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest bg-primary-600 text-white hover:bg-primary-700 transition-colors shadow-lg shadow-primary-500/20"
+                          >
+                            <FiActivity size={14} /> View Detailed Board <FiArrowRight size={14} className="ml-1" />
+                          </button>
                         </div>
                       </div>
 
