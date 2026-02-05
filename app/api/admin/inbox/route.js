@@ -1,7 +1,7 @@
-import connectToDatabase from "../../../utils/db";
+import connectToDatabase from "@/app/utils/db";
 import Message from "../../models/Message";
 import Member from "../../models/Member";
-import Committee from "../../models/Committee";
+import Committee from "@/app/api/models/Committee";
 import mongoose from "mongoose";
 
 export async function GET(req) {

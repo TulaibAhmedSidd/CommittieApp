@@ -46,7 +46,7 @@
 
 import connectToDatabase from "../../../utils/db";
 import Member from "../../models/Member";
-import Committee from "../../models/Committee";  // Assuming you have a Committee model
+import Committee from "@/app/api/models/Committee";
 
 export async function PATCH(req) {
   try {
@@ -57,7 +57,7 @@ export async function PATCH(req) {
     const { memberId, committeeId } = await req.json();
 
     // Validate request payload
-    if (!memberId  || !committeeId) {
+    if (!memberId || !committeeId) {
       return new Response(
         JSON.stringify({ error: "Member ID, updates, and committee ID are required" }),
         { status: 400 }
