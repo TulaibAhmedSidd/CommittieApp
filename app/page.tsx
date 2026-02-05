@@ -34,7 +34,7 @@ export default function Home() {
               <div className="w-10 h-10 bg-primary-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary-500/20">
                 <FiActivity size={22} />
               </div>
-              <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter">
+              <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter uppercase italic">
                 Committie<span className="text-primary-600">App</span>
               </span>
             </div>
@@ -344,7 +344,7 @@ export default function Home() {
           </div>
           <div className="flex gap-8 text-slate-400 text-xs font-black uppercase tracking-widest">
             <a href="#" className="hover:text-white transition-colors">Privacy</a>
-            <a href="#" className="hover:text-white transition-colors">Terms</a>
+            <a href="/terms" className="hover:text-white transition-colors">Terms</a>
             <a href="#" className="hover:text-white transition-colors">Contact</a>
           </div>
           <p className="text-slate-600 text-xs font-medium">© 2026 CommittieApp. All rights reserved.</p>

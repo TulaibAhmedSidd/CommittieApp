@@ -66,7 +66,7 @@ export default function AmdinPanel() {
                         {greeting}, <span className="bg-gradient-to-r from-primary-600 to-indigo-500 bg-clip-text text-transparent">{t("commander")}</span>
                     </h1>
                     <p className="text-slate-500 dark:text-slate-400 font-medium max-w-lg italic">
-                        Welcome to your dashboard. Manage your committees and members easily.
+                        {t("welcomeToYourDashboard")}
                     </p>
                 </div>
 

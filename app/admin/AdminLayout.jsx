@@ -94,7 +94,7 @@ export default function AdminLayout({ children }) {
                     <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center text-white">
                         <FiShield size={18} />
                     </div>
-                    <h1 className="text-xl font-black text-slate-900 dark:text-white tracking-tighter">Committie<span className="text-primary-600">App</span></h1>
+                    <h1 className="text-xl font-black text-slate-900 dark:text-white tracking-tighter uppercase italic">Committie<span className="text-primary-600">App</span></h1>
                 </div>
                 <div className="flex items-center gap-2">
                     <button
