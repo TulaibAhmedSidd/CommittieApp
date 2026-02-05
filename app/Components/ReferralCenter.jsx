@@ -52,7 +52,7 @@ export default function ReferralCenter({ adminId }) {
                         </div>
                         <div className="p-4 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-between gap-4 border border-white/20">
                             <code className="font-mono font-black text-lg tracking-wider">{referralData.referralCode || "NOT_GENERATED"}</code>
-                            <Button onClick={copyToClipboard} size="sm" className="bg-white text-primary-600 hover:bg-white/90 rounded-xl px-4 py-2 text-[10px] font-black uppercase tracking-widest">
+                            <Button onClick={copyToClipboard} size="sm" className="text-black-00 hover:bg-white/90 rounded-xl px-4 py-2 text-[10px] font-black uppercase tracking-widest">
                                 <FiCopy className="mr-2" /> Copy Link
                             </Button>
                         </div>

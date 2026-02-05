@@ -14,7 +14,8 @@ import {
     FiActivity,
     FiShield,
     FiChevronRight,
-    FiCreditCard
+    FiCreditCard,
+    FiSearch
 } from "react-icons/fi";
 
 export default function UserLayout({ children }) {
@@ -37,6 +38,7 @@ export default function UserLayout({ children }) {
 
     const navItems = [
         { name: "My Activity", icon: FiHome, path: "/userDash" },
+        { name: "Explore", icon: FiSearch, path: "/userDash/explore" },
         { name: "Committee Participation", icon: FiGrid, path: "/userDash?view=my" },
         { name: "Inbox / Alerts", icon: FiBell, path: "/userDash#notifications" },
         { name: "My Profile", icon: FiUser, path: "/userDash/profile" },

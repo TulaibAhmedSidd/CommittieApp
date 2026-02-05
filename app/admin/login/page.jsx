@@ -41,6 +41,9 @@ export default function AdminLogin() {
 
             toast.success(t("welcomeBackCommander"));
             router.push("/admin");
+            setTimeout(() => {
+                window.location.reload();
+            }, 800);
         } catch (err) {
             toast.error(err.message);
         } finally {
@@ -56,7 +59,7 @@ export default function AdminLogin() {
     }, [router]);
 
     return (
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden">
+        <div className="w-full min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden">
             {/* Animated Background Elements */}
             <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary-500/10 rounded-full blur-[120px] animate-pulse" />
             <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-indigo-500/10 rounded-full blur-[120px] animate-pulse delay-700" />

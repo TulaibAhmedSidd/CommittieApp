@@ -28,6 +28,7 @@ export default function ThemeManager() {
     const handleThemeChange = async (themeId) => {
         setSaving(true);
         try {
+            alert('sss')
             const adminDetail = localStorage.getItem("admin_detail");
             const admin = adminDetail ? JSON.parse(adminDetail) : null;
 
@@ -68,7 +69,6 @@ export default function ThemeManager() {
                     <Card
                         key={t.id}
                         className={`p-1 overflow-hidden cursor-pointer transition-all duration-300 border-2 ${activeTheme === t.id ? 'border-primary-600 scale-105 shadow-xl' : 'border-transparent hover:border-slate-200 dark:hover:border-slate-700'}`}
-                        onClick={() => handleThemeChange(t.id)}
                     >
                         <div className="relative aspect-video rounded-xl overflow-hidden" style={{ backgroundColor: t.bg }}>
                             <div className="absolute inset-0 flex items-center justify-center">
@@ -76,7 +76,9 @@ export default function ThemeManager() {
                                     {activeTheme === t.id && <FiCheck className="text-white" />}
                                 </div>
                             </div>
-                            <div className="absolute bottom-0 left-0 right-0 p-2 bg-black/20 backdrop-blur-md">
+                            <div
+                                onClick={() => handleThemeChange(t.id)}
+                                className="absolute bottom-0 left-0 right-0 p-2 bg-black/20 backdrop-blur-md">
                                 <p className="text-[10px] font-black text-white uppercase tracking-widest text-center">{t.name}</p>
                             </div>
                         </div>

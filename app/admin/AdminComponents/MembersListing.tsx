@@ -181,17 +181,17 @@ export default function MembersListing() {
 
               <div className="overflow-hidden rounded-[2rem] border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-950/30">
                 <Table>
-                  <thead>
-                    <tr className="bg-slate-50 dark:bg-slate-900/50">
+                  <thead className="w-full">
+                    <tr className="w-full bg-slate-50 dark:bg-slate-900/50">
                       <th className="px-8 py-5 text-left text-[10px] font-black uppercase text-slate-400 tracking-widest">{t("temporalSubject")}</th>
                       <th className="px-8 py-5 text-left text-[10px] font-black uppercase text-slate-400 tracking-widest">{t("sublinkGateway")}</th>
                       <th className="px-8 py-5 text-right text-[10px] font-black uppercase text-slate-400 tracking-widest">{t("protocolOverride")}</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  <tbody className="w-full divide-y divide-slate-100 dark:divide-slate-800">
                     {selectedCommittee.pendingMembers && selectedCommittee.pendingMembers.length > 0 ? (
                       selectedCommittee.pendingMembers.map((m) => (
-                        <TableRow key={m._id} className="group hover:bg-amber-500/5 transition-all">
+                        <TableRow key={m._id} className="w-full group hover:bg-amber-500/5 transition-all">
                           <TableCell>
                             <div className="flex items-center gap-4 ml-2">
                               <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center font-black text-xs text-amber-600">
@@ -209,7 +209,7 @@ export default function MembersListing() {
                         </TableRow>
                       ))
                     ) : (
-                      <TableRow>
+                      <TableRow className="w-full">
                         <TableCell colSpan={3} className="py-16 text-center">
                           <div className="flex flex-col items-center gap-2 opacity-40">
                             <FiUsers size={32} />
@@ -235,17 +235,17 @@ export default function MembersListing() {
 
               <div className="overflow-hidden rounded-[2rem] border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-950/30">
                 <Table>
-                  <thead>
-                    <tr className="bg-slate-50 dark:bg-slate-900/50">
+                  <thead className="w-full">
+                    <tr className="w-full bg-slate-50 dark:bg-slate-900/50">
                       <th className="px-8 py-5 text-left text-[10px] font-black uppercase text-slate-400 tracking-widest">{t("activeNode")}</th>
                       <th className="px-8 py-5 text-left text-[10px] font-black uppercase text-slate-400 tracking-widest">{t("sublinkGateway")}</th>
                       <th className="px-8 py-5 text-right text-[10px] font-black uppercase text-slate-400 tracking-widest">{t("manualOverride")}</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  <tbody className="w-full divide-y divide-slate-100 dark:divide-slate-800">
                     {selectedCommittee.members && selectedCommittee.members.length > 0 ? (
                       selectedCommittee.members.map((m) => (
-                        <TableRow key={m._id} className="group hover:bg-primary-500/5 transition-all">
+                        <TableRow key={m._id} className="w-full group hover:bg-primary-500/5 transition-all">
                           <TableCell>
                             <div className="flex items-center gap-4 ml-2">
                               <div className="w-10 h-10 rounded-xl bg-primary-600 text-white flex items-center justify-center font-black text-xs shadow-lg rotate-3 group-hover:rotate-0 transition-transform">

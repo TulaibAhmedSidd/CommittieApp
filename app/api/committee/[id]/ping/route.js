@@ -19,7 +19,10 @@ export async function POST(req, { params }) {
 
         // Create notification using standalone model
         const notification = new Notification({
-            userId: memberId,
+            recipient: memberId,
+            recipientModel: "Member",
+            sender: adminId,
+            committeeId: id,
             message: message || `Admin of ${committee.name} has requested your payment for this month.`,
             details: `Action: Payment Ping | Committee: ${committee.name} | Month: ${committee.currentMonth}`,
         });

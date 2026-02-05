@@ -1,8 +1,8 @@
 import connectToDatabase from "@/app/utils/db";
 import Committee from "@/app/api/models/Committee";
-import Admin from "../models/Admin";
-import Member from "../models/Member";
-import { createLog } from "../../utils/logger";
+import Admin from "@/app/api/models/Admin";
+import Member from "@/app/api/models/Member";
+import { createLog } from "@/app/utils/logger";
 
 // Handle GET requests (fetch all committees)
 export async function GET(req) {

@@ -71,7 +71,6 @@ export default function SystemControl({ isAdmin, isSuperAdmin, adminDetails }) {
                             Wipe all collections (Members, Committees, etc.) to start fresh. This does not affect your Super Admin account.
                         </p>
                         <Button
-                            variant="secondary"
                             onClick={handleWipeData}
                             loading={loading}
                             className="bg-red-600 hover:bg-red-700 text-white border-none w-full py-4 text-[10px] font-black uppercase tracking-widest"

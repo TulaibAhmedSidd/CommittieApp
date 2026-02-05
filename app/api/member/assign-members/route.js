@@ -1,7 +1,7 @@
 import connectToDatabase from "@/app/utils/db";
 import Member from "@/app/api/models/Member";
 import Committee from "@/app/api/models/Committee";
-import { createLog } from "../../../utils/logger";
+import { createLog } from "@/app/utils/logger";
 
 export async function PATCH(req) {
   try {

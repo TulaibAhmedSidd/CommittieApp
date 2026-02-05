@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import Member from "../../models/Member";
+import Member from "@/app/api/models/Member";
 
 // export async function POST(req) {
 //   try {

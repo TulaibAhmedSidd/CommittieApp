@@ -232,9 +232,17 @@ export const translations = {
         pendingRequests: "Pending Requests",
         noPendingApplications: "No pending applications at this time.",
         waitingForOrganizer: "Waiting for organizer approval...",
-        processingRequest: "Processing Request"
+        processingRequest: "Processing Request",
+        goodMorning: "Good Morning",
+        goodAfternoon: "Good Afternoon",
+        goodEvening: "Good Evening",
+        welcomeToYourDashboard: "Welcome to your dashboard. Manage your committees and members easily.",
     },
     ur: {
+        welcomeToYourDashboard: 'خوش آمدید۔ کمیٹیاں اور ارکان کو سادہ طور پر ادار کریں۔',
+        goodMorning: "صبح میں",
+        goodAfternoon: "ہری میں",
+        goodEvening: "ہری میں",
         // Shared
         dashboard: "ڈیش بورڈ",
         members: "ارکان",
