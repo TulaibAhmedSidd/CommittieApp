@@ -1,4 +1,4 @@
-import connectToDatabase from "../../../../utils/db";
+import connectToDatabase from "@/app/utils/db";
 import Admin from "../../models/Admin";
 import Member from "../../models/Member";
 
