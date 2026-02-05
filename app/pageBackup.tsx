@@ -15,32 +15,12 @@ import {
   FiMenu,
   FiX
 } from "react-icons/fi";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Button from "./Components/Theme/Button";
 import Card from "./Components/Theme/Card";
 
 export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [counts, setCounts] = useState({ members: 0, organizers: 0, pooled: 0 });
-
-  useEffect(() => {
-    // simple animated counters to add life to trust metrics
-    const targets = { members: 1200, organizers: 85, pooled: 50000 };
-    const duration = 1200;
-    const steps = 60;
-    const interval = Math.floor(duration / steps);
-    let step = 0;
-    const t = setInterval(() => {
-      step++;
-      setCounts({
-        members: Math.min(targets.members, Math.floor((targets.members * step) / steps)),
-        organizers: Math.min(targets.organizers, Math.floor((targets.organizers * step) / steps)),
-        pooled: Math.min(targets.pooled, Math.floor((targets.pooled * step) / steps)),
-      });
-      if (step >= steps) clearInterval(t);
-    }, interval);
-    return () => clearInterval(t);
-  }, []);
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans selection:bg-primary-500/30">
@@ -229,107 +209,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* How It Works & Trust Builders */}
-      <section className="py-16 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800">
-        <div className="max-w-7xl mx-auto px-4 md:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-start">
-            <div className="space-y-6">
-              <h3 className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter">How CommittieApp Keeps It Transparent</h3>
-              <p className="text-slate-500 font-medium">A short, clear flow so members and organizers always know what's happening — verification, proof uploads, approvals, and payout tracking.</p>
-
-              <div className="space-y-4">
-                <div className="flex gap-4 items-start">
-                  <div className="p-3 bg-primary-50 rounded-lg text-primary-600">
-                    <FiShield size={20} />
-                  </div>
-                  <div>
-                    <p className="font-black">Verified Accounts</p>
-                    <p className="text-sm text-slate-500">Users and organizers complete identity checks and receive a Blue Tick for trust.</p>
-                  </div>
-                </div>
-
-                <div className="flex gap-4 items-start">
-                  <div className="p-3 bg-slate-50 rounded-lg text-primary-600">
-                    <FiEdit size={20} />
-                  </div>
-                  <div>
-                    <p className="font-black">Proof-First Payouts</p>
-                    <p className="text-sm text-slate-500">All payments require proof uploads and organizer verification before payout.</p>
-                  </div>
-                </div>
-
-                <div className="flex gap-4 items-start">
-                  <div className="p-3 bg-blue-50 rounded-lg text-blue-600">
-                    <FiSearch size={20} />
-                  </div>
-                  <div>
-                    <p className="font-black">Local Discovery</p>
-                    <p className="text-sm text-slate-500">Find committees near you and join communities you trust without exposing exact locations.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="col-span-1 lg:col-span-1">
-              <div className="grid grid-cols-3 gap-4">
-                <div className="py-3 px-5 rounded-2xl bg-slate-50 dark:bg-slate-950 text-center">
-                  <p className="text-2xl font-black">{counts.members.toLocaleString()}</p>
-                  <p className="text-xs uppercase tracking-widest text-slate-500 mt-2">Active Members</p>
-                </div>
-                <div className="py-3 px-5 rounded-2xl bg-slate-50 dark:bg-slate-950 text-center">
-                  <p className="text-2xl font-black">{counts.organizers}</p>
-                  <p className="text-xs uppercase tracking-widest text-slate-500 mt-2">Verified Organizers</p>
-                </div>
-                <div className="py-3 px-5 rounded-2xl bg-slate-50 dark:bg-slate-950 text-center">
-                  <p className="text-2xl font-black">Rs {Math.floor(counts.pooled / 1000).toLocaleString()}K</p>
-                  <p className="text-xs uppercase tracking-widest text-slate-500 mt-2">Total Pooled</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="col-span-1 lg:col-span-1 space-y-6">
-              <h4 className="text-xl font-black">Watch a quick walkthrough</h4>
-              <div className="rounded-2xl overflow-hidden border border-slate-100 dark:border-slate-800">
-                <div className="aspect-video bg-black/5">
-                  <iframe className="w-full h-full" src="https://www.youtube.com/embed/ysz5S6PUM-U" title="CommittieApp walkthrough" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
-                </div>
-              </div>
-              <p className="text-sm text-slate-500">Short demo: create a committee, verify members, collect proofs, and automate payouts — all visible to participants.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Organizer Upsell */}
-      <section className="py-12 bg-gradient-to-r from-primary-50 to-white dark:from-slate-900/60 dark:to-slate-900">
-        <div className="max-w-7xl mx-auto px-4 md:px-8">
-          <div className="rounded-3xl p-8 md:p-12 bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-800 shadow-lg grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
-            <div className="md:col-span-2">
-              <h3 className="text-2xl font-black text-slate-900 dark:text-white">Organizers: Grow your circle with confidence</h3>
-              <p className="text-slate-500 mt-2">Use our tools to scale committees, collect payments with proof, and build your reputation with verified Blue Ticks. Earn through optional organizer fees and referral rewards.</p>
-
-              <ul className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <li className="flex gap-3 items-start"><div className="p-2 bg-primary-50 rounded-md text-primary-600"><FiEdit /></div><span className="font-black">Organizer Dashboard</span></li>
-                <li className="flex gap-3 items-start"><div className="p-2 bg-primary-50 rounded-md text-primary-600"><FiCheckCircle /></div><span className="font-black">Verified Members</span></li>
-                <li className="flex gap-3 items-start"><div className="p-2 bg-primary-50 rounded-md text-primary-600"><FiBell /></div><span className="font-black">Automated Notifications</span></li>
-                <li className="flex gap-3 items-start"><div className="p-2 bg-primary-50 rounded-md text-primary-600"><FiDollarSign /></div><span className="font-black">Flexible Fee Options</span></li>
-              </ul>
-            </div>
-
-            <div className="md:col-span-1">
-              <div className="p-6 rounded-2xl bg-primary-600 text-white">
-                <p className="text-sm uppercase tracking-widest font-black">Organizer Starter</p>
-                <p className="text-3xl font-black mt-4">Free</p>
-                <p className="text-sm mt-2">Create up to 3 committees, access verification tools, and full transparency features.</p>
-                <Link href="/admin/register" className="block mt-6">
-                  <Button className="w-full py-3 font-black uppercase tracking-widest">Become an Organizer</Button>
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Features Section */}
       <section id="features" className="py-20 md:py-32 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 relative">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
@@ -464,9 +343,9 @@ export default function Home() {
             </span>
           </div>
           <div className="flex gap-8 text-slate-400 text-xs font-black uppercase tracking-widest">
-            <a href="/privacy" className="hover:text-white transition-colors">Privacy</a>
+            <a href="#" className="hover:text-white transition-colors">Privacy</a>
             <a href="/terms" className="hover:text-white transition-colors">Terms</a>
-            <a href="/contact" className="hover:text-white transition-colors">Contact</a>
+            <a href="#" className="hover:text-white transition-colors">Contact</a>
           </div>
           <p className="text-slate-600 text-xs font-medium">© 2026 CommittieApp. All rights reserved.</p>
         </div>
