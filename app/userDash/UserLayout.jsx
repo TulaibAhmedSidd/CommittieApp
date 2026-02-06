@@ -52,14 +52,14 @@ export default function UserLayout({ children }) {
     const isActive = (path) => pathname === path;
 
     return (
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col md:flex-row font-sans selection:bg-primary-500/30">
+        <div className="min-h-screen bg-background text-foreground flex flex-col md:flex-row font-sans selection:bg-primary-500/30">
             {/* Mobile Header */}
             <div className={`md:hidden flex items-center justify-between p-4 sticky top-0 z-50 transition-all duration-300 ${scrolled ? "bg-white/80 dark:bg-slate-900/80 backdrop-blur-lg border-b border-slate-200 dark:border-slate-800 shadow-sm" : "bg-transparent"}`}>
                 <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center text-white">
+                    <div className="w-8 h-8 bg-primary-500 rounded-lg flex items-center justify-center text-white">
                         <FiActivity size={18} />
                     </div>
-                    <h1 className="text-xl font-black text-slate-900 dark:text-white tracking-tighter">Committie<span className="text-primary-600">App</span></h1>
+                    <h1 className="text-xl font-black text-foreground tracking-tighter">Committie<span className="text-primary-500">App</span></h1>
                 </div>
                 <button
                     onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -72,7 +72,7 @@ export default function UserLayout({ children }) {
             {/* Sidebar */}
             <aside
                 className={`
-                    fixed md:sticky top-0 left-0 h-screen w-72 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 
+                    fixed md:sticky top-0 left-0 h-screen w-72 bg-background border-r border-slate-200 dark:border-slate-800 
                     z-[60] transition-all duration-500 ease-in-out transform 
                     ${isSidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
                     md:shadow-none shadow-2xl
@@ -82,11 +82,11 @@ export default function UserLayout({ children }) {
                     {/* Brand */}
                     <div className="p-8 hidden md:block">
                         <div className="flex items-center gap-3 mb-2">
-                            <div className="w-10 h-10 bg-primary-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-primary-500/20">
+                            <div className="w-10 h-10 bg-primary-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-primary-500/20">
                                 <FiActivity size={22} />
                             </div>
-                            <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter">
-                                Committie<span className="text-primary-600">App</span>
+                            <h1 className="text-2xl font-black text-foreground tracking-tighter">
+                                Committie<span className="text-primary-500">App</span>
                             </h1>
                         </div>
                         <div className="flex items-center gap-2 px-1">
@@ -98,11 +98,11 @@ export default function UserLayout({ children }) {
                     {/* Member Profile Card */}
                     <Link href="/userDash/profile" className="px-6 mb-4 block">
                         <div className="p-5 rounded-3xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-premium flex items-center gap-4 group hover:border-primary-500/50 transition-colors">
-                            <div className="w-12 h-12 bg-primary-600 text-white rounded-2xl flex items-center justify-center font-black shadow-lg shadow-primary-500/20 group-hover:rotate-6 transition-transform">
+                            <div className="w-12 h-12 bg-primary-500 text-white rounded-2xl flex items-center justify-center font-black shadow-lg shadow-primary-500/20 group-hover:rotate-6 transition-transform">
                                 {user?._id ? user.name.substring(0, 2).toUpperCase() : <FiUser />}
                             </div>
                             <div className="overflow-hidden">
-                                <p className="text-sm font-black text-slate-900 dark:text-white truncate uppercase tracking-tighter">{user?.name || "Guest Participant"}</p>
+                                <p className="text-sm font-black text-foreground truncate uppercase tracking-tighter">{user?.name || "Guest Participant"}</p>
                                 <div className="flex items-center gap-1.5 mt-0.5">
                                     <FiShield size={10} className="text-green-500" />
                                     <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest">Verified Profile</p>
@@ -125,13 +125,13 @@ export default function UserLayout({ children }) {
                                     className={`
                                         flex items-center justify-between px-4 py-3.5 rounded-2xl font-bold transition-all duration-300 group
                                         ${active
-                                            ? "bg-primary-600 text-white shadow-xl shadow-primary-500/20 translate-x-1"
+                                            ? "bg-primary-500 text-white shadow-xl shadow-primary-500/20 translate-x-1"
                                             : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-white"}
                                     `}
                                 >
                                     <div className="flex items-center gap-3">
                                         <div className={`p-2 rounded-xl transition-colors ${active ? "bg-white/20" : "bg-transparent group-hover:bg-primary-500/10"}`}>
-                                            <Icon size={18} className={active ? "text-white" : "group-hover:text-primary-600"} />
+                                            <Icon size={18} className={active ? "text-white" : "group-hover:text-primary-500"} />
                                         </div>
                                         <span className="text-sm tracking-tight">{item.name}</span>
                                     </div>

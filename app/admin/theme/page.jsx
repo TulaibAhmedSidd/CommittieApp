@@ -31,8 +31,8 @@ export default function ThemePage() {
 
     return (
         <div className="p-8 md:p-12 animate-in fade-in duration-700">
-            <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter uppercase italic mb-8">
-                System <span className="text-primary-600">Control</span>
+            <h1 className="text-4xl font-black text-foreground tracking-tighter uppercase italic mb-8">
+                System <span className="text-primary-500">Control</span>
             </h1>
             <ThemeManager />
             <SystemControl

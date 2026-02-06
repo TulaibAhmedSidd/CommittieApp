@@ -63,20 +63,20 @@ export default function Notifications({ userId }) {
               className={`
                 relative p-5 rounded-2xl border transition-all duration-300
                 ${n.isRead
-                  ? "bg-white dark:bg-slate-900 border-secondary-100 dark:border-secondary-800 opacity-70"
-                  : "bg-primary-50/30 dark:bg-primary-900/10 border-primary-200 dark:border-primary-800/50 shadow-sm cursor-pointer hover:shadow-md hover:-translate-y-0.5"
+                  ? "bg-background border-border-color opacity-70"
+                  : "bg-primary-500/5 border-primary-500/20 shadow-sm cursor-pointer hover:shadow-md hover:-translate-y-0.5"
                 }
               `}
             >
               <div className="flex gap-4">
                 <div className={`
                   shrink-0 w-10 h-10 rounded-full flex items-center justify-center
-                  ${n.isRead ? "bg-secondary-100 dark:bg-secondary-800 text-secondary-400" : "bg-primary-100 dark:bg-primary-900 text-primary-600"}
+                  ${n.isRead ? "bg-secondary-100 dark:bg-secondary-800 text-secondary-400" : "bg-primary-500/10 text-primary-500"}
                 `}>
                   {n.isRead ? <FiCheck /> : <FiBell className="animate-bounce-slow" />}
                 </div>
                 <div className="flex-1 space-y-1">
-                  <p className={`text-sm leading-relaxed ${n.isRead ? "text-secondary-600 dark:text-secondary-400" : "text-secondary-900 dark:text-white font-semibold"}`}>
+                  <p className={`text-sm leading-relaxed ${n.isRead ? "text-secondary-600 dark:text-secondary-400" : "text-foreground font-semibold"}`}>
                     {n.message}
                   </p>
                   <div className="flex items-center gap-2 text-[10px] text-secondary-400 font-bold uppercase tracking-tighter">
@@ -85,7 +85,7 @@ export default function Notifications({ userId }) {
                   </div>
                 </div>
                 {!n.isRead && (
-                  <div className="w-2 h-2 rounded-full bg-primary-600 mt-2 shadow-[0_0_8px_rgba(79,70,229,0.5)]" />
+                  <div className="w-2 h-2 rounded-full bg-primary-500 mt-2 shadow-[0_0_8px_rgba(var(--primary-rgb),0.5)]" />
                 )}
               </div>
             </div>

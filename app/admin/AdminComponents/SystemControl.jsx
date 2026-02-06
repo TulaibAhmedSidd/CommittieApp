@@ -56,7 +56,7 @@ export default function SystemControl({ isAdmin, isSuperAdmin, adminDetails }) {
     return (
         <div className="space-y-8 mt-12 pt-12 border-t border-slate-200 dark:border-slate-800">
             <div className="space-y-2">
-                <h2 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">System <span className="text-primary-600">Utilities</span></h2>
+                <h2 className="text-2xl font-black text-foreground uppercase tracking-tighter">System <span className="text-primary-500">Utilities</span></h2>
                 <p className="text-slate-500 text-sm font-medium italic">Advanced administrative protocols for environment management.</p>
             </div>
 
@@ -82,7 +82,7 @@ export default function SystemControl({ isAdmin, isSuperAdmin, adminDetails }) {
 
                 {isAdmin && (
                     <Card className="p-8 border-primary-500/20 bg-primary-500/5 space-y-4">
-                        <div className="flex items-center gap-3 text-primary-600">
+                        <div className="flex items-center gap-3 text-primary-500">
                             <FiZap size={24} />
                             <h3 className="font-black uppercase tracking-tight">Rapid Seeding</h3>
                         </div>

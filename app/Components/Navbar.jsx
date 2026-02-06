@@ -39,17 +39,17 @@ export default function Navbar() {
 
     return (
         <nav className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-500 ${scrolled
-            ? "py-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-premium border-b border-slate-200 dark:border-slate-800"
+            ? "py-4 bg-background/80 backdrop-blur-xl shadow-premium border-b border-border-color"
             : "py-6 bg-transparent"
             }`}>
             <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
                 {/* Brand */}
                 <Link href="/" className="flex items-center gap-3 group">
-                    <div className="w-10 h-10 bg-primary-600 rounded-[1.25rem] flex items-center justify-center text-white shadow-lg shadow-primary-500/20 group-hover:scale-110 transition-transform">
+                    <div className="w-10 h-10 bg-primary-500 rounded-[1.25rem] flex items-center justify-center text-white shadow-lg shadow-primary-500/20 group-hover:scale-110 transition-transform">
                         <FiShield size={22} />
                     </div>
-                    <span className="text-2xl md:text-2xl font-black text-slate-900 dark:text-white tracking-tighter uppercase italic">
-                        Committie<span className="text-primary-600">App</span>
+                    <span className="text-2xl md:text-2xl font-black text-foreground tracking-tighter uppercase italic">
+                        Committie<span className="text-primary-500">App</span>
                     </span>
                 </Link>
 
@@ -59,7 +59,7 @@ export default function Navbar() {
                         <button
                             onClick={() => setLanguage("en")}
                             className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${language === "en"
-                                ? "bg-white dark:bg-slate-700 text-primary-600 shadow-sm"
+                                ? "bg-white dark:bg-slate-700 text-primary-500 shadow-sm"
                                 : "text-slate-500 hover:text-slate-700"
                                 }`}
                         >
@@ -68,7 +68,7 @@ export default function Navbar() {
                         <button
                             onClick={() => setLanguage("ur")}
                             className={`px-4 py-2 rounded-xl text-sm font-black transition-all ${language === "ur"
-                                ? "bg-white dark:bg-slate-700 text-primary-600 shadow-sm"
+                                ? "bg-white dark:bg-slate-700 text-primary-500 shadow-sm"
                                 : "text-slate-500 hover:text-slate-700"
                                 }`}
                         >
@@ -78,7 +78,7 @@ export default function Navbar() {
 
                     {isLoggedIn ? (
                         <div className="flex items-center gap-4">
-                            <Link href="/userDash" className={`text-xs font-black uppercase tracking-widest transition-colors ${pathname === "/userDash" ? "text-primary-600" : "text-slate-500 hover:text-slate-900 dark:hover:text-white"}`}>
+                            <Link href="/userDash" className={`text-xs font-black uppercase tracking-widest transition-colors ${pathname === "/userDash" ? "text-primary-500" : "text-slate-500 hover:text-slate-900 dark:hover:text-white"}`}>
                                 {t("dashboard")}
                             </Link>
                             <button
@@ -92,13 +92,13 @@ export default function Navbar() {
                         <div className="flex items-center gap-3">
                             <Link
                                 href="/login"
-                                className="px-6 py-3 text-slate-600 dark:text-slate-300 hover:text-primary-600 font-black uppercase text-[10px] tracking-widest transition-all"
+                                className="px-6 py-3 text-slate-600 dark:text-slate-300 hover:text-primary-500 font-black uppercase text-[10px] tracking-widest transition-all"
                             >
                                 Login
                             </Link>
                             <Link
                                 href="/register"
-                                className="px-8 py-3 bg-primary-600 text-white hover:scale-105 transition-all rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-primary-500/20"
+                                className="px-8 py-3 bg-primary-500 text-white hover:scale-105 transition-all rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-primary-500/20"
                             >
                                 Join Now
                             </Link>
@@ -125,7 +125,7 @@ export default function Navbar() {
 
             {/* Mobile Menu */}
             <div className={`
-                lg:hidden absolute top-full left-4 right-4 mt-2 p-6 bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl border border-slate-100 dark:border-slate-800
+                lg:hidden absolute top-full left-4 right-4 mt-2 p-6 bg-background rounded-[2.5rem] shadow-2xl border border-slate-100 dark:border-slate-800
                 transition-all duration-500 ease-in-out origin-top
                 ${isMenuOpen ? "scale-y-100 opacity-100 visible" : "scale-y-0 opacity-0 invisible"}
             `}>
@@ -159,7 +159,7 @@ export default function Navbar() {
                             <Link
                                 href="/register"
                                 onClick={() => setIsMenuOpen(false)}
-                                className="flex items-center gap-4 p-4 bg-primary-600 rounded-2xl font-black uppercase text-xs tracking-widest text-white justify-center shadow-lg shadow-primary-500/20"
+                                className="flex items-center gap-4 p-4 bg-primary-500 rounded-2xl font-black uppercase text-xs tracking-widest text-white justify-center shadow-lg shadow-primary-500/20"
                             >
                                 Join Now
                             </Link>

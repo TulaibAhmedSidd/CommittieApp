@@ -12,6 +12,7 @@
   --card-background: #ffffff;
   --border-color: #e2e8f0;
   --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --primary-hover: #4f46e5;
 }
 
 /* Base Dark Mode (Midnight) */
@@ -22,6 +23,7 @@
   --primary-rgb: 99, 102, 241;
   --card-background: #1e293b;
   --border-color: #334155;
+  --primary-hover: #4f46e5;
 }
 
 /* 1. Forest Theme */
@@ -30,6 +32,7 @@
   --primary-rgb: 16, 185, 129;
   --primary-hover: #059669;
 }
+
 .theme-forest.dark {
   --background: #064e3b;
   --card-background: #065f46;
@@ -40,7 +43,9 @@
 .theme-solar {
   --primary: #f59e0b;
   --primary-rgb: 245, 158, 11;
+  --primary-hover: #d97706;
 }
+
 .theme-solar.dark {
   --background: #451a03;
   --card-background: #78350f;
@@ -51,7 +56,9 @@
 .theme-royal {
   --primary: #8b5cf6;
   --primary-rgb: 139, 92, 246;
+  --primary-hover: #7c3aed;
 }
+
 .theme-royal.dark {
   --background: #2e1065;
   --card-background: #4c1d95;
@@ -62,7 +69,9 @@
 .theme-crimson {
   --primary: #ef4444;
   --primary-rgb: 239, 68, 68;
+  --primary-hover: #dc2626;
 }
+
 .theme-crimson.dark {
   --background: #450a0a;
   --card-background: #7f1d1d;
@@ -73,7 +82,9 @@
 .theme-ocean {
   --primary: #06b6d4;
   --primary-rgb: 6, 182, 212;
+  --primary-hover: #0891b2;
 }
+
 .theme-ocean.dark {
   --background: #083344;
   --card-background: #164e63;
@@ -84,7 +95,9 @@
 .theme-sunset {
   --primary: #f97316;
   --primary-rgb: 249, 115, 22;
+  --primary-hover: #ea580c;
 }
+
 .theme-sunset.dark {
   --background: #431407;
   --card-background: #7c2d12;
@@ -95,7 +108,9 @@
 .theme-rose {
   --primary: #f43f5e;
   --primary-rgb: 244, 63, 94;
+  --primary-hover: #e11d48;
 }
+
 .theme-rose.dark {
   --background: #4c0519;
   --card-background: #881337;
@@ -109,6 +124,7 @@
   --border-color: #222222;
   --primary: #ffffff;
   --primary-rgb: 255, 255, 255;
+  --primary-hover: #f3f4f6;
   --foreground: #ffffff;
 }
 
@@ -116,30 +132,36 @@
 .theme-steel {
   --primary: #475569;
   --primary-rgb: 71, 85, 105;
+  --primary-hover: #334155;
 }
+
 .theme-steel.dark {
   --background: #0f172a;
   --card-background: #1e293b;
   --border-color: #334155;
   --primary: #94a3b8;
   --primary-rgb: 148, 163, 184;
+  --primary-hover: #cbd5e1;
 }
 
 /* 10. Cyber Theme */
 .theme-cyber {
   --primary: #d946ef;
   --primary-rgb: 217, 70, 239;
+  --primary-hover: #c026d3;
 }
+
 .theme-cyber.dark {
   --background: #2e1065;
   --card-background: #1e1b4b;
   --border-color: #312e81;
   --primary: #6ee7b7;
   --primary-rgb: 110, 231, 183;
+  --primary-hover: #34d399;
 }
 
 body {
-  color: var(--background);
+  color: var(--foreground);
   background: var(--background);
   font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -159,19 +181,19 @@ body {
 
 @layer components {
   .glass-card {
-    @apply bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-white/20 dark:border-slate-800/50 shadow-premium;
+    @apply bg-background/80 backdrop-blur-md border border-color shadow-premium;
   }
-  
+
   .btn-primary {
     @apply px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-sm font-medium;
   }
 
   .btn-secondary {
-    @apply px-4 py-2 bg-secondary-100 dark:bg-secondary-800 hover:bg-secondary-200 dark:hover:bg-secondary-700 text-secondary-900 dark:text-secondary-50 rounded-lg transition-all duration-200 font-medium;
+    @apply px-4 py-2 bg-secondary-100 dark:bg-secondary-800 hover:bg-secondary-200 dark:hover:bg-secondary-700 text-foreground rounded-lg transition-all duration-200 font-medium;
   }
 
   .input-field {
-    @apply w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-secondary-200 dark:border-secondary-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all outline-none text-secondary-900 dark:text-secondary-50;
+    @apply w-full px-4 py-2.5 bg-background border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all outline-none text-foreground;
   }
 }
 
@@ -185,7 +207,7 @@ body {
 [data-reveal] {
   opacity: 0;
   transform: translateY(28px) scale(0.995);
-  transition: opacity 700ms cubic-bezier(.2,.9,.2,1), transform 700ms cubic-bezier(.2,.9,.2,1);
+  transition: opacity 700ms cubic-bezier(.2, .9, .2, 1), transform 700ms cubic-bezier(.2, .9, .2, 1);
   will-change: opacity, transform;
 }
 
@@ -204,7 +226,9 @@ body {
 
 /* Reduced-motion preference */
 @media (prefers-reduced-motion: reduce) {
-  [data-reveal], [data-reveal].revealed {
+
+  [data-reveal],
+  [data-reveal].revealed {
     transition: none !important;
     transform: none !important;
     opacity: 1 !important;
