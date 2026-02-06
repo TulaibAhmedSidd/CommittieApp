@@ -43,27 +43,27 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans selection:bg-primary-500/30">
+    <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary-500/30">
 
       {/* Navbar */}
-      <nav className="fixed w-full z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-lg border-b border-slate-200 dark:border-slate-800">
+      <nav className="fixed w-full z-50 bg-background/80 backdrop-blur-lg border-b border-border-color">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           <div className="flex items-center justify-between h-20">
             {/* Logo */}
             <div className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-primary-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary-500/20">
+              <div className="w-10 h-10 bg-primary-500 rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary-500/20">
                 <FiActivity size={22} />
               </div>
-              <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter uppercase italic">
-                Committie<span className="text-primary-600">App</span>
+              <span className="text-2xl font-black text-foreground tracking-tighter uppercase italic">
+                Committie<span className="text-primary-500">App</span>
               </span>
             </div>
 
             {/* Desktop Links */}
             <div className="hidden md:flex items-center gap-8">
-              <a href="#features" className="text-sm font-bold text-slate-500 hover:text-primary-600 uppercase tracking-widest transition-colors">Features</a>
-              <a href="#reviews" className="text-sm font-bold text-slate-500 hover:text-primary-600 uppercase tracking-widest transition-colors">Reviews</a>
-              <a href="#faq" className="text-sm font-bold text-slate-500 hover:text-primary-600 uppercase tracking-widest transition-colors">FAQ</a>
+              <a href="#features" className="text-sm font-bold text-slate-500 hover:text-primary-500 uppercase tracking-widest transition-colors">Features</a>
+              <a href="#reviews" className="text-sm font-bold text-slate-500 hover:text-primary-500 uppercase tracking-widest transition-colors">Reviews</a>
+              <a href="#faq" className="text-sm font-bold text-slate-500 hover:text-primary-500 uppercase tracking-widest transition-colors">FAQ</a>
             </div>
 
             {/* Auth Buttons */}
@@ -74,12 +74,12 @@ export default function Home() {
                 </button>
               </Link>
               <Link href="/login">
-                <button className="text-slate-900 dark:text-white font-black uppercase text-xs tracking-widest hover:text-primary-600 transition-colors">
+                <button className="text-foreground font-black uppercase text-xs tracking-widest hover:text-primary-500 transition-colors">
                   Login
                 </button>
               </Link>
               <Link href="/register">
-                <Button className="font-black uppercase text-xs tracking-widest px-6 py-3 bg-primary-600 hover:bg-primary-700 shadow-xl shadow-primary-500/20">
+                <Button className="font-black uppercase text-xs tracking-widest px-6 py-3 bg-primary-500 hover:bg-primary-700 shadow-xl shadow-primary-500/20">
                   Get Started
                 </Button>
               </Link>
@@ -87,7 +87,7 @@ export default function Home() {
 
             {/* Mobile Menu Toggle */}
             <div className="md:hidden">
-              <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2 text-slate-900 dark:text-white">
+              <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2 text-foreground">
                 {mobileMenuOpen ? <FiX size={24} /> : <FiMenu size={24} />}
               </button>
             </div>
@@ -96,12 +96,12 @@ export default function Home() {
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 animate-in slide-in-from-top-4 duration-200">
+          <div className="md:hidden bg-background border-b border-slate-200 dark:border-slate-800 animate-in slide-in-from-top-4 duration-200">
             <div className="flex flex-col p-4 space-y-4">
               <a href="#features" onClick={() => setMobileMenuOpen(false)} className="text-sm font-black uppercase text-slate-600">Features</a>
               <a href="#reviews" onClick={() => setMobileMenuOpen(false)} className="text-sm font-black uppercase text-slate-600">Reviews</a>
               <Link href="/admin/login" onClick={() => setMobileMenuOpen(false)} className="text-sm font-black uppercase text-slate-600">Organizer Login</Link>
-              <Link href="/login" onClick={() => setMobileMenuOpen(false)} className="text-sm font-black uppercase text-primary-600">Login</Link>
+              <Link href="/login" onClick={() => setMobileMenuOpen(false)} className="text-sm font-black uppercase text-primary-500">Login</Link>
               <Link href="/register" onClick={() => setMobileMenuOpen(false)}>
                 <Button className="w-full font-black uppercase text-xs tracking-widest">Get Started</Button>
               </Link>
@@ -118,14 +118,14 @@ export default function Home() {
 
         <div className="max-w-7xl mx-auto px-4 md:px-8 relative z-10 text-center">
 
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-background border border-slate-200 dark:border-slate-800 shadow-sm mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
             <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
             <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Trusted by 1000+ Members</span>
           </div>
 
-          <h1 className="text-5xl md:text-7xl lg:text-8xl font-black text-slate-900 dark:text-white tracking-tighter mb-6 animate-in fade-in slide-in-from-bottom-8 duration-1000">
+          <h1 className="text-5xl md:text-7xl lg:text-8xl font-black text-foreground tracking-tighter mb-6 animate-in fade-in slide-in-from-bottom-8 duration-1000">
             Save Together.<br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-blue-600">Achieve Together.</span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-500 to-blue-600">Achieve Together.</span>
           </h1>
 
           <p className="text-lg md:text-xl text-slate-500 max-w-2xl mx-auto mb-10 font-medium leading-relaxed animate-in fade-in slide-in-from-bottom-10 duration-[1200ms]">
@@ -139,7 +139,7 @@ export default function Home() {
               </Button>
             </Link>
             <Link href="/register">
-              <button className="h-14 px-10 text-sm font-black uppercase tracking-widest bg-white dark:bg-slate-900 border-2 border-primary-600 text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/10 transition-all rounded-xl shadow-lg">
+              <button className="h-14 px-10 text-sm font-black uppercase tracking-widest bg-background border-2 border-primary-500 text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/10 transition-all rounded-xl shadow-lg">
                 Become an Organizer
               </button>
             </Link>
@@ -174,7 +174,7 @@ export default function Home() {
 
               <div className="space-y-6">
                 <div className="flex gap-6 p-6 rounded-3xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors group">
-                  <div className="w-14 h-14 bg-primary-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <div className="w-14 h-14 bg-primary-500 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
                     <FiUsers size={28} />
                   </div>
                   <div>
@@ -230,16 +230,16 @@ export default function Home() {
       </section>
 
       {/* How It Works & Trust Builders */}
-      <section className="py-16 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800">
+      <section className="py-16 bg-background border-t border-slate-100 dark:border-slate-800">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-start">
             <div className="space-y-6">
-              <h3 className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter">How CommittieApp Keeps It Transparent</h3>
+              <h3 className="text-3xl font-black text-foreground tracking-tighter">How CommittieApp Keeps It Transparent</h3>
               <p className="text-slate-500 font-medium">A short, clear flow so members and organizers always know what's happening — verification, proof uploads, approvals, and payout tracking.</p>
 
               <div className="space-y-4">
                 <div className="flex gap-4 items-start">
-                  <div className="p-3 bg-primary-50 rounded-lg text-primary-600">
+                  <div className="p-3 bg-primary-50 rounded-lg text-primary-500">
                     <FiShield size={20} />
                   </div>
                   <div>
@@ -249,7 +249,7 @@ export default function Home() {
                 </div>
 
                 <div className="flex gap-4 items-start">
-                  <div className="p-3 bg-slate-50 rounded-lg text-primary-600">
+                  <div className="p-3 bg-slate-50 rounded-lg text-primary-500">
                     <FiEdit size={20} />
                   </div>
                   <div>
@@ -305,19 +305,19 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           <div className="rounded-3xl p-8 md:p-12 bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-800 shadow-lg grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
             <div className="md:col-span-2">
-              <h3 className="text-2xl font-black text-slate-900 dark:text-white">Organizers: Grow your circle with confidence</h3>
+              <h3 className="text-2xl font-black text-foreground">Organizers: Grow your circle with confidence</h3>
               <p className="text-slate-500 mt-2">Use our tools to scale committees, collect payments with proof, and build your reputation with verified Blue Ticks. Earn through optional organizer fees and referral rewards.</p>
 
               <ul className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <li className="flex gap-3 items-start"><div className="p-2 bg-primary-50 rounded-md text-primary-600"><FiEdit /></div><span className="font-black">Organizer Dashboard</span></li>
-                <li className="flex gap-3 items-start"><div className="p-2 bg-primary-50 rounded-md text-primary-600"><FiCheckCircle /></div><span className="font-black">Verified Members</span></li>
-                <li className="flex gap-3 items-start"><div className="p-2 bg-primary-50 rounded-md text-primary-600"><FiBell /></div><span className="font-black">Automated Notifications</span></li>
-                <li className="flex gap-3 items-start"><div className="p-2 bg-primary-50 rounded-md text-primary-600"><FiDollarSign /></div><span className="font-black">Flexible Fee Options</span></li>
+                <li className="flex gap-3 items-start"><div className="p-2 bg-primary-50 rounded-md text-primary-500"><FiEdit /></div><span className="font-black">Organizer Dashboard</span></li>
+                <li className="flex gap-3 items-start"><div className="p-2 bg-primary-50 rounded-md text-primary-500"><FiCheckCircle /></div><span className="font-black">Verified Members</span></li>
+                <li className="flex gap-3 items-start"><div className="p-2 bg-primary-50 rounded-md text-primary-500"><FiBell /></div><span className="font-black">Automated Notifications</span></li>
+                <li className="flex gap-3 items-start"><div className="p-2 bg-primary-50 rounded-md text-primary-500"><FiDollarSign /></div><span className="font-black">Flexible Fee Options</span></li>
               </ul>
             </div>
 
             <div className="md:col-span-1">
-              <div className="p-6 rounded-2xl bg-primary-600 text-white">
+              <div className="p-6 rounded-2xl bg-primary-500 text-white">
                 <p className="text-sm uppercase tracking-widest font-black">Organizer Starter</p>
                 <p className="text-3xl font-black mt-4">Free</p>
                 <p className="text-sm mt-2">Create up to 3 committees, access verification tools, and full transparency features.</p>
@@ -331,10 +331,10 @@ export default function Home() {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-20 md:py-32 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 relative">
+      <section id="features" className="py-20 md:py-32 bg-background border-t border-slate-100 dark:border-slate-800 relative">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           <div className="text-center mb-20 space-y-4">
-            <h2 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">Why Choose <span className="text-primary-600">Us?</span></h2>
+            <h2 className="text-4xl md:text-5xl font-black text-foreground tracking-tighter uppercase">Why Choose <span className="text-primary-500">Us?</span></h2>
             <p className="text-slate-500 max-w-xl mx-auto font-medium">Built for transparency, designed for ease. Managing money circles has never been this simple.</p>
           </div>
 
@@ -362,10 +362,10 @@ export default function Home() {
               }
             ].map((feature, i) => (
               <div key={i} className="group p-8 rounded-[2rem] bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 hover:border-primary-500/50 hover:shadow-xl hover:shadow-primary-500/10 transition-all duration-300">
-                <div className="w-14 h-14 bg-white dark:bg-slate-900 rounded-2xl flex items-center justify-center text-primary-600 shadow-sm mb-6 group-hover:scale-110 transition-transform">
+                <div className="w-14 h-14 bg-background rounded-2xl flex items-center justify-center text-primary-500 shadow-sm mb-6 group-hover:scale-110 transition-transform">
                   <feature.icon size={28} />
                 </div>
-                <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight mb-3">{feature.title}</h3>
+                <h3 className="text-xl font-black text-foreground tracking-tight mb-3">{feature.title}</h3>
                 <p className="text-sm text-slate-500 leading-relaxed font-medium">{feature.desc}</p>
               </div>
             ))}
@@ -377,7 +377,7 @@ export default function Home() {
       <section id="reviews" className="py-20 bg-slate-50 dark:bg-slate-950 overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-black uppercase tracking-widest text-slate-900 dark:text-white">Trusted by the Community</h2>
+            <h2 className="text-3xl font-black uppercase tracking-widest text-foreground">Trusted by the Community</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -386,7 +386,7 @@ export default function Home() {
               { quote: "I manage my group without confusion. The automated turn calculator is a lifesaver.", author: "Ahmed R.", role: "Organizer" },
               { quote: "Clear updates & transparency! I verified my payment in seconds.", author: "John D.", role: "Participant" }
             ].map((testimonial, i) => (
-              <Card key={i} className="bg-white dark:bg-slate-900 border-none p-8 relative">
+              <Card key={i} className="bg-background border-none p-8 relative">
                 <div className="absolute top-6 right-8 text-6xl text-slate-100 dark:text-slate-800 font-serif leading-none">"</div>
                 <div className="relative z-10 space-y-6">
                   <p className="text-slate-600 dark:text-slate-300 font-medium text-lg leading-relaxed">
@@ -397,7 +397,7 @@ export default function Home() {
                       {testimonial.author.charAt(0)}
                     </div>
                     <div>
-                      <p className="text-sm font-black uppercase text-slate-900 dark:text-white">{testimonial.author}</p>
+                      <p className="text-sm font-black uppercase text-foreground">{testimonial.author}</p>
                       <p className="text-xs text-slate-400 font-black uppercase tracking-widest">{testimonial.role}</p>
                     </div>
                   </div>
@@ -409,10 +409,10 @@ export default function Home() {
       </section>
 
       {/* FAQ Section */}
-      <section id="faq" className="py-20 bg-white dark:bg-slate-900">
+      <section id="faq" className="py-20 bg-background">
         <div className="max-w-3xl mx-auto px-4 md:px-8 space-y-12">
           <div className="text-center">
-            <h2 className="text-3xl font-black uppercase tracking-tighter text-slate-900 dark:text-white">Frequently Asked Questions</h2>
+            <h2 className="text-3xl font-black uppercase tracking-tighter text-foreground">Frequently Asked Questions</h2>
           </div>
 
           <div className="space-y-4">
@@ -422,7 +422,7 @@ export default function Home() {
               { q: "Is it safe?", a: "We prioritize security. All accounts are verified, and we maintain a strict log of all transactions and activities for full transparency." }
             ].map((faq, i) => (
               <div key={i} className="p-6 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
-                <h4 className="text-lg font-black text-slate-900 dark:text-white mb-2">{faq.q}</h4>
+                <h4 className="text-lg font-black text-foreground mb-2">{faq.q}</h4>
                 <p className="text-slate-500 font-medium text-sm">{faq.a}</p>
               </div>
             ))}
@@ -431,7 +431,7 @@ export default function Home() {
       </section>
 
       {/* Trust & Safety */}
-      <section className="py-16 bg-primary-600 text-white relative overflow-hidden">
+      <section className="py-16 bg-primary-500 text-white relative overflow-hidden">
         <FiShield className="absolute -left-10 -bottom-20 text-white/5 rotate-12" size={400} />
         <div className="max-w-7xl mx-auto px-4 md:px-8 relative z-10">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
@@ -456,11 +456,11 @@ export default function Home() {
       <footer className="py-12 bg-slate-950 text-white border-t border-slate-800">
         <div className="max-w-7xl mx-auto px-4 md:px-8 flex flex-col md:flex-row justify-between items-center gap-8">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center text-white">
+            <div className="w-8 h-8 bg-primary-500 rounded-lg flex items-center justify-center text-white">
               <FiActivity size={18} />
             </div>
             <span className="text-xl font-black tracking-tighter">
-              Committie<span className="text-primary-600">App</span>
+              Committie<span className="text-primary-500">App</span>
             </span>
           </div>
           <div className="flex gap-8 text-slate-400 text-xs font-black uppercase tracking-widest">

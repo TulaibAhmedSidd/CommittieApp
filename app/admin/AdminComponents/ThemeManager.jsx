@@ -8,7 +8,7 @@ import { FiCheck, FiLayout, FiZap } from "react-icons/fi";
 import { toast } from "react-toastify";
 
 const themes = [
-    { id: 'midnight', name: 'Midnight', primary: '#6366f1', bg: '#0f172a' },
+    { id: 'midnight', name: 'Midnight', primary: 'var(--primary)', bg: 'var(--background)' },
     { id: 'forest', name: 'Forest', primary: '#10b981', bg: '#064e3b' },
     { id: 'solar', name: 'Solar', primary: '#f59e0b', bg: '#451a03' },
     { id: 'royal', name: 'Royal', primary: '#8b5cf6', bg: '#2e1065' },
@@ -28,7 +28,6 @@ export default function ThemeManager() {
     const handleThemeChange = async (themeId) => {
         setSaving(true);
         try {
-            alert('sss')
             const adminDetail = localStorage.getItem("admin_detail");
             const admin = adminDetail ? JSON.parse(adminDetail) : null;
 
@@ -55,11 +54,11 @@ export default function ThemeManager() {
     return (
         <div className="space-y-8 p-4">
             <div className="flex items-center gap-3 mb-6">
-                <div className="p-3 bg-primary-600/10 text-primary-600 rounded-2xl">
+                <div className="p-3 bg-primary-500/10 text-primary-500 rounded-2xl">
                     <FiLayout size={24} />
                 </div>
                 <div>
-                    <h2 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">System Aesthetics</h2>
+                    <h2 className="text-2xl font-black text-foreground uppercase tracking-tight">System Aesthetics</h2>
                     <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Global theme control for all users</p>
                 </div>
             </div>
@@ -68,11 +67,11 @@ export default function ThemeManager() {
                 {themes.map((t) => (
                     <Card
                         key={t.id}
-                        className={`p-1 overflow-hidden cursor-pointer transition-all duration-300 border-2 ${activeTheme === t.id ? 'border-primary-600 scale-105 shadow-xl' : 'border-transparent hover:border-slate-200 dark:hover:border-slate-700'}`}
+                        className={`p-1 overflow-hidden cursor-pointer transition-all duration-300 border-2 ${activeTheme === t.id ? 'border-primary-500 scale-105 shadow-xl' : 'border-transparent hover:border-slate-200 dark:hover:border-slate-700'}`}
                     >
-                        <div className="relative aspect-video rounded-xl overflow-hidden" style={{ backgroundColor: t.bg }}>
+                        <div className="relative aspect-video rounded-xl overflow-hidden" style={{ backgroundColor: t.id === 'midnight' ? 'var(--background)' : t.bg }}>
                             <div className="absolute inset-0 flex items-center justify-center">
-                                <div className="w-8 h-8 rounded-full border-4 border-white/20 flex items-center justify-center" style={{ backgroundColor: t.primary }}>
+                                <div className="w-8 h-8 rounded-full border-4 border-white/20 flex items-center justify-center" style={{ backgroundColor: t.id === 'midnight' ? 'var(--primary)' : t.primary }}>
                                     {activeTheme === t.id && <FiCheck className="text-white" />}
                                 </div>
                             </div>
@@ -86,8 +85,8 @@ export default function ThemeManager() {
                 ))}
             </div>
 
-            <div className="p-6 bg-primary-600/5 border border-primary-600/10 rounded-3xl flex items-center gap-4">
-                <FiZap className="text-primary-600" size={24} />
+            <div className="p-6 bg-primary-500/5 border border-primary-500/10 rounded-3xl flex items-center gap-4">
+                <FiZap className="text-primary-500" size={24} />
                 <p className="text-[11px] font-bold text-primary-700 dark:text-primary-400 uppercase tracking-widest leading-relaxed">
                     Security Protocol: Theme changes are global and visible to all members and organizers instantly. Always choose an accessible pairing.
                 </p>

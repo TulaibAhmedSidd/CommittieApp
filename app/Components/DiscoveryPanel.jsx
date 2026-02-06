@@ -60,26 +60,26 @@ export default function DiscoveryPanel({ onChatClick }) {
         <div className="space-y-8">
             <div className="flex flex-col gap-4">
                 <div className="relative group">
-                    <div className="absolute inset-y-0 left-6 flex items-center text-slate-400 group-focus-within:text-primary-600 transition-colors">
+                    <div className="absolute inset-y-0 left-6 flex items-center text-slate-400 group-focus-within:text-primary-500 transition-colors">
                         <FiSearch size={20} />
                     </div>
                     <input
                         type="text"
                         placeholder="Discover Committees, Organizers, or Members?..."
-                        className="w-full pl-16 pr-6 py-6 bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-premium-hover border border-slate-100 dark:border-slate-800 text-sm font-black uppercase tracking-tight outline-none focus:ring-4 focus:ring-primary-500/10 transition-all"
+                        className="w-full pl-16 pr-6 py-6 bg-background rounded-[2.5rem] shadow-premium-hover border border-border-color text-sm font-black uppercase tracking-tight outline-none focus:ring-4 focus:ring-primary-500/10 transition-all"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                     />
                     <div className="absolute inset-y-2 right-2 flex items-center gap-2">
                         <button
                             onClick={handleNearMe}
-                            className={`px-6 h-full rounded-[2rem] flex items-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all ${nearMe ? 'bg-primary-600 text-white shadow-lg' : 'bg-slate-50 dark:bg-slate-800 text-slate-500 hover:bg-slate-100'}`}
+                            className={`px-6 h-full rounded-[2rem] flex items-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all ${nearMe ? 'bg-primary-500 text-white shadow-lg' : 'bg-background text-slate-500 hover:bg-slate-100'}`}
                         >
                             <FiNavigation /> {nearMe ? 'Near Me Active' : 'Near Me'}
                         </button>
                         <button
                             onClick={() => setShowFilters(!showFilters)}
-                            className="p-4 rounded-full bg-slate-900 text-white hover:bg-primary-600 transition-colors"
+                            className="p-4 rounded-full bg-slate-900 text-white hover:bg-primary-500 transition-colors"
                         >
                             <FiFilter />
                         </button>
@@ -91,12 +91,12 @@ export default function DiscoveryPanel({ onChatClick }) {
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Discovery Type</label>
-                                <div className="flex bg-white dark:bg-slate-900 p-1 rounded-2xl border border-slate-100 dark:border-slate-800">
+                                <div className="flex bg-background p-1 rounded-2xl border border-border-color">
                                     {['all', 'committee', 'organizer', 'member'].map(t => (
                                         <button
                                             key={t}
                                             onClick={() => setType(t)}
-                                            className={`flex-1 py-3 px-2 rounded-xl text-[9px] font-black uppercase tracking-tighter transition-all ${type === t ? 'bg-primary-600 text-white' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+                                            className={`flex-1 py-3 px-2 rounded-xl text-[9px] font-black uppercase tracking-tighter transition-all ${type === t ? 'bg-primary-500 text-white' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
                                         >
                                             {t}
                                         </button>
@@ -141,8 +141,8 @@ export default function DiscoveryPanel({ onChatClick }) {
                             <div className="space-y-6 relative z-10">
                                 <div className="space-y-2">
                                     <div className="flex justify-between items-start">
-                                        <h4 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">{c.name}</h4>
-                                        <div className="flex items-center gap-1 text-[10px] font-black text-primary-600 bg-primary-600/10 px-3 py-1 rounded-full uppercase">
+                                        <h4 className="text-xl font-black text-foreground uppercase tracking-tighter">{c.name}</h4>
+                                        <div className="flex items-center gap-1 text-[10px] font-black text-primary-500 bg-primary-500/10 px-3 py-1 rounded-full uppercase">
                                             {c.status}
                                         </div>
                                     </div>
@@ -161,7 +161,7 @@ export default function DiscoveryPanel({ onChatClick }) {
                                 </div>
                                 <Button
                                     onClick={() => window.location.href = `/userDash/join?id=${c._id}`}
-                                    className="w-full py-4 bg-slate-900 hover:bg-primary-600 text-[10px] font-black uppercase tracking-widest"
+                                    className="w-full py-4 bg-slate-900 hover:bg-primary-500 text-[10px] font-black uppercase tracking-widest"
                                 >
                                     Join Circuit
                                 </Button>
@@ -181,11 +181,11 @@ export default function DiscoveryPanel({ onChatClick }) {
                                         {orig.name.charAt(0)}
                                     </div>
                                     <div>
-                                        <h4 className="flex items-center gap-2 font-black text-slate-900 dark:text-white uppercase tracking-tight">
+                                        <h4 className="flex items-center gap-2 font-black text-foreground uppercase tracking-tight">
                                             {orig.name}
                                             <BlueTick verified={orig.verificationStatus === 'verified'} size={14} />
                                         </h4>
-                                        <p className="text-[10px] text-indigo-600 font-black uppercase tracking-widest">Elite Organizer</p>
+                                        <p className="text-[10px] text-primary-500 font-black uppercase tracking-widest">Elite Organizer</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-4 text-[10px] font-black text-slate-500 uppercase">
@@ -202,7 +202,7 @@ export default function DiscoveryPanel({ onChatClick }) {
                                     </Button>
                                     <Button
                                         onClick={() => onChatClick && onChatClick(orig)}
-                                        className="w-14 py-4 bg-primary-600"
+                                        className="w-14 py-4 bg-primary-500"
                                     >
                                         <FiMessageSquare />
                                     </Button>
@@ -223,7 +223,7 @@ export default function DiscoveryPanel({ onChatClick }) {
                                         {m.name.charAt(0)}
                                     </div>
                                     <div>
-                                        <h4 className="flex items-center gap-2 font-black text-slate-900 dark:text-white uppercase tracking-tight">
+                                        <h4 className="flex items-center gap-2 font-black text-foreground uppercase tracking-tight">
                                             {m.name}
                                             <BlueTick verified={m.verificationStatus === 'verified'} size={14} />
                                         </h4>
@@ -237,7 +237,7 @@ export default function DiscoveryPanel({ onChatClick }) {
                                 </div>
                                 <Button
                                     onClick={() => onChatClick && onChatClick(m)}
-                                    className="w-full py-4 text-[10px] font-black uppercase tracking-widest bg-slate-900 hover:bg-primary-600"
+                                    className="w-full py-4 text-[10px] font-black uppercase tracking-widest bg-slate-900 hover:bg-primary-500"
                                 >
                                     <FiMessageSquare className="mr-2" /> Message Member
                                 </Button>

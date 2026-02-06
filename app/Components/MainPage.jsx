@@ -131,21 +131,21 @@ export default function MainPage() {
     <div className="space-y-12 animate-in fade-in duration-700">
       {view === "all" ? (
         <>
-          <div className="flex flex-col gap-2 pb-6 border-b border-slate-200 dark:border-slate-800">
-            <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">{t("discoverPools")}</h1>
+          <div className="flex flex-col gap-2 pb-6 border-b border-border-color">
+            <h1 className="text-4xl font-black text-foreground tracking-tighter uppercase">{t("discoverPools")}</h1>
             <p className="text-slate-500 font-medium italic">{t("browseParticipateDesc")}</p>
           </div>
           <DiscoveryPanel onChatClick={(other) => setActiveChat(other)} />
 
           {userLoggedData?.createdByAdminName && (
             <div className="flex items-center gap-4 p-6 bg-primary-500/5 rounded-[2rem] border border-primary-500/10">
-              <div className="w-12 h-12 rounded-2xl bg-primary-600 flex items-center justify-center text-white shadow-lg shadow-primary-500/20">
+              <div className="w-12 h-12 rounded-2xl bg-primary-500 flex items-center justify-center text-white shadow-lg shadow-primary-500/20">
                 <FiLayers size={22} />
               </div>
               <div>
-                <p className="text-[10px] font-black text-primary-600 uppercase tracking-widest">Primary Organizer</p>
-                <p className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tighter italic">
-                  Associated with: <span className="text-primary-600">{userLoggedData.createdByAdminName}</span>
+                <p className="text-[10px] font-black text-primary-500 uppercase tracking-widest">Primary Organizer</p>
+                <p className="text-lg font-black text-foreground uppercase tracking-tighter italic">
+                  Associated with: <span className="text-primary-500">{userLoggedData.createdByAdminName}</span>
                 </p>
               </div>
             </div>
@@ -181,20 +181,20 @@ export default function MainPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tighter line-clamp-1"
+                      <h3 className="text-xl font-black text-foreground uppercase tracking-tighter line-clamp-1"
                         onClick={() => { router.push('/userDash/committee/' + c._id) }}
                       >{c.name}</h3>
                       <p className="text-slate-500 dark:text-slate-400 text-sm font-medium italic line-clamp-2 leading-relaxed">{c.description}</p>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl space-y-1">
+                      <div className="p-4 bg-background dark:bg-slate-800/50 rounded-2xl space-y-1">
                         <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block">{t("installment")}</span>
-                        <span className="text-sm font-black text-slate-900 dark:text-white block">PKR {formatMoney(c.monthlyAmount)}</span>
+                        <span className="text-sm font-black text-foreground block">PKR {formatMoney(c.monthlyAmount)}</span>
                       </div>
-                      <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl space-y-1">
+                      <div className="p-4 bg-background dark:bg-slate-800/50 rounded-2xl space-y-1">
                         <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block">{t("duration")}</span>
-                        <span className="text-sm font-black text-slate-900 dark:text-white block">{c.monthDuration} {t("durationMonths")}</span>
+                        <span className="text-sm font-black text-foreground block">{c.monthDuration} {t("durationMonths")}</span>
                       </div>
                     </div>
 
@@ -234,11 +234,11 @@ export default function MainPage() {
       {/* Announcements */}
       <div id="notifications" className="pt-12 scroll-mt-24 space-y-8">
         <div className="flex items-center gap-4">
-          <div className="p-3 bg-primary-100 dark:bg-primary-900/30 text-primary-600 rounded-2xl">
+          <div className="p-3 bg-primary-100 dark:bg-primary-900/30 text-primary-500 rounded-2xl">
             <FiBell size={24} />
           </div>
-          <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">{t("recentAnnouncements")}</h2>
-          <div className="h-px flex-1 bg-slate-200 dark:bg-slate-800" />
+          <h2 className="text-3xl font-black text-foreground tracking-tighter uppercase">{t("recentAnnouncements")}</h2>
+          <div className="h-px flex-1 bg-border-color" />
         </div>
         <Notifications user={true} userId={userLoggedData?._id} />
       </div>
@@ -249,27 +249,27 @@ export default function MainPage() {
           <div className="p-3 bg-green-100 dark:bg-green-900/30 text-green-600 rounded-2xl">
             <FiCheckCircle size={24} />
           </div>
-          <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">{t("drawingResults")}</h2>
-          <div className="h-px flex-1 bg-slate-200 dark:bg-slate-800" />
+          <h2 className="text-3xl font-black text-foreground tracking-tighter uppercase">{t("drawingResults")}</h2>
+          <div className="h-px flex-1 bg-border-color" />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {committees.filter(c => c.result?.length > 0).map((c) => (
             <Card key={c._id} className="border-none shadow-xl bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl p-8 relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl group-hover:bg-green-500/10 transition-colors" />
-              <div className="flex justify-between items-start mb-6 border-b border-slate-100 dark:border-slate-800 pb-4">
-                <h3 className="font-black text-slate-900 dark:text-white uppercase tracking-tight">{c.name}</h3>
-                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full">
+              <div className="flex justify-between items-start mb-6 border-b border-border-color pb-4">
+                <h3 className="font-black text-foreground uppercase tracking-tight">{c.name}</h3>
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 bg-background px-3 py-1 rounded-full">
                   {moment(c.announcementDate).format("MMM DD, YYYY")}
                 </span>
               </div>
               <div className="space-y-3">
                 {c.result.slice(0, 3).map((res, i) => (
-                  <div key={i} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl transition-all hover:bg-slate-100 dark:hover:bg-slate-700">
+                  <div key={i} className="flex items-center justify-between p-4 bg-background dark:bg-slate-800 rounded-2xl transition-all hover:bg-slate-100 dark:hover:bg-slate-700">
                     <div className="flex items-center gap-4">
-                      <span className="w-8 h-8 flex items-center justify-center bg-primary-600 text-white rounded-xl text-xs font-black shadow-lg shadow-primary-500/20">
+                      <span className="w-8 h-8 flex items-center justify-center bg-primary-500 text-white rounded-xl text-xs font-black shadow-lg shadow-primary-500/20">
                         {res.position}
                       </span>
-                      <span className="text-slate-900 dark:text-white font-black uppercase text-xs tracking-tight">{res.member?.name}</span>
+                      <span className="text-foreground font-black uppercase text-xs tracking-tight">{res.member?.name}</span>
                     </div>
                   </div>
                 ))}
