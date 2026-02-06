@@ -5,9 +5,18 @@ export default function PWAInstallBar() {
     const [deferredPrompt, setDeferredPrompt] = useState(null);
     const [showIOSHint, setShowIOSHint] = useState(false);
     const [isInstalled, setIsInstalled] = useState(false);
+    const [isMobile, setIsMobile] = useState(false);
 
     useEffect(() => {
-        // Check if already installed
+        // Detect mobile devices only
+        const isMobileDevice =
+            /iphone|ipad|ipod|android/i.test(navigator.userAgent);
+
+        setIsMobile(isMobileDevice);
+
+        if (!isMobileDevice) return;
+
+        // Already installed
         if (
             window.matchMedia("(display-mode: standalone)").matches ||
             window.navigator.standalone === true
@@ -16,16 +25,16 @@ export default function PWAInstallBar() {
             return;
         }
 
-        // Detect iOS Safari
+        // iOS detection
         const isIOS =
-            /iphone|ipad|ipod/i.test(window.navigator.userAgent) &&
+            /iphone|ipad|ipod/i.test(navigator.userAgent) &&
             !window.navigator.standalone;
 
         if (isIOS) {
             setShowIOSHint(true);
         }
 
-        // Android / Desktop install prompt
+        // Android install prompt
         const handler = (e) => {
             e.preventDefault();
             setDeferredPrompt(e);
@@ -38,23 +47,12 @@ export default function PWAInstallBar() {
         };
     }, []);
 
-    const handleInstall = async () => {
-        if (!deferredPrompt) return;
-
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-
-        if (outcome === "accepted") {
-            setIsInstalled(true);
-        }
-
-        setDeferredPrompt(null);
-    };
-
-    if (isInstalled) return null;
+    // ❌ Do not render on desktop or if installed
+    if (!isMobile || isInstalled) return null;
 
     return (
         <div className="fixed bottom-4 left-1/2 z-50 w-[92%] max-w-md -translate-x-1/2 rounded-xl bg-black p-4 shadow-xl">
+            {/* Android */}
             {deferredPrompt && (
                 <div className="flex items-center justify-between gap-3">
                     <div className="text-sm text-white">
@@ -65,14 +63,20 @@ export default function PWAInstallBar() {
                     </div>
 
                     <button
-                        onClick={handleInstall}
-                        className="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-black transition hover:opacity-90"
+                        onClick={async () => {
+                            deferredPrompt.prompt();
+                            await deferredPrompt.userChoice;
+                            setIsInstalled(true);
+                            setDeferredPrompt(null);
+                        }}
+                        className="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-black"
                     >
                         Install
                     </button>
                 </div>
             )}
 
+            {/* iOS */}
             {showIOSHint && !deferredPrompt && (
                 <div className="text-sm text-white">
                     <p className="font-semibold">Install this app</p>
