@@ -2,14 +2,14 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { FiUser, FiSearch, FiUserPlus, FiCheckCircle, FiMoreVertical } from "react-icons/fi";
+import { FiUser, FiSearch, FiUserPlus, FiCheckCircle, FiMoreVertical, FiShield, FiMessageSquare, FiNavigation, FiMapPin, FiX } from "react-icons/fi";
 import Card from "../../Components/Theme/Card";
 import Button from "../../Components/Theme/Button";
 import Input from "../../Components/Theme/Input";
 import { toast } from "react-toastify";
 import BlueTick from "../../Components/Theme/BlueTick";
 import ChatBox from "../../Components/ChatBox";
-import { FiMessageSquare, FiNavigation, FiMapPin, FiX } from "react-icons/fi";
+import MemberDocumentReview from "../../Components/Admin/MemberDocumentReview";
 
 export default function AllMembersPage() {
     const [members, setMembers] = useState([]);
@@ -21,6 +21,9 @@ export default function AllMembersPage() {
     const [coords, setCoords] = useState(null);
     const [city, setCity] = useState("");
     const [activeChat, setActiveChat] = useState(null);
+    const [selectedMember, setSelectedMember] = useState(null);
+    const [page, setPage] = useState(1);
+    const [pagination, setPagination] = useState({ total: 0, pages: 1 });
     const router = useRouter();
 
     useEffect(() => {
@@ -36,13 +39,14 @@ export default function AllMembersPage() {
     const fetchMembers = async () => {
         setLoading(true);
         try {
-            let url = `/api/discovery?type=member&q=${search}&city=${city}`;
+            let url = `/api/discovery?type=member&q=${search}&city=${city}&page=${page}&limit=12`;
             if (nearMe && coords) {
                 url += `&lat=${coords.lat}&lng=${coords.lng}&radius=50`;
             }
             const res = await fetch(url);
             const data = await res.json();
             setMembers(data.members || []);
+            setPagination(data.pagination?.members || { total: 0, pages: 1, page: 1 });
         } catch (err) {
             toast.error("Failed to fetch member pool");
         } finally {
@@ -51,9 +55,13 @@ export default function AllMembersPage() {
     };
 
     useEffect(() => {
+        setPage(1);
+    }, [search, nearMe, city]);
+
+    useEffect(() => {
         const timeout = setTimeout(fetchMembers, 500);
         return () => clearTimeout(timeout);
-    }, [search, nearMe, city]);
+    }, [search, nearMe, city, page]);
 
     const handleNearMe = () => {
         if (!nearMe) {
@@ -125,8 +133,9 @@ export default function AllMembersPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredMembers.length > 0 ? filteredMembers.map((member) => (
+                {members.length > 0 ? members.map((member) => (
                     <Card key={member._id} className="p-6 space-y-4 hover:shadow-premium transition-all border-slate-100 dark:border-slate-800">
+                        {/* Member Card Content */}
                         <div className="flex items-start justify-between">
                             <div className="flex items-center gap-4">
                                 <div className="w-12 h-12 rounded-2xl bg-primary-600/10 text-primary-600 flex items-center justify-center font-black text-xl">
@@ -142,19 +151,28 @@ export default function AllMembersPage() {
                                     </p>
                                 </div>
                             </div>
-                            <button
-                                onClick={() => setActiveChat(member)}
-                                className="p-3 bg-slate-100 dark:bg-slate-800 rounded-xl text-slate-500 hover:bg-primary-600 hover:text-white transition-all shadow-sm"
-                            >
-                                <FiMessageSquare size={16} />
-                            </button>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={() => setActiveChat(member)}
+                                    className="p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-500 hover:bg-primary-600 hover:text-white transition-all shadow-sm"
+                                >
+                                    <FiMessageSquare size={16} />
+                                </button>
+                                <button
+                                    onClick={() => setSelectedMember(member)}
+                                    className="p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-primary-600 hover:bg-primary-600 hover:text-white transition-all shadow-sm"
+                                    title="View Documents"
+                                >
+                                    <FiShield size={16} />
+                                </button>
+                            </div>
                         </div>
 
                         <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center">
                             <div className="flex -space-x-2 overflow-hidden">
                                 {member.organizers?.map((org, i) => (
-                                    <div key={i} title={org.name} className="inline-block h-6 w-6 rounded-full ring-2 ring-white dark:ring-slate-900 bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-[8px] font-black uppercase">
-                                        {org.name.charAt(0)}
+                                    <div key={i} title={org?.name || 'Organizer'} className="inline-block h-6 w-6 rounded-full ring-2 ring-white dark:ring-slate-900 bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-[8px] font-black uppercase">
+                                        {(org?.name || '?').charAt(0)}
                                     </div>
                                 ))}
                                 {(!member.organizers || member.organizers.length === 0) && <p className="text-[10px] text-slate-400 uppercase font-black tracking-widest">Unassigned</p>}
@@ -164,7 +182,7 @@ export default function AllMembersPage() {
                                 <div className="flex items-center gap-2 px-4 py-2 bg-green-500/10 text-green-600 rounded-xl font-black uppercase text-[10px] tracking-widest">
                                     Associated <FiCheckCircle />
                                 </div>
-                            ) : member.pendingOrganizers?.includes(currentAdmin?._id) ? (
+                            ) : (member.pendingOrganizers?.some(org => (org._id || org) === currentAdmin?._id)) ? (
                                 <button disabled className="px-4 py-2 bg-orange-500 text-white rounded-xl font-black uppercase text-[10px] tracking-widest cursor-not-allowed shadow-lg shadow-orange-500/20">
                                     Requested
                                 </button>
@@ -190,6 +208,33 @@ export default function AllMembersPage() {
                 )}
             </div>
 
+            {/* Pagination Controls */}
+            {pagination.pages > 1 && (
+                <div className="flex justify-center items-center gap-6 pt-12">
+                    <Button
+                        variant="secondary"
+                        onClick={() => setPage(p => Math.max(1, p - 1))}
+                        disabled={page === 1}
+                        className="px-8 py-3 text-[10px] font-black uppercase tracking-widest"
+                    >
+                        Previous
+                    </Button>
+                    <div className="flex items-center gap-3">
+                        <span className="text-[10px] font-black text-slate-400 uppercase">Page</span>
+                        <span className="w-10 h-10 rounded-xl bg-primary-600 text-white flex items-center justify-center font-black text-xs shadow-lg shadow-primary-500/20">{page}</span>
+                        <span className="text-[10px] font-black text-slate-400 uppercase">of {pagination.pages}</span>
+                    </div>
+                    <Button
+                        variant="secondary"
+                        onClick={() => setPage(p => Math.min(pagination.pages, p + 1))}
+                        disabled={page === pagination.pages}
+                        className="px-8 py-3 text-[10px] font-black uppercase tracking-widest"
+                    >
+                        Next
+                    </Button>
+                </div>
+            )}
+
             {activeChat && (
                 <ChatBox
                     currentUserId={currentAdmin?._id}
@@ -199,6 +244,35 @@ export default function AllMembersPage() {
                     otherUserModel="Member"
                     onClose={() => setActiveChat(null)}
                 />
+            )}
+
+            {/* Member Details Modal */}
+            {selectedMember && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-300">
+                    <Card className="max-w-4xl w-full p-10 space-y-8 bg-white dark:bg-slate-900 shadow-2xl relative overflow-hidden max-h-[90vh] overflow-y-auto">
+                        <div className="absolute top-0 right-0 p-12 opacity-5 pointer-events-none">
+                            <FiShield size={160} />
+                        </div>
+
+                        <div className="flex justify-between items-start relative z-10">
+                            <div>
+                                <h2 className="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tighter italic">Review Credentials</h2>
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Inspecting identity documents and verification status</p>
+                            </div>
+                            <button onClick={() => setSelectedMember(null)} className="p-3 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-all group">
+                                <FiX size={28} className="text-slate-400 group-hover:rotate-90 transition-transform" />
+                            </button>
+                        </div>
+
+                        <div className="relative z-10">
+                            <MemberDocumentReview member={selectedMember} />
+                        </div>
+
+                        <div className="pt-6 border-t border-slate-100 dark:border-slate-800 flex justify-end relative z-10">
+                            <Button onClick={() => setSelectedMember(null)} className="px-12 py-4 text-[10px] font-black uppercase tracking-widest bg-slate-900 shadow-xl">Close Review</Button>
+                        </div>
+                    </Card>
+                </div>
             )}
         </div>
     );

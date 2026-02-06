@@ -17,6 +17,7 @@ import Table, { TableRow, TableCell } from "./Theme/Table";
 import { useLanguage } from "./LanguageContext";
 import { submitPayment } from "../userDash/apis";
 import { toast } from "react-toastify";
+import { useRouter } from "next/navigation";
 
 export default function MyCommittie2() {
   const { t } = useLanguage();
@@ -91,7 +92,7 @@ export default function MyCommittie2() {
       setSubmitting(false);
     }
   };
-
+  const router = useRouter();
   if (loading) {
     return (
       <div className="py-24 flex flex-col items-center justify-center gap-4 animate-in fade-in duration-500">

@@ -1,14 +1,14 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { FiSearch, FiMapPin, FiNavigation, FiTarget, FiBriefcase, FiUser, FiLayers, FiFilter, FiX, FiMessageSquare } from "react-icons/fi";
+import { FiSearch, FiMapPin, FiNavigation, FiTarget, FiBriefcase, FiUser, FiLayers, FiFilter, FiX, FiMessageSquare, FiCheckCircle, FiClock } from "react-icons/fi";
 import Card from "./Theme/Card";
 import Button from "./Theme/Button";
 import Input from "./Theme/Input";
 import BlueTick from "./Theme/BlueTick";
 import { toast } from "react-toastify";
 
-export default function DiscoveryPanel({ onChatClick }) {
+export default function DiscoveryPanel({ onChatClick, member, refreshMember }) {
     const [search, setSearch] = useState("");
     const [type, setType] = useState("all");
     const [city, setCity] = useState("");
@@ -53,6 +53,31 @@ export default function DiscoveryPanel({ onChatClick }) {
         } else {
             setNearMe(false);
             setCoords(null);
+        }
+    };
+
+    const handleConnect = async (adminId) => {
+        if (!member) {
+            toast.error("Please login to connect");
+            return;
+        }
+
+        try {
+            const res = await fetch("/api/member/pool", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ memberId: member._id, adminId })
+            });
+
+            if (res.ok) {
+                toast.success("Association request sent!");
+                refreshMember && refreshMember();
+            } else {
+                const data = await res.json();
+                toast.error(data.error || "Connection failed");
+            }
+        } catch (err) {
+            toast.error("Failed to initiate connection");
         }
     };
 
@@ -159,12 +184,66 @@ export default function DiscoveryPanel({ onChatClick }) {
                                         <FiTarget /> {c.maxMembers} Members
                                     </div>
                                 </div>
-                                <Button
-                                    onClick={() => window.location.href = `/userDash/join?id=${c._id}`}
-                                    className="w-full py-4 bg-slate-900 hover:bg-primary-600 text-[10px] font-black uppercase tracking-widest"
-                                >
-                                    Join Circuit
-                                </Button>
+                                {member ? (
+                                    (() => {
+                                        const committeeId = c._id.toString();
+                                        const committeeRecord = member.committees?.find(rec => (rec.committee?._id || rec.committee)?.toString() === committeeId);
+                                        const status = committeeRecord ? committeeRecord.status : "available";
+                                        const spotsLeft = c.maxMembers - (c.members?.length || 0);
+
+                                        if (status === "pending") {
+                                            return (
+                                                <div className="w-full flex items-center justify-center gap-3 py-4 bg-amber-500/10 text-amber-600 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-amber-500/20">
+                                                    <FiClock className="animate-pulse" /> Pending Approval
+                                                </div>
+                                            );
+                                        }
+                                        if (status === "approved") {
+                                            return (
+                                                <Button
+                                                    onClick={() => window.location.href = `/userDash/committee/${c._id}`}
+                                                    className="w-full py-4 bg-green-500 hover:bg-green-600 text-[10px] font-black uppercase tracking-widest"
+                                                >
+                                                    <FiCheckCircle className="mr-2" /> Joined — View
+                                                </Button>
+                                            );
+                                        }
+
+                                        // Check Verification
+                                        if (member.verificationStatus !== "verified") {
+                                            return (
+                                                <div className="space-y-3">
+                                                    <Button
+                                                        onClick={() => window.location.href = "/userDash?view=verification"}
+                                                        className="w-full py-4 bg-amber-600 hover:bg-amber-700 text-[10px] font-black uppercase tracking-widest shadow-lg shadow-amber-600/20"
+                                                    >
+                                                        Verification Required
+                                                    </Button>
+                                                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tight text-center bg-slate-50 dark:bg-slate-800/50 py-2 rounded-xl border border-slate-100 dark:border-slate-800">
+                                                        Requires: NIC (Front/Back) & Electricity Bill
+                                                    </p>
+                                                </div>
+                                            );
+                                        }
+
+                                        return (
+                                            <Button
+                                                onClick={() => window.location.href = `/userDash/join?id=${c._id}`}
+                                                disabled={spotsLeft <= 0}
+                                                className="w-full py-4 bg-slate-900 hover:bg-primary-600 text-[10px] font-black uppercase tracking-widest"
+                                            >
+                                                {spotsLeft > 0 ? "Join Circuit" : "Circuit Full"}
+                                            </Button>
+                                        );
+                                    })()
+                                ) : (
+                                    <Button
+                                        onClick={() => window.location.href = `/userDash/join?id=${c._id}`}
+                                        className="w-full py-4 bg-slate-900 hover:bg-primary-600 text-[10px] font-black uppercase tracking-widest"
+                                    >
+                                        Join Circuit
+                                    </Button>
+                                )}
                             </div>
                         </Card>
                     ))}
@@ -196,10 +275,41 @@ export default function DiscoveryPanel({ onChatClick }) {
                                 <div className="flex gap-2">
                                     <Button
                                         onClick={() => window.location.href = `/userDash/organizer?id=${orig._id}`}
-                                        className="flex-1 py-4 text-[10px] font-black uppercase tracking-[0.15em] bg-slate-100 text-slate-600 hover:bg-slate-200"
+                                        className="flex-1 py-4 text-[10px] font-black uppercase tracking-[0.15em]  text-slate-600 hover:bg-slate-200"
                                     >
                                         Profile
                                     </Button>
+
+                                    {member && (
+                                        (() => {
+                                            const isConnected = member.organizers?.some(o => (o._id || o) === orig._id);
+                                            const isPending = member.pendingOrganizers?.some(o => (o._id || o) === orig._id);
+
+                                            if (isConnected) {
+                                                return (
+                                                    <div className="flex-1 flex items-center justify-center gap-2 bg-green-500/10 text-green-600 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-green-500/20">
+                                                        <FiCheckCircle /> Connected
+                                                    </div>
+                                                );
+                                            }
+                                            if (isPending) {
+                                                return (
+                                                    <div className="flex-1 flex items-center justify-center gap-2 bg-amber-500/10 text-amber-600 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-amber-500/20">
+                                                        <FiClock /> Pending
+                                                    </div>
+                                                );
+                                            }
+                                            return (
+                                                <Button
+                                                    onClick={() => handleConnect(orig._id)}
+                                                    className="flex-1 py-4 text-[10px] font-black uppercase tracking-widest bg-primary-600 text-white"
+                                                >
+                                                    Connect
+                                                </Button>
+                                            );
+                                        })()
+                                    )}
+
                                     <Button
                                         onClick={() => onChatClick && onChatClick(orig)}
                                         className="w-14 py-4 bg-primary-600"

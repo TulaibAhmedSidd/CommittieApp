@@ -9,6 +9,10 @@ export async function GET(req) {
   await connectToDatabase();
   const { searchParams } = new URL(req.url);
   const adminId = searchParams.get("adminId");
+  const q = searchParams.get("q") || "";
+  const page = parseInt(searchParams.get("page") || "1");
+  const limit = parseInt(searchParams.get("limit") || "10");
+  const skip = (page - 1) * limit;
 
   try {
     let query = {};
@@ -16,9 +20,13 @@ export async function GET(req) {
       const requester = await Admin.findById(adminId);
       // If requester is NOT super admin, filter by createdBy
       if (!requester?.isSuperAdmin) {
-        query = { createdBy: adminId };
+        query.createdBy = adminId;
       }
     }
+    if (q) {
+      query.name = { $regex: q, $options: "i" };
+    }
+    const total = await Committee.countDocuments(query);
     const committees = await Committee.find(query)
       .populate({
         path: "members",
@@ -35,7 +43,10 @@ export async function GET(req) {
       .populate({
         path: "createdBy",
         model: "Admin",
-      });
+      })
+      .skip(skip)
+      .limit(limit);
+
     const committeesWithDetails = committees.map((committee) => ({
       ...committee.toObject(),
       createdBy: committee.createdBy?._id,
@@ -44,7 +55,11 @@ export async function GET(req) {
         email: committee.createdBy?.email || "",
       },
     }));
-    return new Response(JSON.stringify(committeesWithDetails), { status: 200 });
+
+    return new Response(JSON.stringify({
+      committees: committeesWithDetails,
+      pagination: { total, page, pages: Math.ceil(total / limit) }
+    }), { status: 200 });
   } catch (err) {
     return new Response(
       JSON.stringify({ error: "Failed to fetch committees", details: err.message }),
@@ -70,6 +85,8 @@ export async function POST(req) {
       bankDetails,
       organizerFee,
       isFeeMandatory,
+      requireDocuments,
+      mandatoryDocuments,
     } = body;
 
     // Validate required fields
@@ -114,6 +131,8 @@ export async function POST(req) {
       bankDetails,
       organizerFee: organizerFee || 0,
       isFeeMandatory: isFeeMandatory || false,
+      requireDocuments: requireDocuments || false,
+      mandatoryDocuments: mandatoryDocuments || [],
     });
 
     await newCommittee.save();
@@ -155,6 +174,8 @@ export async function PATCH(req) {
       startDate,
       createdBy,
       bankDetails,
+      requireDocuments,
+      mandatoryDocuments,
     } = body;
 
     if (!id || !createdBy) {
@@ -185,6 +206,8 @@ export async function PATCH(req) {
       monthDuration,
       startDate,
       bankDetails,
+      requireDocuments,
+      mandatoryDocuments,
     };
 
     if (startDate && monthDuration) {

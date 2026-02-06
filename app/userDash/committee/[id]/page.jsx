@@ -12,12 +12,14 @@ import Button from "../../../Components/Theme/Button";
 import Input from "../../../Components/Theme/Input";
 import Table, { TableRow, TableCell } from "../../../Components/Theme/Table";
 import ChatBox from "../../../Components/ChatBox";
-import BlueTick from "../../../Components/Theme/BlueTick";
+import Modal from "../../../Components/Theme/Modal";
+import UploadCapture from "../../../Components/Theme/UploadCapture";
 import { formatMoney } from "../../../utils/commonFunc";
 import { submitPayment } from "../../apis";
 import { toast } from "react-toastify";
 import moment from "moment";
 import { useLanguage } from "../../../Components/LanguageContext";
+import BlueTick from "@/app/Components/Theme/BlueTick";
 
 export default function CommitteeDetailPage() {
     const { t } = useLanguage();
@@ -58,8 +60,11 @@ export default function CommitteeDetailPage() {
         }
     };
 
-    const handlePaymentSubmit = async (e) => {
-        e.preventDefault();
+    const handlePaymentSubmit = async () => {
+        if (!paymentData.screenshot || !paymentData.transactionId) {
+            return toast.warning("Screenshot and Transaction ID are required");
+        }
+
         setSubmitting(true);
         try {
             await submitPayment(committeeId, {
@@ -92,9 +97,7 @@ export default function CommitteeDetailPage() {
     const turnRecord = committee.result?.find(r => r.position === committee.currentMonth);
     const isMyTurn = (turnRecord?.member?._id === user?._id || turnRecord?.member === user?._id);
     const imInComittie = committee?.members?.some(member => member?._id == user?._id);
-    // console.log("imInComittie", imInComittie)
-    // console.log("committee?.members", committee)
-    // console.log("user?._id", user?._id)
+
     return (
         <div className="p-8 md:p-12 space-y-12 animate-in fade-in slide-in-from-bottom-6 duration-1000">
             {/* Header */}
@@ -321,70 +324,71 @@ export default function CommitteeDetailPage() {
             </div>
 
             {/* Payment Modal */}
-            {isPayModalOpen && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/95 backdrop-blur-md p-4 animate-in fade-in duration-300">
-                    <Card className="max-w-3xl w-full bg-white dark:bg-slate-900 overflow-hidden shadow-2xl border-none p-0">
-                        <form onSubmit={handlePaymentSubmit} className="flex flex-col md:flex-row h-full max-h-[90vh]">
-                            {/* Sidebar */}
-                            <div className="md:w-72 bg-slate-900 text-white p-10 flex flex-col justify-between relative overflow-hidden">
-                                <FiInfo className="absolute -bottom-4 -right-4 text-white/5 font-black" size={140} />
-                                <div className="space-y-8 relative z-10">
-                                    <h3 className="text-3xl font-black tracking-tighter uppercase whitespace-pre-wrap">Sync Installment</h3>
-                                    <div className="space-y-4">
-                                        <div className="space-y-1">
-                                            <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Base Installment</p>
-                                            <p className="text-2xl font-black tracking-tighter">RS {formatMoney(committee.monthlyAmount)}</p>
-                                        </div>
-                                        <div className="pt-4 border-t border-white/10">
-                                            <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Total Required</p>
-                                            <p className="text-3xl font-black text-white">RS {formatMoney(committee.monthlyAmount + (committee.isFeeMandatory ? (committee.organizerFee || 0) : 0))}</p>
-                                        </div>
-                                    </div>
-                                </div>
+            <Modal
+                isOpen={isPayModalOpen}
+                onClose={() => setIsPayModalOpen(false)}
+                title="Sync Installment Data"
+                size="lg"
+            >
+                <div className="flex flex-col md:flex-row gap-10">
+                    {/* Summary */}
+                    <div className="md:w-64 space-y-8">
+                        <div className="p-6 bg-slate-900 text-white rounded-[2rem] space-y-4">
+                            <div className="space-y-1">
+                                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Base Installment</p>
+                                <p className="text-2xl font-black tracking-tighter">RS {formatMoney(committee.monthlyAmount)}</p>
                             </div>
-
-                            {/* Form */}
-                            <div className="flex-1 p-10 md:p-14 space-y-10 overflow-y-auto">
-                                <div className="flex justify-between items-start">
-                                    <h4 className="text-sm font-black text-slate-500 uppercase tracking-widest">Transaction Evidence</h4>
-                                    <Button variant="ghost" onClick={() => setIsPayModalOpen(false)} className="p-2 h-auto text-slate-300 hover:text-red-500 transition-colors">
-                                        <FiXCircle size={32} />
-                                    </Button>
-                                </div>
-
-                                <div className="grid grid-cols-1 gap-8">
-                                    <Input
-                                        label="Transaction ID / Ref"
-                                        placeholder="e.g. TRX-9922883"
-                                        value={paymentData.transactionId}
-                                        onChange={(e) => setPaymentData({ ...paymentData, transactionId: e.target.value })}
-                                        required
-                                        className="h-16 font-mono font-black uppercase text-sm"
-                                    />
-                                    <div className="space-y-3">
-                                        <label className="text-[11px] font-black uppercase text-slate-400 tracking-widest ml-1">Screenshot Proof (Base64/URL)</label>
-                                        <div className="relative group">
-                                            <textarea
-                                                placeholder="Paste screenshot data or Provide URL..."
-                                                value={paymentData.screenshot}
-                                                onChange={(e) => setPaymentData({ ...paymentData, screenshot: e.target.value })}
-                                                required
-                                                rows={4}
-                                                className="w-full bg-slate-50 dark:bg-slate-950/50 border-2 border-slate-100 dark:border-slate-800 rounded-[2rem] p-6 text-xs font-mono resize-none focus:ring-2 focus:ring-primary-500/20 transition-all outline-none"
-                                            />
-                                            <FiUploadCloud className="absolute right-6 top-6 text-slate-300" size={24} />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <Button type="submit" loading={submitting} className="w-full py-6 bg-primary-600 hover:bg-primary-700 font-black uppercase tracking-[0.3em] text-[11px] rounded-[1.5rem] shadow-premium">
-                                    Finalize Submission <FiArrowRight className="ml-2" />
-                                </Button>
+                            <div className="pt-4 border-t border-white/10">
+                                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Total Required</p>
+                                <p className="text-3xl font-black text-white">RS {formatMoney(committee.monthlyAmount + (committee.isFeeMandatory ? (committee.organizerFee || 0) : 0))}</p>
                             </div>
-                        </form>
-                    </Card>
+                        </div>
+                        <div className="p-4 bg-primary-500/5 rounded-2xl border border-primary-500/10 flex gap-3 italic">
+                            <FiInfo className="text-primary-600 shrink-0 mt-0.5" />
+                            <p className="text-[10px] text-slate-600 dark:text-slate-400 leading-relaxed font-medium">Please ensure the transaction ID is accurate for rapid node verification.</p>
+                        </div>
+                    </div>
+
+                    {/* Controls */}
+                    <div className="flex-1 space-y-8">
+                        <Input
+                            label="Transaction ID / Protocol Ref"
+                            placeholder="e.g. TRX-9922883"
+                            value={paymentData.transactionId}
+                            onChange={(e) => setPaymentData({ ...paymentData, transactionId: e.target.value })}
+                            required
+                            className="h-14 font-mono font-black uppercase text-sm tracking-wider"
+                        />
+
+                        <UploadCapture
+                            label="Transaction Evidence (Screenshot)"
+                            id="payment-proof"
+                            value={paymentData.screenshot}
+                            memberId={user?._id}
+                            onUpload={(url) => setPaymentData({ ...paymentData, screenshot: url })}
+                            required
+                            placeholder="Upload or Capture Payment Proof"
+                        />
+
+                        <div className="flex gap-4">
+                            <Button
+                                variant="secondary"
+                                onClick={() => setIsPayModalOpen(false)}
+                                className="flex-1 py-4 text-[10px] font-black uppercase tracking-widest bg-slate-100 dark:bg-slate-800 border-none"
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                onClick={handlePaymentSubmit}
+                                loading={submitting}
+                                className="flex-[2] py-4 text-[10px] font-black uppercase tracking-widest bg-primary-600 border-none shadow-xl shadow-primary-500/20"
+                            >
+                                Finalize & Sync <FiArrowRight className="ml-2" />
+                            </Button>
+                        </div>
+                    </div>
                 </div>
-            )}
+            </Modal>
 
             {activeChat && (
                 <ChatBox

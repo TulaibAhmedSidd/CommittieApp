@@ -14,6 +14,7 @@ import MyCommittie2 from "./MyCommittie2";
 import AssociationRequests from "./AssociationRequests";
 import AssociationTransparency from "./AssociationTransparency";
 import DiscoveryPanel from "./DiscoveryPanel";
+import VerifiedMember from "./VerifiedMember";
 import ChatBox from "./ChatBox";
 import { useLanguage } from "./LanguageContext";
 
@@ -74,6 +75,13 @@ export default function MainPage() {
   };
 
   const registerForCommittee = async (committee) => {
+    // Verification Check
+    if (userLoggedData?.verificationStatus !== "verified") {
+      toast.warning("Verification Required! Please complete your profile verification first.");
+      router.push("/userDash?view=verification");
+      return;
+    }
+
     const committeeId = committee._id;
     const adminId = committee.createdBy?._id || committee.createdBy;
 
@@ -113,7 +121,8 @@ export default function MainPage() {
   };
 
   const getMemberStatus = (committeeId) => {
-    const committeeRecord = userLoggedData?.committees?.find(c => (c.committee?._id || c.committee) === committeeId);
+    const idStr = committeeId.toString();
+    const committeeRecord = userLoggedData?.committees?.find(c => (c.committee?._id || c.committee)?.toString() === idStr);
     if (!committeeRecord) return "available";
     return committeeRecord.status;
   };
@@ -129,13 +138,19 @@ export default function MainPage() {
 
   return (
     <div className="space-y-12 animate-in fade-in duration-700">
-      {view === "all" ? (
+      {view === "verification" ? (
+        <VerifiedMember member={userLoggedData} onUpdate={(updated) => setUserLoggedData(updated)} />
+      ) : view === "all" ? (
         <>
           <div className="flex flex-col gap-2 pb-6 border-b border-slate-200 dark:border-slate-800">
             <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">{t("discoverPools")}</h1>
             <p className="text-slate-500 font-medium italic">{t("browseParticipateDesc")}</p>
           </div>
-          <DiscoveryPanel onChatClick={(other) => setActiveChat(other)} />
+          <DiscoveryPanel
+            member={userLoggedData}
+            refreshMember={() => fetchMemberById(userLoggedData?._id)}
+            onChatClick={(other) => setActiveChat(other)}
+          />
 
           {userLoggedData?.createdByAdminName && (
             <div className="flex items-center gap-4 p-6 bg-primary-500/5 rounded-[2rem] border border-primary-500/10">
@@ -200,13 +215,27 @@ export default function MainPage() {
 
                     <div className="pt-4 mt-auto">
                       {status === "available" ? (
-                        <Button
-                          className="w-full py-4 font-black uppercase tracking-widest text-[10px] shadow-lg shadow-primary-500/20"
-                          disabled={spotsLeft <= 0}
-                          onClick={() => registerForCommittee(c)}
-                        >
-                          {t("applyToJoin")}
-                        </Button>
+                        userLoggedData?.verificationStatus !== "verified" ? (
+                          <div className="space-y-3">
+                            <Button
+                              className="w-full py-4 bg-amber-600 hover:bg-amber-700 font-black uppercase tracking-widest text-[10px] shadow-lg shadow-amber-600/20"
+                              onClick={() => router.push("/userDash?view=verification")}
+                            >
+                              Verification Required
+                            </Button>
+                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tight text-center bg-slate-50 dark:bg-slate-800/50 py-2 rounded-xl border border-slate-100 dark:border-slate-800">
+                              Requires: NIC (Front/Back) & Electricity Bill
+                            </p>
+                          </div>
+                        ) : (
+                          <Button
+                            className="w-full py-4 font-black uppercase tracking-widest text-[10px] shadow-lg shadow-primary-500/20"
+                            disabled={spotsLeft <= 0}
+                            onClick={() => registerForCommittee(c)}
+                          >
+                            {t("applyToJoin")}
+                          </Button>
+                        )
                       ) : status === "pending" ? (
                         <div className="w-full flex items-center justify-center gap-3 py-4 bg-amber-500/10 text-amber-600 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-amber-500/20 shadow-sm">
                           <FiClock className="animate-pulse" /> {t("applicationPending")}

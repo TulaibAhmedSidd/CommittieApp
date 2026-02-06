@@ -247,15 +247,14 @@ export default function MemberProfilePage() {
                                     placeholder="42101-XXXXXXX-X"
                                 />
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Original NIC Image (URL)</label>
-                                    <input
-                                        type="text"
-                                        name="nicImage"
-                                        placeholder="Paste NIC Image URL..."
-                                        value={formData.nicImage}
-                                        onChange={handleChange}
-                                        className="w-full px-4 py-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800 text-xs font-bold outline-none focus:ring-2 focus:ring-primary-500/20 transition-all"
-                                    />
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Profile Trust Score</label>
+                                    <Link
+                                        href="/userDash?view=verification"
+                                        className="w-full flex items-center justify-between px-4 py-4 bg-primary-600/5 dark:bg-primary-900/10 rounded-2xl border border-primary-500/10 text-xs font-black text-primary-600 hover:bg-primary-600 hover:text-white transition-all group"
+                                    >
+                                        Go to Verification Hub
+                                        <FiShield className="group-hover:rotate-12 transition-transform" />
+                                    </Link>
                                 </div>
                             </div>
                         </div>

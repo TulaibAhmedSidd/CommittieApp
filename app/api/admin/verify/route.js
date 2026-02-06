@@ -19,13 +19,13 @@ export async function GET(req) {
         if (admin.isSuperAdmin) {
             // Super Admin can verify everyone
             pendingAdmins = await Admin.find({ verificationStatus: "pending" }).select("name email nicNumber nicImage city country verificationStatus");
-            pendingMembers = await Member.find({ verificationStatus: "pending" }).select("name email nicNumber nicImage city country verificationStatus");
+            pendingMembers = await Member.find({ verificationStatus: "pending" }).select("name email nicFront nicBack electricityBill documents city country verificationStatus");
         } else {
             // Organizers can only verify members associated with them
             pendingMembers = await Member.find({
                 verificationStatus: "pending",
                 organizers: adminId
-            }).select("name email nicNumber nicImage city country verificationStatus");
+            }).select("name email nicFront nicBack electricityBill documents city country verificationStatus");
         }
 
         return new Response(JSON.stringify({ admins: pendingAdmins, members: pendingMembers }), { status: 200 });

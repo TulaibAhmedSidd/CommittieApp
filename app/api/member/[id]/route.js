@@ -8,7 +8,7 @@ export async function GET(req, { params }) {
   const { id } = params;
   try {
     await connectToDatabase();
-    const member = await Member.findById(id);
+    const member = await Member.findById(id).populate("pendingOrganizers", "name email city country verificationStatus");
     if (!member) return new Response("Member not found", { status: 404 });
     return new Response(JSON.stringify(member), { status: 200 });
   } catch (err) {
@@ -94,15 +94,26 @@ export async function DELETE(req, { params }) {
 
 export async function PATCH(req, { params }) {
   const { id } = params;
-  const { payoutDetails } = await req.json();
+  const { payoutDetails, location, documents, city, country, nicNumber, nicFront, nicBack, electricityBill } = await req.json();
 
   try {
     await connectToDatabase();
     const member = await Member.findById(id);
     if (!member) return new Response("Member not found", { status: 404 });
 
-    if (payoutDetails) {
-      member.payoutDetails = payoutDetails;
+    if (payoutDetails) member.payoutDetails = payoutDetails;
+    if (location) member.location = location;
+    if (documents) member.documents = documents;
+    if (city) member.city = city;
+    if (country) member.country = country;
+    if (nicNumber) member.nicNumber = nicNumber;
+    if (nicFront) member.nicFront = nicFront;
+    if (nicBack) member.nicBack = nicBack;
+    if (electricityBill) member.electricityBill = electricityBill;
+
+    // Automatically set to pending if all primary docs are present
+    if (member.nicFront && member.nicBack && member.electricityBill && member.verificationStatus === "unverified") {
+      member.verificationStatus = "pending";
     }
 
     await member.save();

@@ -39,45 +39,67 @@ export async function GET(req) {
             return {};
         };
 
+        const verificationStatus = searchParams.get("verificationStatus");
+        const minRating = parseFloat(searchParams.get("minRating") || "0");
+
         const geoQuery = getGeoQuery();
+        const page = parseInt(searchParams.get("page") || "1");
+        const limit = parseInt(searchParams.get("limit") || "12");
+        const skip = (page - 1) * limit;
+
+        let pagination = {};
 
         if (type === "all" || type === "committee") {
             const commQuery = {
                 ... (q ? { name: { $regex: q, $options: "i" } } : {}),
                 status: "open"
             };
-            // Committees don't have location yet in schema, we might link to Admin location
-            results.committees = await Committee.find(commQuery).populate("organizer", "name location city verificationStatus");
-
-            // If near me is active, filter committees by organizer proximity
-            if (geoQuery.location) {
-                results.committees = results.committees.filter(c => {
-                    if (!c.organizer || !c.organizer.location) return false;
-                    // Note: Manual distance calculation or use mongo aggregate for better perf later
-                    return true; // placeholder for now, aggregate is better
-                });
-            }
+            const total = await Committee.countDocuments(commQuery);
+            results.committees = await Committee.find(commQuery)
+                .populate({
+                    path: "createdBy",
+                    select: "name location city verificationStatus",
+                    model: "Admin"
+                })
+                .skip(skip)
+                .limit(limit);
+            pagination.committees = { total, page, pages: Math.ceil(total / limit) };
         }
 
         if (type === "all" || type === "organizer") {
-            results.organizers = await Admin.find({
+            let adminQuery = {
                 ...textQuery,
                 ...cityQuery,
                 ...geoQuery,
                 isAdmin: true,
                 isSuperAdmin: false
-            }).select("name email city country verificationStatus location");
+            };
+            if (verificationStatus) adminQuery.verificationStatus = verificationStatus;
+
+            const total = await Admin.countDocuments(adminQuery);
+            results.organizers = await Admin.find(adminQuery)
+                .select("name email city country verificationStatus location")
+                .skip(skip)
+                .limit(limit);
+            pagination.organizers = { total, page, pages: Math.ceil(total / limit) };
         }
 
         if (type === "all" || type === "member") {
-            results.members = await Member.find({
+            const memberQuery = {
                 ...textQuery,
                 ...cityQuery,
                 ...geoQuery
-            }).select("name email city country verificationStatus location");
+            };
+            const total = await Member.countDocuments(memberQuery);
+            results.members = await Member.find(memberQuery)
+                .select("name email city country verificationStatus location pendingOrganizers organizers nicFront nicBack electricityBill documents")
+                .populate("organizers", "name")
+                .skip(skip)
+                .limit(limit);
+            pagination.members = { total, page, pages: Math.ceil(total / limit) };
         }
 
-        return new Response(JSON.stringify(results), { status: 200 });
+        return new Response(JSON.stringify({ ...results, pagination }), { status: 200 });
     } catch (err) {
         return new Response(JSON.stringify({ error: err.message }), { status: 500 });
     }

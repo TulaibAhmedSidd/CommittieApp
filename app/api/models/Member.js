@@ -38,7 +38,9 @@ const MemberSchema = new mongoose.Schema({
   country: { type: String, default: "Pakistan" },
   city: String,
   nicNumber: String,
-  nicImage: String,
+  nicFront: String, // Explicit field for verification
+  nicBack: String,  // Explicit field for verification
+  electricityBill: String, // Explicit field for verification
   verificationStatus: {
     type: String,
     enum: ["unverified", "pending", "verified"],
@@ -53,6 +55,13 @@ const MemberSchema = new mongoose.Schema({
     bankName: String,
     iban: String,
   },
+  documents: [
+    {
+      name: String,
+      url: String,
+      uploadedAt: { type: Date, default: Date.now },
+    },
+  ],
 });
 
 MemberSchema.index({ location: "2dsphere" });

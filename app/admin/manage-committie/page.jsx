@@ -17,6 +17,8 @@ export default function ManageCommittiePage() {
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
     const [currentAdmin, setCurrentAdmin] = useState(null);
+    const [page, setPage] = useState(1);
+    const [pagination, setPagination] = useState({ total: 0, pages: 1 });
     const router = useRouter();
 
     useEffect(() => {
@@ -32,13 +34,25 @@ export default function ManageCommittiePage() {
         if (currentAdmin?._id) {
             fetchCommittees();
         }
-    }, [currentAdmin]);
+    }, [currentAdmin, page]);
+
+    useEffect(() => {
+        setPage(1);
+    }, [search]);
+
+    useEffect(() => {
+        const timeout = setTimeout(() => {
+            if (currentAdmin?._id) fetchCommittees();
+        }, 500);
+        return () => clearTimeout(timeout);
+    }, [search]);
 
     const fetchCommittees = async () => {
         try {
-            const res = await fetch(`/api/committee?adminId=${currentAdmin._id}`);
+            const res = await fetch(`/api/committee?adminId=${currentAdmin._id}&page=${page}&limit=10&q=${search}`);
             const data = await res.json();
-            setCommittees(data);
+            setCommittees(data.committees || []);
+            setPagination(data.pagination || { total: 0, pages: 1, page: 1 });
         } catch (err) {
             toast.error("Failed to load committees");
         } finally {
@@ -97,7 +111,7 @@ export default function ManageCommittiePage() {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                        {filteredCommittees.length > 0 ? filteredCommittees.map((c) => (
+                        {committees.length > 0 ? committees.map((c) => (
                             <tr key={c._id} className="group hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
                                 <td className="p-6">
                                     <div className="space-y-1">
@@ -156,6 +170,33 @@ export default function ManageCommittiePage() {
                     </tbody>
                 </table>
             </div>
+
+            {/* Pagination Controls */}
+            {pagination.pages > 1 && (
+                <div className="flex justify-center items-center gap-6 pt-4">
+                    <Button
+                        variant="secondary"
+                        onClick={() => setPage(p => Math.max(1, p - 1))}
+                        disabled={page === 1}
+                        className="px-8 py-3 text-[10px] font-black uppercase tracking-widest"
+                    >
+                        Previous
+                    </Button>
+                    <div className="flex items-center gap-3">
+                        <span className="text-[10px] font-black text-slate-400 uppercase">Page</span>
+                        <span className="w-10 h-10 rounded-xl bg-primary-600 text-white flex items-center justify-center font-black text-xs shadow-lg shadow-primary-500/20">{page}</span>
+                        <span className="text-[10px] font-black text-slate-400 uppercase">of {pagination.pages}</span>
+                    </div>
+                    <Button
+                        variant="secondary"
+                        onClick={() => setPage(p => Math.min(pagination.pages, p + 1))}
+                        disabled={page === pagination.pages}
+                        className="px-8 py-3 text-[10px] font-black uppercase tracking-widest"
+                    >
+                        Next
+                    </Button>
+                </div>
+            )}
         </div>
     );
 }

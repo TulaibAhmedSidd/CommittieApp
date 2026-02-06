@@ -1,4 +1,5 @@
 import connectToDatabase from "@/app/utils/db";
+import mongoose from "mongoose";
 import Review from "@/app/api/models/Review";
 import Admin from "@/app/api/models/Admin";
 
@@ -9,6 +10,18 @@ export async function POST(req) {
 
         if (!organizerId || !memberId || !rating) {
             return new Response(JSON.stringify({ error: "Missing required fields" }), { status: 400 });
+        }
+
+        // Eligibility Check: User must have completed at least one finished committee with this organizer
+        const Committee = mongoose.models.Committee || (await import("@/app/api/models/Committee")).default;
+        const finishedCommittee = await Committee.findOne({
+            createdBy: organizerId,
+            members: memberId,
+            status: "finished"
+        });
+
+        if (!finishedCommittee) {
+            return new Response(JSON.stringify({ error: "You must complete at least one committee with this organizer to submit a review." }), { status: 403 });
         }
 
         const review = new Review({

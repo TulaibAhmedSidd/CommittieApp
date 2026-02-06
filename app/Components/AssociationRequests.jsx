@@ -64,7 +64,12 @@ export default function AssociationRequests({ memberId }) {
                                 {(admin.name || "A").charAt(0)}
                             </div>
                             <div>
-                                <p className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">{admin.name || "Organizer"}</p>
+                                <button
+                                    onClick={() => window.location.href = `/userDash/organizer?id=${admin._id}`}
+                                    className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight hover:text-primary-600 transition-colors text-left"
+                                >
+                                    {admin.name || "Organizer"}
+                                </button>
                                 <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Wants to join your network</p>
                             </div>
                         </div>
