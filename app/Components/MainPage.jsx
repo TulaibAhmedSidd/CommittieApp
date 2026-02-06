@@ -183,7 +183,9 @@ export default function MainPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tighter line-clamp-1">{c.name}</h3>
+                      <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tighter line-clamp-1"
+                        onClick={() => { router.push('/userDash/committee/' + c._id) }}
+                      >{c.name}</h3>
                       <p className="text-slate-500 dark:text-slate-400 text-sm font-medium italic line-clamp-2 leading-relaxed">{c.description}</p>
                     </div>
 

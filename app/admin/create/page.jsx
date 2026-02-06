@@ -47,6 +47,7 @@ export default function CreateCommittee() {
         },
         organizerFee: 0,
         isFeeMandatory: false,
+        durationError: ''
     });
 
     const steps = [t("coreParameters"), t("financialSchema"), t("bankInformation"), t("finalCalibration")];
@@ -107,17 +108,51 @@ export default function CreateCommittee() {
     const calculateTotalAmount = ({ monthlyAmount, monthDuration }) => {
         const installment = parseFloat(monthlyAmount);
         const duration = parseInt(monthDuration, 10);
-        if (!isNaN(installment) && !isNaN(duration) && installment > 0 && duration > 0) {
+        const maxMembers = parseInt(formData.maxMembers, 10) || 0;
+
+        // Basic validation
+        if (
+            isNaN(installment) ||
+            isNaN(duration) ||
+            installment <= 0 ||
+            duration <= 0 ||
+            maxMembers <= 0
+        ) {
             setFormData((prev) => ({
                 ...prev,
-                totalAmount: Math.round(installment * duration),
+                totalAmount: "",
+                durationError: "Invalid input values",
             }));
-        } else {
-            setFormData((prev) => ({ ...prev, totalAmount: "" }));
+            return;
         }
+
+        // 🔴 Core BC rule: duration must be multiple of members
+        if (duration % maxMembers !== 0) {
+            setFormData((prev) => ({
+                ...prev,
+                totalAmount: "",
+                durationError: `Duration must be ${maxMembers}, ${maxMembers * 2}, ${maxMembers * 3} months`,
+            }));
+            return;
+        }
+
+        // ✅ Valid BC calculation
+        const monthlyPool = maxMembers * installment;
+        const totalBCAmount = installment * duration;
+        const perMemberTotal = installment * duration;
+
+        setFormData((prev) => ({
+            ...prev,
+            totalAmount: Math.round(totalBCAmount),
+            durationError: "",
+            monthlyPool,
+            perMemberTotal,
+        }));
     };
 
+
     const validateStep = () => {
+        if (formData.durationError) { return true }
         if (step === 0) return formData.name.length > 3 && formData.description.length > 5 && formData.maxMembers > 0;
         if (step === 1) return formData.monthlyAmount > 0 && formData.monthDuration >= 3 && formData.startDate;
         if (step === 2) return formData.bankDetails.accountTitle && formData.bankDetails.bankName && formData.bankDetails.iban;
@@ -242,7 +277,7 @@ export default function CreateCommittee() {
                                     label={t("cycleDurationMonths") || "Duration (Months)"}
                                     name="monthDuration"
                                     type="number"
-                                    min={3}
+                                    min={formData.maxMembers}
                                     placeholder="12"
                                     value={formData.monthDuration}
                                     onChange={handleChange}
@@ -304,6 +339,9 @@ export default function CreateCommittee() {
                                             + {formData.organizerFee} PKR Organizer Fee {formData.isFeeMandatory ? "(Mandatory)" : "(Optional)"}
                                         </p>
                                     )}
+                                    <h2 className="text-2xl text-red-500 tracking-tighter uppercase">
+                                        {formData.durationError}
+                                    </h2>
                                 </div>
                                 <FiDollarSign size={80} className="absolute -bottom-4 -right-4 opacity-10 group-hover:scale-110 transition-transform duration-700" />
                             </div>

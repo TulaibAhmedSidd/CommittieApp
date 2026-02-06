@@ -8,6 +8,5 @@ export default function ClientNavbar() {
 
     // Don't show the global navbar on the landing page ("/") or dashboards
     if (pathname === "/" || pathname.startsWith("/userDash") || pathname.startsWith("/admin")) return null;
-
     return <Navbar />;
 }

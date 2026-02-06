@@ -48,7 +48,7 @@ export default function Navbar() {
                     <div className="w-10 h-10 bg-primary-600 rounded-[1.25rem] flex items-center justify-center text-white shadow-lg shadow-primary-500/20 group-hover:scale-110 transition-transform">
                         <FiShield size={22} />
                     </div>
-                    <span className="text-xl md:text-2xl font-black text-slate-900 dark:text-white tracking-tighter uppercase italic">
+                    <span className="text-2xl md:text-2xl font-black text-slate-900 dark:text-white tracking-tighter uppercase italic">
                         Committie<span className="text-primary-600">App</span>
                     </span>
                 </Link>

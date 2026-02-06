@@ -99,6 +99,8 @@ export async function PATCH(req, { params }) {
         // Notify member
         const notification = new Notification({
             userId: payment.member,
+            recipient: payment.member,
+            recipientModel: 'Member',
             message: `Your payment status for ${committee.name} (Month ${payment.month}) has been set to ${status}.`,
             details: `Admin Action: ${status === 'verified' ? 'Force Verified / Approved' : status}`,
         });

@@ -7,6 +7,7 @@ import Button from "../../Components/Theme/Button";
 import { formatMoney } from "../../utils/commonFunc";
 import { toast } from "react-toastify";
 import { useLanguage } from "../../Components/LanguageContext";
+import { useRouter } from "next/navigation";
 
 export default function ExplorePage() {
     const { t } = useLanguage();
@@ -15,6 +16,7 @@ export default function ExplorePage() {
     const [joining, setJoining] = useState(null);
     const [userId, setUserId] = useState(null);
 
+    console.log("committees", committees)
     useEffect(() => {
         const userData = localStorage.getItem("member");
         if (userData) {
@@ -68,7 +70,7 @@ export default function ExplorePage() {
     };
 
     if (loading) return <div className="p-10 text-center uppercase font-black tracking-widest animate-pulse">Scanning Network...</div>;
-
+    const router = useRouter();
     return (
         <div className="space-y-10 animate-in fade-in slide-in-from-bottom-8 duration-1000">
             <div className="flex flex-col md:flex-row justify-between items-end border-b border-slate-200 dark:border-slate-800 pb-8 gap-6">
@@ -99,7 +101,9 @@ export default function ExplorePage() {
                                         <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
                                         <span className="text-[9px] font-black text-green-600 uppercase tracking-widest">Open for Enrollment</span>
                                     </div>
-                                    <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter group-hover:text-primary-600 transition-colors">{c.name}</h3>
+                                    <h3 className=" cursor-pointer text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter group-hover:text-primary-600 transition-colors"
+                                        onClick={() => { router.push('/userDash/committee/' + c._id) }}
+                                    >{c.name}</h3>
                                 </div>
                                 <p className="text-sm text-slate-500 line-clamp-2 h-10 italic">{c.description}</p>
 

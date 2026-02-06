@@ -186,7 +186,7 @@ function ManageContent() {
         const payment = committee.payments.find(p => p.month === committee.currentMonth && p.member === member._id);
         return { member, payment };
     });
-
+    console.log("viewingPayment", viewingPayment)
     return (
         <div className="space-y-8 py-8 animate-in fade-in slide-in-from-bottom-4 duration-700 p-8">
             <div className="flex items-center justify-between">
@@ -438,23 +438,28 @@ function ManageContent() {
                                     <p className="text-sm italic text-slate-200">{viewingPayment.submission?.description || "No description"}</p>
                                 </div>
                             </div>
+                            {
+                                viewingPayment?.status == 'verified' ?
+                                    ""
+                                    :
 
-                            <div className="flex gap-4 pt-4">
-                                <Button
-                                    onClick={() => handleUpdatePayment(viewingPayment._id, "verified")}
-                                    loading={actionLoading}
-                                    className="flex-1 bg-green-600 hover:bg-green-700 font-black uppercase text-[10px] tracking-widest py-4"
-                                >
-                                    <FiCheckCircle className="mr-2" /> Approve
-                                </Button>
-                                <Button
-                                    onClick={() => handleUpdatePayment(viewingPayment._id, "rejected")}
-                                    loading={actionLoading}
-                                    className="flex-1 bg-red-600 hover:bg-red-700 font-black uppercase text-[10px] tracking-widest py-4"
-                                >
-                                    <FiXCircle className="mr-2" /> Reject
-                                </Button>
-                            </div>
+                                    <div className="flex gap-4 pt-4">
+                                        <Button
+                                            onClick={() => handleUpdatePayment(viewingPayment._id, "verified", viewingPayment?.member)}
+                                            loading={actionLoading}
+                                            className="flex-1 bg-green-600 hover:bg-green-700 font-black uppercase text-[10px] tracking-widest py-4"
+                                        >
+                                            <FiCheckCircle className="mr-2" /> Approve
+                                        </Button>
+                                        <Button
+                                            onClick={() => handleUpdatePayment(viewingPayment._id, "rejected", viewingPayment?.member)}
+                                            loading={actionLoading}
+                                            className="flex-1 bg-red-600 hover:bg-red-700 font-black uppercase text-[10px] tracking-widest py-4"
+                                        >
+                                            <FiXCircle className="mr-2" /> Reject
+                                        </Button>
+                                    </div>
+                            }
                         </div>
                     </Card>
                 </div>

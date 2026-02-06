@@ -91,7 +91,10 @@ export default function CommitteeDetailPage() {
     const myPayment = committee.payments?.find(p => p.month === committee.currentMonth && (p.member?._id === user?._id || p.member === user?._id));
     const turnRecord = committee.result?.find(r => r.position === committee.currentMonth);
     const isMyTurn = (turnRecord?.member?._id === user?._id || turnRecord?.member === user?._id);
-
+    const imInComittie = committee?.members?.some(member => member?._id == user?._id);
+    // console.log("imInComittie", imInComittie)
+    // console.log("committee?.members", committee)
+    // console.log("user?._id", user?._id)
     return (
         <div className="p-8 md:p-12 space-y-12 animate-in fade-in slide-in-from-bottom-6 duration-1000">
             {/* Header */}
@@ -176,8 +179,8 @@ export default function CommitteeDetailPage() {
                                         </TableCell>
                                         <TableCell>
                                             <span className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest ${p?.status === "verified" ? "bg-green-100 text-green-600" :
-                                                    p?.status === "pending" ? "bg-amber-100 text-amber-600" :
-                                                        "bg-slate-100 text-slate-400"
+                                                p?.status === "pending" ? "bg-amber-100 text-amber-600" :
+                                                    "bg-slate-100 text-slate-400"
                                                 }`}>
                                                 {p?.status || "Awaiting Payment"}
                                             </span>
@@ -275,14 +278,17 @@ export default function CommitteeDetailPage() {
 
                             <Button
                                 className={`w-full py-5 font-black uppercase tracking-[0.2em] text-xs shadow-2xl ${myPayment?.status === 'verified' || myPayment?.status === 'pending'
-                                        ? "bg-white/10 text-white/40 cursor-not-allowed"
-                                        : "bg-white text-primary-600 hover:scale-[0.98]"
+                                    ? "bg-white/10 text-white/40 cursor-not-allowed"
+                                    : " text-primary-600 hover:scale-[0.98]"
                                     }`}
-                                disabled={myPayment?.status === 'verified' || myPayment?.status === 'pending'}
+                                disabled={myPayment?.status === 'verified' || myPayment?.status === 'pending' || imInComittie == false}
                                 onClick={() => setIsPayModalOpen(true)}
                             >
-                                {myPayment?.status === 'verified' ? "Verified & Locked" :
-                                    myPayment?.status === 'pending' ? "Verification in Progress" : "Sync Installment Data"}
+                                {
+                                    imInComittie == false ?
+                                        "im not part of this comittie" :
+                                        myPayment?.status === 'verified' ? "Verified & Locked" :
+                                            myPayment?.status === 'pending' ? "Verification in Progress" : "Sync Installment Data"}
                                 <FiArrowRight className="ml-2" />
                             </Button>
                         </div>
