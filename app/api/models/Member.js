@@ -53,6 +53,13 @@ const MemberSchema = new mongoose.Schema({
     bankName: String,
     iban: String,
   },
+  documents: [
+    {
+      name: String,
+      url: String,
+      uploadedAt: { type: Date, default: Date.now },
+    },
+  ],
 });
 
 MemberSchema.index({ location: "2dsphere" });

@@ -94,16 +94,20 @@ export async function DELETE(req, { params }) {
 
 export async function PATCH(req, { params }) {
   const { id } = params;
-  const { payoutDetails } = await req.json();
+  const { payoutDetails, location, documents, city, country, nicNumber, nicImage } = await req.json();
 
   try {
     await connectToDatabase();
     const member = await Member.findById(id);
     if (!member) return new Response("Member not found", { status: 404 });
 
-    if (payoutDetails) {
-      member.payoutDetails = payoutDetails;
-    }
+    if (payoutDetails) member.payoutDetails = payoutDetails;
+    if (location) member.location = location;
+    if (documents) member.documents = documents;
+    if (city) member.city = city;
+    if (country) member.country = country;
+    if (nicNumber) member.nicNumber = nicNumber;
+    if (nicImage) member.nicImage = nicImage;
 
     await member.save();
     return new Response(JSON.stringify(member), { status: 200 });

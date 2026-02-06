@@ -70,6 +70,8 @@ export async function POST(req) {
       bankDetails,
       organizerFee,
       isFeeMandatory,
+      requireDocuments,
+      mandatoryDocuments,
     } = body;
 
     // Validate required fields
@@ -114,6 +116,8 @@ export async function POST(req) {
       bankDetails,
       organizerFee: organizerFee || 0,
       isFeeMandatory: isFeeMandatory || false,
+      requireDocuments: requireDocuments || false,
+      mandatoryDocuments: mandatoryDocuments || [],
     });
 
     await newCommittee.save();
@@ -155,6 +159,8 @@ export async function PATCH(req) {
       startDate,
       createdBy,
       bankDetails,
+      requireDocuments,
+      mandatoryDocuments,
     } = body;
 
     if (!id || !createdBy) {
@@ -185,6 +191,8 @@ export async function PATCH(req) {
       monthDuration,
       startDate,
       bankDetails,
+      requireDocuments,
+      mandatoryDocuments,
     };
 
     if (startDate && monthDuration) {

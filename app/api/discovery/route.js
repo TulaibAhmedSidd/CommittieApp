@@ -39,6 +39,9 @@ export async function GET(req) {
             return {};
         };
 
+        const verificationStatus = searchParams.get("verificationStatus");
+        const minRating = parseFloat(searchParams.get("minRating") || "0");
+
         const geoQuery = getGeoQuery();
 
         if (type === "all" || type === "committee") {
@@ -46,27 +49,27 @@ export async function GET(req) {
                 ... (q ? { name: { $regex: q, $options: "i" } } : {}),
                 status: "open"
             };
-            // Committees don't have location yet in schema, we might link to Admin location
-            results.committees = await Committee.find(commQuery).populate("organizer", "name location city verificationStatus");
-
-            // If near me is active, filter committees by organizer proximity
-            if (geoQuery.location) {
-                results.committees = results.committees.filter(c => {
-                    if (!c.organizer || !c.organizer.location) return false;
-                    // Note: Manual distance calculation or use mongo aggregate for better perf later
-                    return true; // placeholder for now, aggregate is better
-                });
-            }
+            results.committees = await Committee.find(commQuery).populate({
+                path: "createdBy",
+                select: "name location city verificationStatus",
+                model: "Admin"
+            });
         }
 
         if (type === "all" || type === "organizer") {
-            results.organizers = await Admin.find({
+            let adminQuery = {
                 ...textQuery,
                 ...cityQuery,
                 ...geoQuery,
                 isAdmin: true,
                 isSuperAdmin: false
-            }).select("name email city country verificationStatus location");
+            };
+            if (verificationStatus) adminQuery.verificationStatus = verificationStatus;
+
+            results.organizers = await Admin.find(adminQuery).select("name email city country verificationStatus location");
+
+            // If rating filter is needed, we'd need to join with Reviews.
+            // For now, simpler filtering.
         }
 
         if (type === "all" || type === "member") {

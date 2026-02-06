@@ -19,6 +19,7 @@ import Button from "../../Components/Theme/Button";
 import Input from "../../Components/Theme/Input";
 import Card from "../../Components/Theme/Card";
 import StepProgress from "../../Components/Theme/StepProgress";
+import Modal from "../../Components/Theme/Modal";
 import { useLanguage } from "../../Components/LanguageContext";
 
 export const dynamic = "force-dynamic";
@@ -29,6 +30,8 @@ export default function CreateCommittee() {
     const [step, setStep] = useState(0);
     const [loading, setLoading] = useState(false);
     const [userLoggedDetails, setUserLoggedDetails] = useState(null);
+    const [showConsent, setShowConsent] = useState(false);
+    const [isConsentChecked, setIsConsentChecked] = useState(false);
 
     const [formData, setFormData] = useState({
         name: "",
@@ -47,8 +50,12 @@ export default function CreateCommittee() {
         },
         organizerFee: 0,
         isFeeMandatory: false,
+        requireDocuments: false,
+        mandatoryDocuments: [],
         durationError: ''
     });
+
+    const documentOptions = ["NIC Front", "NIC Back", "Electricity Bill", "Gas Bill", "Water Bill", "Work ID"];
 
     const steps = [t("coreParameters"), t("financialSchema"), t("bankInformation"), t("finalCalibration")];
 
@@ -110,7 +117,6 @@ export default function CreateCommittee() {
         const duration = parseInt(monthDuration, 10);
         const maxMembers = parseInt(formData.maxMembers, 10) || 0;
 
-        // Basic validation
         if (
             isNaN(installment) ||
             isNaN(duration) ||
@@ -126,7 +132,6 @@ export default function CreateCommittee() {
             return;
         }
 
-        // 🔴 Core BC rule: duration must be multiple of members
         if (duration % maxMembers !== 0) {
             setFormData((prev) => ({
                 ...prev,
@@ -136,7 +141,6 @@ export default function CreateCommittee() {
             return;
         }
 
-        // ✅ Valid BC calculation
         const monthlyPool = maxMembers * installment;
         const totalBCAmount = installment * duration;
         const perMemberTotal = installment * duration;
@@ -152,7 +156,7 @@ export default function CreateCommittee() {
 
 
     const validateStep = () => {
-        if (formData.durationError) { return true }
+        if (formData.durationError) { return false }
         if (step === 0) return formData.name.length > 3 && formData.description.length > 5 && formData.maxMembers > 0;
         if (step === 1) return formData.monthlyAmount > 0 && formData.monthDuration >= 3 && formData.startDate;
         if (step === 2) return formData.bankDetails.accountTitle && formData.bankDetails.bankName && formData.bankDetails.iban;
@@ -163,11 +167,18 @@ export default function CreateCommittee() {
     const handleBack = () => setStep((s) => Math.max(s - 1, 0));
 
     const handleSubmit = async (e) => {
-        e.preventDefault();
+        if (e) e.preventDefault();
+        setShowConsent(true);
+    };
+
+    const handleFinalSubmit = async () => {
+        if (!isConsentChecked) return toast.warning("Please accept the operational terms.");
+
+        setShowConsent(false);
         setLoading(true);
         try {
             await createCommittee({ ...formData, createdBy: userLoggedDetails?._id });
-            toast.success(t("success"));
+            toast.success(t("success") || "Pool Initialized Successfully");
 
             if (confirm(t("assignMembersProtocol") || "Do you want to assign members now?")) {
                 router.push("/admin/assign-member");
@@ -242,7 +253,7 @@ export default function CreateCommittee() {
                                     value={formData.description}
                                     onChange={handleChange}
                                     rows={4}
-                                    className="input-field min-h-[120px] bg-white/5 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 text-base font-medium resize-none shadow-sm transition-all focus:ring-2 focus:ring-primary-500/20 w-full"
+                                    className="input-field min-h-[120px] bg-white/5 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 text-base font-medium resize-none shadow-sm transition-all focus:ring-2 focus:ring-primary-500/20 w-full outline-none"
                                     required
                                 />
                             </div>
@@ -328,6 +339,50 @@ export default function CreateCommittee() {
                                 </div>
                             </div>
 
+                            <div className="space-y-6 p-6 bg-slate-50 dark:bg-slate-950/50 rounded-3xl border border-slate-200 dark:border-slate-800">
+                                <div className="flex items-center gap-4">
+                                    <input
+                                        type="checkbox"
+                                        id="requireDocuments"
+                                        checked={formData.requireDocuments}
+                                        onChange={(e) => setFormData({ ...formData, requireDocuments: e.target.checked })}
+                                        className="w-6 h-6 accent-primary-600"
+                                    />
+                                    <label htmlFor="requireDocuments" className="text-sm font-black uppercase text-slate-700 dark:text-slate-200 tracking-tighter cursor-pointer">
+                                        Require Documents to Join?
+                                    </label>
+                                </div>
+
+                                {formData.requireDocuments && (
+                                    <div className="space-y-4 animate-in fade-in slide-in-from-top-4">
+                                        <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest leading-none mb-3">Select Mandatory Documents</p>
+                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                            {documentOptions.map(opt => (
+                                                <div
+                                                    key={opt}
+                                                    onClick={() => {
+                                                        const current = formData.mandatoryDocuments || [];
+                                                        if (current.includes(opt)) {
+                                                            setFormData({ ...formData, mandatoryDocuments: current.filter(o => o !== opt) });
+                                                        } else {
+                                                            setFormData({ ...formData, mandatoryDocuments: [...current, opt] });
+                                                        }
+                                                    }}
+                                                    className={`
+                                                        px-4 py-3 rounded-xl border-2 transition-all cursor-pointer text-center text-[10px] font-black uppercase tracking-tight
+                                                        ${(formData.mandatoryDocuments || []).includes(opt)
+                                                            ? "border-primary-500 bg-primary-500/10 text-primary-600"
+                                                            : "border-slate-100 dark:border-slate-800 text-slate-400 hover:border-slate-200"}
+                                                    `}
+                                                >
+                                                    {opt}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
                             <div className="p-8 rounded-[2rem] bg-slate-900 dark:bg-white text-white dark:text-slate-900 flex justify-between items-center shadow-2xl relative overflow-hidden group">
                                 <div className="relative z-10">
                                     <p className="text-[10px] uppercase font-black tracking-[0.3em] opacity-60 mb-2 underline decoration-primary-500 decoration-2">{t("totalPoolValuation") || "Total Pool Valuation"}</p>
@@ -354,7 +409,7 @@ export default function CreateCommittee() {
                                 <div className="p-3 bg-blue-500 text-white rounded-xl shadow-lg shadow-blue-500/20">
                                     <FiDollarSign size={22} />
                                 </div>
-                                <div>
+                                <div className="">
                                     <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">{t("step") || "Step"} 3</p>
                                     <p className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tighter italic">{t("bankInformation") || "Bank Information"}</p>
                                 </div>
@@ -397,7 +452,7 @@ export default function CreateCommittee() {
                                 <div className="p-3 bg-green-500 text-white rounded-xl shadow-lg shadow-green-500/20">
                                     <FiCheckCircle size={22} />
                                 </div>
-                                <div>
+                                <div className="">
                                     <p className="text-[10px] font-black text-green-600 uppercase tracking-widest">{t("step") || "Step"} 4</p>
                                     <p className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tighter italic">{t("finalValidation") || "Final Validation"}</p>
                                 </div>
@@ -449,6 +504,59 @@ export default function CreateCommittee() {
                     )}
                 </div>
             </Card>
+
+            <Modal
+                isOpen={showConsent}
+                onClose={() => setShowConsent(false)}
+                title="Organizer Ethical Declaration"
+                size="lg"
+            >
+                <div className="space-y-8">
+                    <div className="p-6 bg-primary-500/5 rounded-3xl border border-primary-500/10 space-y-4">
+                        <div className="flex items-center gap-3 text-primary-600 font-black uppercase text-xs">
+                            <FiInfo /> Operational Accountability
+                        </div>
+                        <ul className="space-y-3 text-xs text-slate-600 dark:text-slate-400 font-medium list-disc ml-4 leading-relaxed">
+                            <li>I solemnly swear to manage the pooled assets (PKR {formData.totalAmount?.toLocaleString()}) with absolute transparency and integrity.</li>
+                            <li>I acknowledge my responsibility to disburse payouts timely as per the defined cycle logic.</li>
+                            <li>In case of a member's unforeseen uncertainty (death, insolvency), I agree to follow the predetermined succession plan or community-led resolution.</li>
+                            <li>I understand that mismanagent or fraud will result in immediate termination of my organizer privileges and possible legal pursuit.</li>
+                            <li>I verify that the provided bank information is correct and belongs to the authorized organizer identity.</li>
+                        </ul>
+                    </div>
+
+                    <div className="flex items-start gap-4">
+                        <input
+                            type="checkbox"
+                            id="organizer-consent-check"
+                            className="w-6 h-6 mt-1 rounded-lg accent-primary-600"
+                            checked={isConsentChecked}
+                            onChange={(e) => setIsConsentChecked(e.target.checked)}
+                        />
+                        <label htmlFor="organizer-consent-check" className="text-sm font-bold text-slate-900 dark:text-white leading-relaxed cursor-pointer">
+                            I accept full ethical and management responsibility for this financial circuit and agree to these terms.
+                        </label>
+                    </div>
+
+                    <div className="flex gap-4">
+                        <Button
+                            variant="secondary"
+                            onClick={() => setShowConsent(false)}
+                            className="flex-1 py-4 text-[10px] font-black uppercase tracking-widest bg-slate-100 dark:bg-slate-800 border-none"
+                        >
+                            Decline
+                        </Button>
+                        <Button
+                            onClick={handleFinalSubmit}
+                            disabled={!isConsentChecked || loading}
+                            loading={loading}
+                            className="flex-[2] py-4 text-[10px] font-black uppercase tracking-widest bg-primary-600 border-none shadow-xl shadow-primary-500/20"
+                        >
+                            Establish Pool
+                        </Button>
+                    </div>
+                </div>
+            </Modal>
         </div>
     );
 }

@@ -191,7 +191,7 @@ const AssignMembers = () => {
                                                     <div>
                                                         <p className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tighter">{c.name}</p>
                                                         <p className="text-xs text-slate-500 font-medium">
-                                                            {c.members?.length + c.pendingMembers?.length} / {c.maxMembers} 已派定 • PKR {formatMoney(c.monthlyAmount)}
+                                                            {(c.members?.length || 0) + (c.pendingMembers?.length || 0)} / {c.maxMembers} {t("assigned") || "Assigned"} • PKR {formatMoney(c.monthlyAmount)}
                                                         </p>
                                                     </div>
                                                 </div>

@@ -16,12 +16,9 @@ import {
     manageComRequest
 } from "../apis";
 
-import Card from "../../Components/Theme/Card";
-import Button from "../../Components/Theme/Button";
-import Input from "../../Components/Theme/Input";
-import Table, { TableRow, TableCell } from "../../Components/Theme/Table";
+import Modal from "../../Components/Theme/Modal";
+import UploadCapture from "../../Components/Theme/UploadCapture";
 import { useLanguage } from "../../Components/LanguageContext";
-import { FiUploadCloud } from "react-icons/fi";
 import ChatBox from "../../Components/ChatBox";
 
 function ManageContent() {
@@ -125,7 +122,6 @@ function ManageContent() {
     };
 
     const openPayoutModal = (member) => {
-        // Calculate total amount (monthly amount * total members)
         const totalAmount = committee.monthlyAmount * committee.members.length;
         setPayoutData({
             memberId: member._id,
@@ -137,8 +133,11 @@ function ManageContent() {
         setPayoutModalOpen(true);
     };
 
-    const handleRecordPayout = async (e) => {
-        e.preventDefault();
+    const handleRecordPayout = async () => {
+        if (!payoutData.screenshot || !payoutData.transactionId) {
+            return toast.warning("Evidence and Transaction ID are required");
+        }
+
         setActionLoading(true);
         try {
             const res = await fetch(`/api/committee/${committeeId}/payout`, {
@@ -182,11 +181,6 @@ function ManageContent() {
     if (loading) return <div className="p-10 text-center uppercase font-black tracking-widest animate-pulse">Initializing Data...</div>;
     if (!committee) return <div className="p-10 text-center">Committee not found</div>;
 
-    const currentMonthPayments = committee.members.map(member => {
-        const payment = committee.payments.find(p => p.month === committee.currentMonth && p.member === member._id);
-        return { member, payment };
-    });
-    console.log("viewingPayment", viewingPayment)
     return (
         <div className="space-y-8 py-8 animate-in fade-in slide-in-from-bottom-4 duration-700 p-8">
             <div className="flex items-center justify-between">
@@ -250,11 +244,8 @@ function ManageContent() {
                             <Table headers={[t("memberName") || "Member Name", t("status") || "Status", t("actions") || "Actions"]}>
                                 {committee.members.map((member) => {
                                     const payment = committee.payments.find(p => p.month === committee.currentMonth && (p.member._id === member._id || p.member === member._id));
-
-                                    // Highlight if beneficiary this month
                                     const turn = committee.result.find(r => r.position === committee.currentMonth);
                                     const isBeneficiary = (turn?.member === member._id || turn?.member?._id === member._id);
-
                                     const totalDue = committee.monthlyAmount + (committee.isFeeMandatory ? (committee.organizerFee || 0) : 0);
 
                                     return (
@@ -340,7 +331,6 @@ function ManageContent() {
                                 </div>
                             </div>
 
-                            {/* Beneficiary Turn Info */}
                             <div className="pt-6 border-t border-white/10 space-y-3">
                                 <p className="text-[9px] font-black text-primary-500 uppercase tracking-widest mb-1">Beneficiary (This Month)</p>
                                 {(() => {
@@ -390,133 +380,113 @@ function ManageContent() {
                                     );
                                 })()}
                             </div>
-
-                            <div className="pt-6 border-t border-white/10">
-                                <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">{t("bankDetails") || "Bank Details"}</p>
-                                <p className="text-sm font-bold uppercase">{committee.bankDetails?.accountTitle}</p>
-                                <p className="text-xs text-slate-400">{committee.bankDetails?.bankName}</p>
-                                <p className="text-xs text-slate-400 font-mono tracking-tighter mt-1">{committee.bankDetails?.iban}</p>
-                            </div>
                         </div>
                     </Card>
                 </div>
             </div>
 
-            {/* Payment Verification Modal (Existing) */}
-            {viewingPayment && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/90 backdrop-blur-sm p-4">
-                    <Card className="max-w-xl w-full bg-white dark:bg-slate-900 overflow-hidden animate-in zoom-in-95 duration-300">
-                        <div className="p-8 space-y-6">
-                            <div className="flex justify-between items-center">
-                                <h3 className="text-2xl font-black uppercase tracking-tighter text-slate-900 dark:text-white">Verify Payment</h3>
-                                <Button variant="ghost" onClick={() => setViewingPayment(null)} className="p-2 h-auto text-slate-400">
-                                    <FiXCircle size={24} />
-                                </Button>
-                            </div>
-
-                            {viewingPayment.submission?.screenshot ? (
-                                <div className="rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-50">
-                                    <img src={viewingPayment.submission.screenshot} alt="Payment Proof" className="w-full h-auto max-h-[300px] object-contain" />
-                                </div>
-                            ) : (
-                                <div className="h-40 flex items-center justify-center bg-slate-100 rounded-2xl text-slate-400 italic text-sm">No screenshot provided</div>
-                            )}
-
-                            <div className="space-y-4">
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Transaction ID</p>
-                                        <p className="font-mono text-sm break-all text-slate-200">{viewingPayment.submission?.transactionId || "N/A"}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Submitted At</p>
-                                        <p className="text-sm text-slate-200">{moment(viewingPayment.submission?.submittedAt).format("LLL")}</p>
-                                    </div>
-                                </div>
-                                <div>
-                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Description</p>
-                                    <p className="text-sm italic text-slate-200">{viewingPayment.submission?.description || "No description"}</p>
-                                </div>
-                            </div>
-                            {
-                                viewingPayment?.status == 'verified' ?
-                                    ""
-                                    :
-
-                                    <div className="flex gap-4 pt-4">
-                                        <Button
-                                            onClick={() => handleUpdatePayment(viewingPayment._id, "verified", viewingPayment?.member)}
-                                            loading={actionLoading}
-                                            className="flex-1 bg-green-600 hover:bg-green-700 font-black uppercase text-[10px] tracking-widest py-4"
-                                        >
-                                            <FiCheckCircle className="mr-2" /> Approve
-                                        </Button>
-                                        <Button
-                                            onClick={() => handleUpdatePayment(viewingPayment._id, "rejected", viewingPayment?.member)}
-                                            loading={actionLoading}
-                                            className="flex-1 bg-red-600 hover:bg-red-700 font-black uppercase text-[10px] tracking-widest py-4"
-                                        >
-                                            <FiXCircle className="mr-2" /> Reject
-                                        </Button>
-                                    </div>
-                            }
+            {/* View Payment Evidence Modal */}
+            <Modal
+                isOpen={!!viewingPayment}
+                onClose={() => setViewingPayment(null)}
+                title="Verify Incoming Node Payment"
+                size="lg"
+            >
+                <div className="space-y-8">
+                    {viewingPayment?.submission?.screenshot ? (
+                        <div className="rounded-[2.5rem] overflow-hidden border-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 shadow-inner">
+                            <img src={viewingPayment.submission.screenshot} alt="Payment Proof" className="w-full h-auto max-h-[400px] object-contain" />
                         </div>
-                    </Card>
-                </div>
-            )}
+                    ) : (
+                        <div className="h-40 flex items-center justify-center bg-slate-100 dark:bg-slate-800 rounded-[2rem] text-slate-400 italic text-xs font-bold uppercase tracking-widest">No evidence provided</div>
+                    )}
 
-            {/* Payout Recording Modal (New) */}
-            {payoutModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/90 backdrop-blur-sm p-4 animate-in fade-in duration-300">
-                    <Card className="max-w-lg w-full bg-white dark:bg-slate-900 overflow-hidden shadow-2xl border-none p-0">
-                        <div className="p-8 bg-slate-900 text-white border-b border-white/10">
-                            <p className="text-[10px] font-black uppercase tracking-widest text-primary-500 mb-1">Official Disbursement</p>
-                            <h3 className="text-2xl font-black uppercase tracking-tight">Record Payout</h3>
-                            <p className="text-xs text-slate-400 mt-2">To: <span className="text-white font-bold uppercase">{payoutData.memberName}</span></p>
+                    <div className="grid grid-cols-2 gap-6 p-6 bg-slate-50 dark:bg-slate-800/50 rounded-3xl border border-slate-100 dark:border-slate-800">
+                        <div>
+                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Transaction Identity</p>
+                            <p className="font-mono text-sm font-black text-slate-900 dark:text-white break-all">{viewingPayment?.submission?.transactionId || "N/A"}</p>
                         </div>
-                        <form onSubmit={handleRecordPayout} className="p-8 space-y-6">
-                            <div className="space-y-4">
-                                <Input
-                                    label="Amount Sent (PKR)"
-                                    type="number"
-                                    value={payoutData.amount}
-                                    onChange={(e) => setPayoutData({ ...payoutData, amount: e.target.value })}
-                                    required
-                                    className="font-mono font-black"
-                                />
-                                <Input
-                                    label="Transaction ID / Ref"
-                                    value={payoutData.transactionId}
-                                    onChange={(e) => setPayoutData({ ...payoutData, transactionId: e.target.value })}
-                                    required
-                                    className="font-mono uppercase font-black tracking-tighter"
-                                    placeholder="e.g. 882910022"
-                                />
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Evidence (Base64/URL)</label>
-                                    <div className="relative group">
-                                        <textarea
-                                            placeholder="Paste screenshot data..."
-                                            value={payoutData.screenshot}
-                                            onChange={(e) => setPayoutData({ ...payoutData, screenshot: e.target.value })}
-                                            required
-                                            rows={3}
-                                            className="w-full bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 text-xs font-mono resize-none focus:ring-2 focus:ring-primary-500/20 outline-none"
-                                        />
-                                        <FiUploadCloud className="absolute right-4 top-4 text-slate-300" />
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="flex gap-4 pt-4">
-                                <Button type="button" variant="ghost" onClick={() => setPayoutModalOpen(false)} className="flex-1 text-slate-500 uppercase text-[10px] tracking-widest font-black">Cancel</Button>
-                                <Button type="submit" loading={actionLoading} className="flex-[2] bg-primary-600 hover:bg-primary-700 font-black uppercase text-[10px] tracking-widest py-4 shadow-xl shadow-primary-500/20">
-                                    Confirm Transfer
-                                </Button>
-                            </div>
-                        </form>
-                    </Card>
+                        <div>
+                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Timestamp</p>
+                            <p className="text-sm font-bold text-slate-900 dark:text-white">{moment(viewingPayment?.submission?.submittedAt).format("LLL")}</p>
+                        </div>
+                        <div className="col-span-full">
+                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Member Testimony</p>
+                            <p className="text-sm italic text-slate-600 dark:text-slate-400">"{viewingPayment?.submission?.description || "No description logged"}"</p>
+                        </div>
+                    </div>
+
+                    {viewingPayment?.status !== 'verified' && (
+                        <div className="flex gap-4">
+                            <Button
+                                onClick={() => handleUpdatePayment(viewingPayment._id, "verified", viewingPayment?.member)}
+                                loading={actionLoading}
+                                className="flex-1 py-4 bg-green-600 hover:bg-green-700 font-black uppercase text-[10px] tracking-widest border-none"
+                            >
+                                <FiCheckCircle className="mr-2" /> Authenticate
+                            </Button>
+                            <Button
+                                onClick={() => handleUpdatePayment(viewingPayment._id, "rejected", viewingPayment?.member)}
+                                loading={actionLoading}
+                                className="flex-1 bg-red-600 hover:bg-red-700 font-black uppercase text-[10px] tracking-widest py-4 border-none"
+                            >
+                                <FiXCircle className="mr-2" /> Flag Irregularity
+                            </Button>
+                        </div>
+                    )}
                 </div>
-            )}
+            </Modal>
+
+            {/* Payout Recording Modal */}
+            <Modal
+                isOpen={payoutModalOpen}
+                onClose={() => setPayoutModalOpen(false)}
+                title="Official Resource Disbursement"
+                size="lg"
+            >
+                <div className="space-y-8">
+                    <div className="p-6 bg-slate-900 text-white rounded-3xl space-y-1">
+                        <p className="text-[9px] font-black uppercase tracking-widest text-primary-500">Recipient Identity</p>
+                        <h4 className="text-2xl font-black uppercase tracking-tighter">{payoutData.memberName}</h4>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <Input
+                            label="Disbursement Amount (PKR)"
+                            type="number"
+                            value={payoutData.amount}
+                            onChange={(e) => setPayoutData({ ...payoutData, amount: e.target.value })}
+                            required
+                            className="h-14 font-mono font-black"
+                        />
+                        <Input
+                            label="Transaction Protocol Ref"
+                            value={payoutData.transactionId}
+                            onChange={(e) => setPayoutData({ ...payoutData, transactionId: e.target.value })}
+                            required
+                            className="h-14 font-mono uppercase font-black tracking-tight"
+                            placeholder="e.g. TR-772911"
+                        />
+                    </div>
+
+                    <UploadCapture
+                        label="Transfer Evidence (Screenshot)"
+                        id="payout-proof"
+                        value={payoutData.screenshot}
+                        onUpload={(url) => setPayoutData({ ...payoutData, screenshot: url })}
+                        required
+                        placeholder="Log Payout Receipt"
+                    />
+
+                    <div className="flex gap-4">
+                        <Button variant="secondary" onClick={() => setPayoutModalOpen(false)} className="flex-1 py-4 text-[10px] font-black uppercase tracking-widest bg-slate-100 dark:bg-slate-800 border-none">Cancel</Button>
+                        <Button onClick={handleRecordPayout} loading={actionLoading} className="flex-[2] bg-primary-600 hover:bg-primary-700 font-black uppercase text-[10px] tracking-widest py-4 shadow-xl shadow-primary-500/20 border-none">
+                            <FiCheckCircle className="mr-2" /> Confirm Transmission
+                        </Button>
+                    </div>
+                </div>
+            </Modal>
+
             {/* Chat Box */}
             {chatConfig && admin && (
                 <ChatBox
@@ -532,6 +502,7 @@ function ManageContent() {
         </div>
     );
 }
+
 
 export default function ManagePage() {
     return (

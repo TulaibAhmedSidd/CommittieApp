@@ -17,12 +17,15 @@ const CommitteeSchema = new mongoose.Schema({
   organizerFee: { type: Number, default: 0 },
   isFeeMandatory: { type: Boolean, default: false },
   currentMonth: { type: Number, default: 1 },
-  members: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Member",
-    },
-  ],
+  members: {
+    type: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Member",
+      },
+    ],
+    default: [],
+  },
   status: {
     type: String,
     enum: ["open", "full", "ongoing", "finished"],
@@ -62,12 +65,17 @@ const CommitteeSchema = new mongoose.Schema({
       position: Number,
     },
   ],
-  pendingMembers: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Member",
-    },
-  ],
+  pendingMembers: {
+    type: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Member",
+      },
+    ],
+    default: [],
+  },
+  requireDocuments: { type: Boolean, default: false },
+  mandatoryDocuments: { type: [String], default: [] },
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Admin",
