@@ -16,6 +16,7 @@ import AssociationTransparency from "./AssociationTransparency";
 import DiscoveryPanel from "./DiscoveryPanel";
 import ChatBox from "./ChatBox";
 import { useLanguage } from "./LanguageContext";
+import InstallPWAButton from '@components/InstallApp';
 
 export const dynamic = "force-dynamic";
 
@@ -135,7 +136,7 @@ export default function MainPage() {
             <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">{t("discoverPools")}</h1>
             <p className="text-slate-500 font-medium italic">{t("browseParticipateDesc")}</p>
           </div>
-
+          <InstallPWAButton />
           <DiscoveryPanel onChatClick={(other) => setActiveChat(other)} />
 
           {userLoggedData?.createdByAdminName && (

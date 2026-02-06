@@ -87,14 +87,13 @@ function RegisterContent() {
             <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-500/10 rounded-full blur-[120px]" />
 
             <div className="w-full max-w-md relative z-10 animate-in fade-in slide-in-from-bottom-8 duration-700">
-                <div className="text-center mb-8 space-y-2">
-                    <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter uppercase italic">
-                        Create <span className="text-primary-600">Account</span>
-                    </h1>
-                    <p className="text-slate-500 dark:text-slate-400 font-black uppercase tracking-widest text-[10px]">Join the CommittieApp Ecosystem</p>
-                </div>
-
                 <Card className="p-8 backdrop-blur-xl bg-white/70 dark:bg-slate-900/70 shadow-2xl border-white/50 dark:border-slate-800/50">
+                    <div className="text-center mb-8 space-y-2">
+                        <h1 className="text-2xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tighter uppercase italic">
+                            Create <span className="text-primary-600">Account</span>
+                        </h1>
+                        <p className="text-slate-500 dark:text-slate-400 font-black uppercase tracking-widest text-[10px]">Join the CommittieApp Ecosystem</p>
+                    </div>
                     <div className="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl mb-8">
                         <button
                             onClick={() => setRole("member")}
