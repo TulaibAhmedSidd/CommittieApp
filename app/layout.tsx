@@ -24,6 +24,7 @@ export const metadata: Metadata = {
 import { LanguageProvider } from "./Components/LanguageContext";
 import { ThemeProvider } from "./Components/ThemeContext";
 import ClientNavbar from "./Components/ClientNavbar";
+import PWAInstallBar from "./Components/PWAinstall";
 
 export default function RootLayout({
   children,
@@ -51,6 +52,7 @@ export default function RootLayout({
         <ThemeProvider>
           <LanguageProvider>
             <ClientNavbar />
+            <PWAInstallBar />
             <ToastContainer autoClose={3000} />
             <div className=" min-h-screen">
               {children}
