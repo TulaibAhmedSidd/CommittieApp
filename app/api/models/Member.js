@@ -17,7 +17,7 @@ const MemberSchema = new mongoose.Schema({
   email: String,
   resetToken: String,
   password: { type: String, required: true }, // Add password field
-  phone: { type: Number, required: false },
+  phone: { type: Number, required: true },
   committee: { type: mongoose.Schema.Types.ObjectId, ref: "Committee" },
   status: { type: String, enum: ["pending", "approved"], default: "pending" },
   committees: [
@@ -37,6 +37,7 @@ const MemberSchema = new mongoose.Schema({
   createdByAdminName: { type: String, required: false }, // Store creator's name for easy lookup
   country: { type: String, default: "Pakistan" },
   city: String,
+  county: String,
   nicNumber: String,
   nicFront: String, // Explicit field for verification
   nicBack: String,  // Explicit field for verification

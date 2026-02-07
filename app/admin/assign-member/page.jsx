@@ -50,7 +50,7 @@ const AssignMembers = () => {
         try {
             const [mems, comms] = await Promise.all([fetchMembers(), fetchCommittees()]);
             setMembers(mems || []);
-            setCommittees(comms || []);
+            setCommittees(comms?.committees || []);
         } catch (err) {
             toast.error(t("error") + ": " + (err.message || "Failed to load"));
         } finally {

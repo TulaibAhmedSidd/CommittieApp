@@ -9,7 +9,11 @@ export async function POST(req) {
 
     const body = await req.json();
     console.log("Admin Registration: Received body:", { ...body, password: '[REDACTED]' });
-    const { name, email, password, phone, createdBy } = body;
+    const { name, email, password, phone, createdBy, city, county, location } = body;
+
+    if (!name || !email || !password || !phone) {
+      return new Response(JSON.stringify({ message: 'Missing mandatory fields (name, email, password, phone)' }), { status: 400 });
+    }
 
     const existingAdmin = await Admin.findOne({ email });
     console.log("Admin Registration: Existing admin check:", existingAdmin ? "Exists" : "New");
@@ -26,6 +30,9 @@ export async function POST(req) {
       email,
       password: hashedPassword,
       phone,
+      city,
+      county,
+      location: location || { type: "Point", coordinates: [0, 0] },
       isAdmin: true,
       status: createdBy ? 'approved' : 'pending'
     };

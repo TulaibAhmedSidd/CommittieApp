@@ -32,7 +32,9 @@ The Super Admin oversees the entire ecosystem. This role approves organizers, ve
 To eliminate fraud and build trust:
 
 * Users and organizers must complete profile verification.
-* Required details include country, city, phone number, NIC number, and original NIC image upload.
+* Required registration details: **Name, Email, Password, Phone (Mandatory), City (Mandatory Dropdown)**.
+* Optional profile details: **County/Area, Precise Geolocation**.
+* Verification artifacts: **NIC number, and original NIC image (Front/Back) + Electricity Bill**.
 * Profiles go into a review stage after submission.
 * Verified accounts receive a **Blue Tick**, visible across the platform.
 * Organizers and members can easily identify trusted participants.

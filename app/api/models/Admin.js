@@ -13,6 +13,7 @@ const AdminSchema = new mongoose.Schema({
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin' },
     country: { type: String, default: "Pakistan" },
     city: String,
+    county: String,
     nicNumber: String,
     nicImage: String,
     verificationStatus: {

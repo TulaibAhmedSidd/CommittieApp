@@ -39,16 +39,24 @@ CommittieApp is a digital platform for managing "Committies" (Rotating Savings a
 ## 2. Core Functional Flows
 
 ### Registration & Approval
-1. **Self-Reg (Member)**: User selects "Start Saving". Account is **Auto-Approved**. They can log in immediately.
-2. **Self-Reg (Organizer)**: User selects "Become an Organizer". Account is **Pending**.
+1. **Self-Reg (Member)**: User selects "Start Saving".
+    - **Mandatory Fields**: Name, Email, Password, **Phone**, **City (Dropdown)**.
+    - **Optional Fields**: County/Area, Geolocation (Captured via browser).
+    - **Status**: Account is **Auto-Approved**. They can log in immediately.
+2. **Self-Reg (Organizer)**: User selects "Become an Organizer".
+    - **Mandatory Fields**: Organizer Name, Email, Password, **Phone**, **City (Dropdown)**.
+    - **Status**: Account is **Pending**.
 3. **Association**: Members can be associated with multiple Organizers. When a member joins a committee, they are automatically "Associated" with that committee's Organizer.
 4. **Super Admin Action**: Super Admin reviews pending Organizers in the **Approvals** tab.
 5. **Activation**: Super Admin clicks "Approve". Top-level organizers can now log in and create committees.
 
-### Referral System
-- **Invite Codes**: Organizers can generate unique referral codes.
-- **Analytics**: Organizers can track their network performance via the Referral Center, viewing counts of both Members and other Admins onboarded via their link.
-- **Auto-Linking**: New users signing up via a referral link are automatically linked to the referring Organizer.
+### Discovery & Networking
+1. **Near Me Page**: A dedicated discovery hub at `/userDash/near-me` where users can find:
+    - **Active Committees**: Filterable by City, County, and name.
+    - **Lead Organizers**: Profiles of trusted committee managers.
+    - **Ecosystem Members**: Nearby participants for networking.
+2. **Geolocation Search**: Uses 2dsphere indexing in MongoDB to find nodes within a 50KM radius of the user's current coordinates.
+3. **Smart Filters**: Capability to narrow down discovery by City (Dropdown selection) or specific Area (County text search).
 
 ### Committee Lifecycle
 1. **Creation**: Organizer creates a committee with parameters (Monthly Amount, Duration, Max Members, Fees).

@@ -44,6 +44,11 @@ graph TD
     %% User Flow
     UserDash --> ViewCommittees[View My Committees]
     UserDash --> ViewHistory[View Payment History]
+    UserDash --> NearMe[/userDash/near-me Page]
+    
+    NearMe --> |Filter| Committees[Active Committees]
+    NearMe --> |Connect| Organizers[Lead Organizers]
+    NearMe --> |Chat| MemberList[Ecosystem Members]
 
     %% Admin Flow
     AdminDash --> ManageCommittees[Manage Committees]
@@ -85,6 +90,10 @@ erDiagram
         String name
         String email UK
         String password
+        String phone
+        String city
+        String county
+        Object location
         Boolean isAdmin
     }
 
@@ -105,7 +114,11 @@ erDiagram
         ObjectId _id
         String name
         String email
+        String phone
         String password
+        String city
+        String county
+        Object location
         String status
         ObjectId committee FK
         ObjectId[] committees

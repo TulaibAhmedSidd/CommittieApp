@@ -43,7 +43,7 @@ export default function Committiee() {
     setLoading(true);
     try {
       const data = await fetchCommittees(userLoggedDetails._id);
-      setCommittees(data);
+      setCommittees(data?.committees || []);
     } catch (err) {
       toast.error(t("error") + ": " + (err.message || "Failed to load"));
     } finally {

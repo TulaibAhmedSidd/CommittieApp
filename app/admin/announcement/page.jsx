@@ -38,7 +38,7 @@ export default function AnnouncementPage() {
             const res = await fetch("/api/committee");
             const data = await res.json();
             const admin = JSON.parse(localStorage.getItem("admin_detail"));
-            setCommittees(data.filter(c => c.createdBy === admin?._id));
+            setCommittees((data.committees || []).filter(c => c.createdBy === admin?._id));
         } catch (err) {
             toast.error(t("error") + ": " + (err.message || "Failed to load"));
         } finally {
@@ -65,7 +65,7 @@ export default function AnnouncementPage() {
             toast.success(t("announceSuccess"));
             fetchCommittees();
         } catch (err) {
-            toast.error(t("error") + ": " + err.message);
+            toast.error(t("error") + ": " + err);
         } finally {
             setLoading(false);
         }

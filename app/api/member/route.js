@@ -156,7 +156,12 @@ export async function POST(req) {
   try {
     await connectToDatabase();
     const body = await req.json();
-    const { name, email, password, referralCode, createdBy, createdByAdminName } = body;
+    const { name, email, password, phone, referralCode, createdBy, createdByAdminName, city, county, location } = body;
+
+    if (!name || !email || !password || !phone) {
+      return new Response(JSON.stringify({ error: "Missing mandatory fields (name, email, password, phone)" }), { status: 400 });
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
 
     let referringAdminId = null;
@@ -173,13 +178,17 @@ export async function POST(req) {
     const newMember = new Member({
       name,
       email,
+      phone,
       password: hashedPassword,
       status: "approved",
       resetToken: "",
       referredBy: referringAdminId,
       organizers: referringAdminId ? [referringAdminId] : (createdBy ? [createdBy] : []),
       createdBy,
-      createdByAdminName
+      createdByAdminName,
+      city,
+      county,
+      location: location || { type: "Point", coordinates: [0, 0] }
     });
     await newMember.save();
 

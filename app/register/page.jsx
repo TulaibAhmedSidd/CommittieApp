@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { FiUser, FiMail, FiLock, FiPhone, FiArrowRight, FiCheckCircle, FiShield, FiBriefcase, FiLink } from "react-icons/fi";
+import { FiUser, FiMail, FiLock, FiPhone, FiArrowRight, FiCheckCircle, FiShield, FiBriefcase, FiLink, FiMapPin, FiNavigation } from "react-icons/fi";
 import Button from "../Components/Theme/Button";
 import Input from "../Components/Theme/Input";
 import Card from "../Components/Theme/Card";
@@ -19,7 +19,10 @@ function RegisterContent() {
         name: "",
         email: "",
         password: "",
-        phone: ""
+        phone: "",
+        city: "",
+        county: "",
+        location: { type: "Point", coordinates: [0, 0] }
     });
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
@@ -30,6 +33,14 @@ function RegisterContent() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (!formData.phone) {
+            toast.error("Phone number is mandatory");
+            return;
+        }
+        if (!formData.city) {
+            toast.error("City is mandatory");
+            return;
+        }
         setLoading(true);
         try {
             const endpoint = role === "member" ? "/api/member" : "/api/admin";
@@ -52,6 +63,29 @@ function RegisterContent() {
             setLoading(false);
         }
     };
+
+    const handleGetLocation = () => {
+        if (!navigator.geolocation) {
+            return toast.error("Geolocation is not supported by your browser");
+        }
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                setFormData(prev => ({
+                    ...prev,
+                    location: {
+                        type: "Point",
+                        coordinates: [position.coords.longitude, position.coords.latitude]
+                    }
+                }));
+                toast.success("Location captured!");
+            },
+            (error) => {
+                toast.error("Unable to retrieve your location");
+            }
+        );
+    };
+
+    const cities = ["Karachi", "Lahore", "Islamabad", "Rawalpindi", "Faisalabad", "Multan", "Peshawar", "Quetta", "Sialkot", "Gujranwala", "Hyderabad", "Sukkur", "Bahawalpur", "Sargodha", "Mardan", "Larkana", "Sheikhupura", "Rahim Yar Khan", "Jhang", "Dera Ghazi Khan"];
 
     if (success) {
         return (
@@ -129,16 +163,58 @@ function RegisterContent() {
                             onChange={handleChange}
                             required
                         />
-                        {role === "member" && (
-                            <Input
-                                label="Phone Number"
-                                name="phone"
-                                placeholder="03001234567"
-                                icon={<FiPhone />}
-                                value={formData.phone}
+                        <Input
+                            label="Phone Number"
+                            name="phone"
+                            placeholder="03001234567"
+                            icon={<FiPhone />}
+                            value={formData.phone}
+                            onChange={handleChange}
+                            required
+                        />
+                        <div className="space-y-1.5 text-left">
+                            <label className="text-sm font-semibold text-secondary-700 dark:text-secondary-300">City</label>
+                            <select
+                                name="city"
+                                value={formData.city}
                                 onChange={handleChange}
-                            />
-                        )}
+                                className="w-full px-4 py-3 bg-white dark:bg-slate-900 border border-secondary-200 dark:border-secondary-700 rounded-lg text-secondary-900 dark:text-white outline-none focus:ring-2 focus:ring-primary-500"
+                                required
+                            >
+                                <option value="">Select City</option>
+                                {cities.sort().map(city => (
+                                    <option key={city} value={city}>{city}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <Input
+                            label="County / Area"
+                            name="county"
+                            placeholder="e.g. Gulshan, DHA..."
+                            icon={<FiMapPin />}
+                            value={formData.county}
+                            onChange={handleChange}
+                        />
+
+                        <div className="flex items-end gap-2">
+                            <div className="flex-1">
+                                <Input
+                                    label="Location Coordinates"
+                                    value={`${formData.location.coordinates[1].toFixed(4)}, ${formData.location.coordinates[0].toFixed(4)}`}
+                                    icon={<FiNavigation />}
+                                    readOnly
+                                />
+                            </div>
+                            <Button
+                                type="button"
+                                variant="secondary"
+                                onClick={handleGetLocation}
+                                className="mb-0.5"
+                                title="Get current location"
+                            >
+                                <FiNavigation />
+                            </Button>
+                        </div>
                         <Input
                             label="Security Password"
                             name="password"

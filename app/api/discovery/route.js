@@ -10,6 +10,7 @@ export async function GET(req) {
         const q = searchParams.get("q") || "";
         const type = searchParams.get("type") || "all"; // committee, organizer, member
         const city = searchParams.get("city") || "";
+        const county = searchParams.get("county") || "";
         const lat = parseFloat(searchParams.get("lat"));
         const lng = parseFloat(searchParams.get("lng"));
         const radius = parseInt(searchParams.get("radius") || "50"); // in km
@@ -23,6 +24,7 @@ export async function GET(req) {
         // Common query for text/city
         const textQuery = q ? { $or: [{ name: { $regex: q, $options: "i" } }, { email: { $regex: q, $options: "i" } }] } : {};
         const cityQuery = city ? { city: { $regex: city, $options: "i" } } : {};
+        const countyQuery = county ? { county: { $regex: county, $options: "i" } } : {};
 
         // Geospatial query helper
         const getGeoQuery = () => {
@@ -70,6 +72,7 @@ export async function GET(req) {
             let adminQuery = {
                 ...textQuery,
                 ...cityQuery,
+                ...countyQuery,
                 ...geoQuery,
                 isAdmin: true,
                 isSuperAdmin: false
@@ -88,6 +91,7 @@ export async function GET(req) {
             const memberQuery = {
                 ...textQuery,
                 ...cityQuery,
+                ...countyQuery,
                 ...geoQuery
             };
             const total = await Member.countDocuments(memberQuery);

@@ -29,7 +29,7 @@ export default function MainPage() {
   const [userLoggedData, setUserLoggedData] = useState(null);
   const [view, setView] = useState(searchParams.get("view") || "all");
   const [activeChat, setActiveChat] = useState(null);
-
+  console.log('committees', committees);
   useEffect(() => {
     const token = localStorage.getItem("token");
     const userData = localStorage.getItem("member");
@@ -66,7 +66,7 @@ export default function MainPage() {
       const res = await fetch("/api/committee");
       if (!res.ok) throw new Error(t("failedToFetchPools"));
       const data = await res.json();
-      setCommittees(data);
+      setCommittees(data?.committees);
     } catch (err) {
       toast.error(t("failedToFetchPools"));
     } finally {
@@ -142,9 +142,11 @@ export default function MainPage() {
         <VerifiedMember member={userLoggedData} onUpdate={(updated) => setUserLoggedData(updated)} />
       ) : view === "all" ? (
         <>
-          <div className="flex flex-col gap-2 pb-6 border-b border-slate-200 dark:border-slate-800">
-            <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">{t("discoverPools")}</h1>
-            <p className="text-slate-500 font-medium italic">{t("browseParticipateDesc")}</p>
+          <div className="flex flex-col gap-4 pb-10 border-b border-slate-200 dark:border-slate-800">
+            <h1 className="text-5xl font-black text-slate-900 dark:text-white tracking-tighter uppercase italic">
+              User <span className="text-primary-600">Command Center</span>
+            </h1>
+            <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">{t("browseParticipateDesc")}</p>
           </div>
           <DiscoveryPanel
             member={userLoggedData}
@@ -153,14 +155,14 @@ export default function MainPage() {
           />
 
           {userLoggedData?.createdByAdminName && (
-            <div className="flex items-center gap-4 p-6 bg-primary-500/5 rounded-[2rem] border border-primary-500/10">
-              <div className="w-12 h-12 rounded-2xl bg-primary-600 flex items-center justify-center text-white shadow-lg shadow-primary-500/20">
-                <FiLayers size={22} />
+            <div className="flex items-center gap-6 p-8 bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-premium">
+              <div className="w-14 h-14 rounded-2xl bg-primary-600 flex items-center justify-center text-white shadow-xl shadow-primary-500/20 rotate-3">
+                <FiLayers size={26} />
               </div>
               <div>
-                <p className="text-[10px] font-black text-primary-600 uppercase tracking-widest">Primary Organizer</p>
-                <p className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tighter italic">
-                  Associated with: <span className="text-primary-600">{userLoggedData.createdByAdminName}</span>
+                <p className="text-[10px] font-black text-primary-600 uppercase tracking-[0.3em] mb-1">Authenticated Organizer</p>
+                <p className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">
+                  Member of Node: <span className="text-primary-600 italic">{userLoggedData.createdByAdminName}</span>
                 </p>
               </div>
             </div>
@@ -262,24 +264,24 @@ export default function MainPage() {
 
       {/* Announcements */}
       <div id="notifications" className="pt-12 scroll-mt-24 space-y-8">
-        <div className="flex items-center gap-4">
-          <div className="p-3 bg-primary-100 dark:bg-primary-900/30 text-primary-600 rounded-2xl">
+        <div className="flex items-center gap-6">
+          <div className="p-4 bg-primary-600 rounded-2xl text-white shadow-lg shadow-primary-500/20 rotate-3">
             <FiBell size={24} />
           </div>
-          <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">{t("recentAnnouncements")}</h2>
-          <div className="h-px flex-1 bg-slate-200 dark:bg-slate-800" />
+          <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter uppercase italic">{t("recentAnnouncements")}</h2>
+          <div className="h-px flex-1 bg-slate-200 dark:bg-slate-800 opacity-50" />
         </div>
         <Notifications user={true} userId={userLoggedData?._id} />
       </div>
 
       {/* Results Block */}
       <div className="pt-12 space-y-8">
-        <div className="flex items-center gap-4">
-          <div className="p-3 bg-green-100 dark:bg-green-900/30 text-green-600 rounded-2xl">
+        <div className="flex items-center gap-6">
+          <div className="p-4 bg-green-500 rounded-2xl text-white shadow-lg shadow-green-500/20 -rotate-3">
             <FiCheckCircle size={24} />
           </div>
-          <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">{t("drawingResults")}</h2>
-          <div className="h-px flex-1 bg-slate-200 dark:bg-slate-800" />
+          <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter uppercase italic">{t("drawingResults")}</h2>
+          <div className="h-px flex-1 bg-slate-200 dark:bg-slate-800 opacity-50" />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {committees.filter(c => c.result?.length > 0).map((c) => (

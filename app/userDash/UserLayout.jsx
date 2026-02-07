@@ -38,6 +38,7 @@ export default function UserLayout({ children }) {
 
     const navItems = [
         { name: "My Activity", icon: FiHome, path: "/userDash" },
+        { name: "Near Me", icon: FiUser, path: "/userDash/near-me" },
         { name: "Explore", icon: FiSearch, path: "/userDash/explore" },
         { name: "Verified Member", icon: FiShield, path: "/userDash?view=verification" },
         { name: "Committee Participation", icon: FiGrid, path: "/userDash?view=my" },
