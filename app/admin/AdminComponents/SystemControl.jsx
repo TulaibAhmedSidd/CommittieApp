@@ -14,8 +14,13 @@ export default function SystemControl({ isAdmin, isSuperAdmin, adminDetails }) {
 
         setLoading(true);
         try {
+            const token = localStorage.getItem("admin_token");
             const res = await fetch("/api/admin/system/wipe", {
                 method: "DELETE",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
                 body: JSON.stringify({ adminId: adminDetails?._id })
             });
             const data = await res.json();
@@ -35,8 +40,13 @@ export default function SystemControl({ isAdmin, isSuperAdmin, adminDetails }) {
     const handleBulkAdd = async () => {
         setLoading(true);
         try {
+            const token = localStorage.getItem("admin_token");
             const res = await fetch("/api/admin/system/bulk-add", {
                 method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
                 body: JSON.stringify({ adminId: adminDetails?._id, adminName: adminDetails?.name })
             });
             const data = await res.json();

@@ -30,7 +30,10 @@ export default function ApprovalsPage() {
     const fetchPending = async () => {
         setLoading(true);
         try {
-            const res = await fetch("/api/admin/approvals");
+            const token = localStorage.getItem("admin_token");
+            const res = await fetch("/api/admin/approvals", {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
             const data = await res.json();
             setApprovals(data);
         } catch (err) {
@@ -43,9 +46,13 @@ export default function ApprovalsPage() {
     const handleAction = async (userId, role, action) => {
         setActionLoading(userId);
         try {
+            const token = localStorage.getItem("admin_token");
             const res = await fetch("/api/admin/approvals", {
                 method: "PATCH",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
                 body: JSON.stringify({ userId, role, action })
             });
 

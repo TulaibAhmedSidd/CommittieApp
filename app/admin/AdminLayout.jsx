@@ -68,6 +68,7 @@ export default function AdminLayout({ children }) {
         { name: "Add members to my Committee", icon: FiLink, path: "/admin/assign-member" },
         { name: "Notifications", icon: FiBell, path: "/admin/notifications" },
         { name: t("broadcaster"), icon: FiActivity, path: "/admin/announcement" },
+        { name: "Inbox", icon: FiMessageSquare, path: "/admin/inbox" },
         { name: "My Profile", icon: FiUser, path: "/admin/profile" },
         ...(isSuperAdmin ? [
             { name: "Approvals", icon: FiShield, path: "/admin/approvals" },

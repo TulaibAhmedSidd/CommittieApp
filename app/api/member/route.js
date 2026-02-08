@@ -137,6 +137,8 @@ import nodemailer from "nodemailer";
 //     }
 // }
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     await connectToDatabase();
@@ -144,7 +146,7 @@ export async function GET() {
     return new Response(JSON.stringify(members), { status: 200 });
   } catch (err) {
     return new Response(
-      JSON.stringify({ error: "Failed to fetch members" + err }),
+      JSON.stringify({ error: "Failed to fetch members" }),
       {
         status: 500,
       }

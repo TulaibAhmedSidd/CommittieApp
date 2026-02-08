@@ -2,6 +2,8 @@ import connectToDatabase from '@/app/utils/db';
 import bcrypt from 'bcryptjs';
 import Admin from '@/app/api/models/Admin';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(req) {
   try {
     console.log("Admin Registration: Connecting to database...");

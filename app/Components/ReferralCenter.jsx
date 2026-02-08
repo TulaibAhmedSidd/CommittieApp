@@ -21,7 +21,10 @@ export default function ReferralCenter({ adminId }) {
 
     const fetchReferralData = async () => {
         try {
-            const res = await fetch(`/api/admin/referral?adminId=${adminId}`);
+            const token = localStorage.getItem("admin_token");
+            const res = await fetch(`/api/admin/referral?adminId=${adminId}`, {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
             if (res.ok) {
                 const data = await res.json();
                 setReferralData(data);

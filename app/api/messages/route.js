@@ -4,19 +4,21 @@ import Committee from "@/app/api/models/Committee";
 import Member from "@/app/api/models/Member";
 import Admin from "@/app/api/models/Admin";
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(req) {
     await connectToDatabase();
     try {
         const { senderId, senderModel, receiverId, receiverModel, committeeId, content } = await req.json();
 
         // Basic validation
-        if (!content || !senderId || !receiverId || !committeeId) {
+        if (!content || !senderId || !receiverId) {
             return new Response(JSON.stringify({ error: "Missing required fields" }), { status: 400 });
         }
 
         // Eligibility check
-        // Check if member is actually in the committee
-        if (senderModel === "Member") {
+        // Check if member is actually in the committee if committeeId is provided
+        if (committeeId && senderModel === "Member") {
             const committee = await Committee.findById(committeeId);
             if (!committee) return new Response(JSON.stringify({ error: "Committee not found" }), { status: 404 });
 
@@ -30,7 +32,7 @@ export async function POST(req) {
             senderModel,
             receiver: receiverId,
             receiverModel,
-            committeeId,
+            committeeId: committeeId || null,
             content
         });
 
@@ -49,18 +51,23 @@ export async function GET(req) {
     const userId = searchParams.get("userId"); // Could be Member or Admin ID
     const otherId = searchParams.get("otherId"); // The person chatting with
 
-    if (!committeeId || !userId || !otherId) {
+    if (!userId || !otherId) {
         return new Response(JSON.stringify({ error: "Missing parameters" }), { status: 400 });
     }
 
     try {
-        const messages = await Message.find({
-            committeeId,
+        const query = {
             $or: [
                 { sender: userId, receiver: otherId },
                 { sender: otherId, receiver: userId }
             ]
-        }).sort({ timestamp: 1 });
+        };
+
+        if (committeeId) {
+            query.committeeId = committeeId;
+        }
+
+        const messages = await Message.find(query).sort({ timestamp: 1 });
 
         return new Response(JSON.stringify(messages), { status: 200 });
     } catch (err) {

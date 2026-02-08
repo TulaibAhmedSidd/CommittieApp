@@ -5,6 +5,8 @@ import connectToDatabase from "@/app/utils/db";
 
 connectToDatabase();
 
+export const dynamic = 'force-dynamic';
+
 // export default async function handler(req, res) {
 //   if (req.method === "POST") {
 //     const { email, password } = req.body;
@@ -43,6 +45,10 @@ connectToDatabase();
 export async function POST(req) {
   try {
     const { email, password } = await req.json(); // Retrieve the data from the request body
+
+    if (typeof email !== 'string' || typeof password !== 'string') {
+      return new Response(JSON.stringify({ message: "Invalid input format" }), { status: 400 });
+    }
 
     // Find the member by email
     const member = await Member.findOne({ email });
@@ -85,12 +91,17 @@ export async function POST(req) {
         }
       );
     }
-    // Return the token
-    return new Response(JSON.stringify({ token: token, member: member }), {
+
+    // Return the token and member info (excluding password)
+    const memberObj = member.toObject();
+    delete memberObj.password;
+
+    return new Response(JSON.stringify({ token: token, member: memberObj }), {
       status: 200,
     });
   } catch (error) {
-    return new Response(JSON.stringify({ message: "Server error, " + error }), {
+    console.error("Login Error:", error);
+    return new Response(JSON.stringify({ message: "Server error. Please try again later." }), {
       status: 500,
     });
   }

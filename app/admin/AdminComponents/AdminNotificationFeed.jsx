@@ -17,12 +17,19 @@ export default function AdminNotificationFeed() {
     const fetchNotifications = async () => {
         try {
             const adminDetail = localStorage.getItem("admin_detail");
+            const token = localStorage.getItem("admin_token");
             const admin = adminDetail ? JSON.parse(adminDetail) : null;
             if (!admin) return;
 
-            const res = await fetch(`/api/admin/notifications?adminId=${admin._id}`);
+            const res = await fetch(`/api/admin/notifications?adminId=${admin._id}`, {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
             const data = await res.json();
-            setNotifications(data);
+            if (Array.isArray(data)) {
+                setNotifications(data);
+            } else {
+                setNotifications([]);
+            }
         } catch (err) {
             console.error("Failed to fetch notifications");
         } finally {
@@ -32,9 +39,13 @@ export default function AdminNotificationFeed() {
 
     const markAsRead = async (id) => {
         try {
+            const token = localStorage.getItem("admin_token");
             await fetch("/api/admin/notifications", {
                 method: "PATCH",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
                 body: JSON.stringify({ notificationId: id })
             });
             setNotifications(prev => prev.map(n => n._id === id ? { ...n, isRead: true } : n));

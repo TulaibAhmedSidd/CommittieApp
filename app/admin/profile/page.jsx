@@ -72,9 +72,13 @@ export default function AdminProfilePage() {
 
         setLoading(true);
         try {
+            const token = localStorage.getItem("admin_token");
             const res = await fetch("/api/admin/profile", {
                 method: "PATCH",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
                 body: JSON.stringify({
                     adminId: admin._id,
                     name: formData.name,

@@ -2,28 +2,26 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { FiMessageSquare, FiUser, FiClock, FiSearch } from "react-icons/fi";
+import { FiMessageSquare, FiUser, FiClock, FiSearch, FiShield } from "react-icons/fi";
 import Card from "../../Components/Theme/Card";
 import ChatBox from "../../Components/ChatBox";
-import { useLanguage } from "../../Components/LanguageContext";
 import moment from "moment";
 
-export default function AdminInbox() {
-    const { t } = useLanguage();
+export default function MemberInbox() {
     const router = useRouter();
     const [conversations, setConversations] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [admin, setAdmin] = useState(null);
+    const [member, setMember] = useState(null);
     const [selectedChat, setSelectedChat] = useState(null);
 
     useEffect(() => {
-        const token = localStorage.getItem("admin_token");
-        const detail = localStorage.getItem("admin_detail");
+        const token = localStorage.getItem("token"); // Member token key
+        const detail = localStorage.getItem("member");
         if (!token) {
-            router.push("/admin/login");
+            router.push("/login");
             return;
         }
-        setAdmin(JSON.parse(detail));
+        setMember(JSON.parse(detail));
         fetchConversations(JSON.parse(detail)._id);
 
         // Poll for new conversations/messages
@@ -31,12 +29,9 @@ export default function AdminInbox() {
         return () => clearInterval(interval);
     }, []);
 
-    const fetchConversations = async (adminId) => {
+    const fetchConversations = async (memberId) => {
         try {
-            const token = localStorage.getItem("admin_token");
-            const res = await fetch(`/api/admin/inbox?adminId=${adminId}`, {
-                headers: { "Authorization": `Bearer ${token}` }
-            });
+            const res = await fetch(`/api/member/inbox?memberId=${memberId}`);
             if (res.ok) {
                 const data = await res.json();
                 setConversations(data);
@@ -50,12 +45,11 @@ export default function AdminInbox() {
 
     return (
         <div className="flex h-screen bg-slate-50 dark:bg-slate-950">
-            {/* <AdminSidebar /> */}
             <div className="flex-1 flex flex-col h-full overflow-hidden relative">
                 <main className="flex-1 overflow-y-auto p-4 md:p-8 space-y-8">
                     <div className="space-y-4">
-                        <h1 className="text-4xl font-black uppercase tracking-tighter text-slate-900 dark:text-white">Inbox</h1>
-                        <p className="text-slate-500 font-medium">Manage support requests and member inquiries.</p>
+                        <h1 className="text-4xl font-black uppercase tracking-tighter text-slate-900 dark:text-white">My Inbox</h1>
+                        <p className="text-slate-500 font-medium">Chat with Committee Organizers and Support.</p>
                     </div>
 
                     {loading ? (
@@ -73,20 +67,20 @@ export default function AdminInbox() {
                                         key={conv.committeeId + conv.otherId}
                                         onClick={() => setSelectedChat({
                                             committeeId: conv.committeeId,
-                                            otherUserId: conv.otherId, // Member
-                                            otherUserName: conv.member.name,
-                                            otherUserModel: "Member"
+                                            otherUserId: conv.otherId,
+                                            otherUserName: conv.otherUser?.name || "Unknown User",
+                                            otherUserModel: conv.otherUserModel || "Admin"
                                         })}
                                         className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] shadow-sm border border-slate-200 dark:border-slate-800 hover:border-primary-500/50 hover:shadow-lg transition-all cursor-pointer group"
                                     >
                                         <div className="flex justify-between items-start mb-4">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center text-slate-500 group-hover:bg-primary-50 group-hover:text-primary-600 transition-colors">
-                                                    <FiUser size={20} />
+                                                    {conv.otherUserModel === 'Admin' ? <FiShield size={20} /> : <FiUser size={20} />}
                                                 </div>
                                                 <div>
-                                                    <h3 className="font-black text-slate-900 dark:text-white uppercase tracking-tight">{conv.member.name}</h3>
-                                                    <p className="text-[10px] uppercase tracking-widest text-slate-400">{conv.committee.name}</p>
+                                                    <h3 className="font-black text-slate-900 dark:text-white uppercase tracking-tight">{conv.otherUser?.name || "Unknown"}</h3>
+                                                    <p className="text-[10px] uppercase tracking-widest text-slate-400">{conv.committee?.name || "Direct Message"}</p>
                                                 </div>
                                             </div>
                                             {conv.unreadCount > 0 && (
@@ -108,17 +102,17 @@ export default function AdminInbox() {
                 </main>
 
                 {/* Chat Box */}
-                {selectedChat && admin && (
+                {selectedChat && member && (
                     <ChatBox
                         committeeId={selectedChat.committeeId}
-                        currentUserId={admin._id}
-                        currentUserModel="Admin"
+                        currentUserId={member._id}
+                        currentUserModel="Member"
                         otherUserId={selectedChat.otherUserId}
                         otherUserName={selectedChat.otherUserName}
-                        otherUserModel="Member"
+                        otherUserModel={selectedChat.otherUserModel}
                         onClose={() => {
                             setSelectedChat(null);
-                            fetchConversations(admin._id); // Refresh on close to update status
+                            fetchConversations(member._id); // Refresh on close
                         }}
                     />
                 )}

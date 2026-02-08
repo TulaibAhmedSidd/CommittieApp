@@ -4,11 +4,17 @@ import Admin from "@/app/api/models/Admin";
 import connectToDatabase from "@/app/utils/db";
 
 
-export async function POST(req) {
-  const { email, password } = await req.json();
-  await connectToDatabase();
+export const dynamic = 'force-dynamic';
 
+export async function POST(req) {
   try {
+    const { email, password } = await req.json();
+
+    if (typeof email !== 'string' || typeof password !== 'string') {
+      return new Response(JSON.stringify({ message: "Invalid input format" }), { status: 400 });
+    }
+    await connectToDatabase();
+
     const admin = await Admin.findOne({ email });
 
     if (!admin) {
@@ -40,11 +46,15 @@ export async function POST(req) {
       { expiresIn: "1h" }
     );
 
-    return new Response(JSON.stringify({ token: token, data: admin }), {
+    const adminObj = admin.toObject();
+    delete adminObj.password;
+
+    return new Response(JSON.stringify({ token: token, data: adminObj }), {
       status: 200,
     });
   } catch (error) {
-    return new Response(JSON.stringify({ message: "Server error" + error }), {
+    console.error("Admin Login Error:", error);
+    return new Response(JSON.stringify({ message: "Server error. Please try again later." }), {
       status: 500,
     });
   }

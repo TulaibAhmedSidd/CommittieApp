@@ -42,7 +42,8 @@ export default function UserLayout({ children }) {
         { name: "Explore", icon: FiSearch, path: "/userDash/explore" },
         { name: "Verified Member", icon: FiShield, path: "/userDash?view=verification" },
         { name: "Committee Participation", icon: FiGrid, path: "/userDash?view=my" },
-        { name: "Inbox / Alerts", icon: FiBell, path: "/userDash#notifications" },
+        { name: "Inbox / Support", icon: FiBell, path: "/userDash/inbox" },
+        { name: "Alerts", icon: FiBell, path: "/userDash#notifications" },
         { name: "My Profile", icon: FiUser, path: "/userDash/profile" },
     ];
 

@@ -26,10 +26,18 @@ export default function IdentityVerificationPage() {
     const fetchRequests = async (adminId) => {
         setLoading(true);
         try {
-            const res = await fetch(`/api/admin/verify?adminId=${adminId}`);
+            const token = localStorage.getItem("admin_token");
+            const res = await fetch(`/api/admin/verify?adminId=${adminId}`, {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
             const data = await res.json();
-            setRequests(data);
+            if (data.admins && data.members) {
+                setRequests(data);
+            } else {
+                setRequests({ admins: [], members: [] });
+            }
         } catch (err) {
+            console.error(err);
             toast.error("Failed to fetch verification requests");
         } finally {
             setLoading(false);
@@ -39,9 +47,13 @@ export default function IdentityVerificationPage() {
     const handleAction = async (userId, status, role) => {
         setActionLoading(userId);
         try {
+            const token = localStorage.getItem("admin_token");
             const res = await fetch("/api/admin/verify", {
                 method: "PATCH",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
                 body: JSON.stringify({ userId, role: role || 'Member', status })
             });
 

@@ -32,7 +32,10 @@ export default function AmdinPanel() {
 
     const fetchStats = async (adminId) => {
         try {
-            const res = await fetch(`/api/admin/stats?adminId=${adminId}`);
+            const token = localStorage.getItem("admin_token");
+            const res = await fetch(`/api/admin/stats?adminId=${adminId}`, {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
             if (res.ok) {
                 const data = await res.json();
                 setStatsData({

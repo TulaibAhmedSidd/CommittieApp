@@ -34,7 +34,7 @@ export default function MembersListing() {
     try {
       setLoading(true);
       const data = await fetchCommittees();
-      setCommittees(data);
+      setCommittees(data?.committees || []);
     } catch (err) {
       toast.error(t("error") + ": Registry unreachable");
     } finally {
