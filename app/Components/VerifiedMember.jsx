@@ -32,9 +32,13 @@ export default function VerifiedMember({ member, onUpdate }) {
 
         setLoading(true);
         try {
+            const token = localStorage.getItem("token");
             const res = await fetch(`/api/member/${member._id}`, {
                 method: "PATCH",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
                 body: JSON.stringify({
                     nicFront: docs.nicFront,
                     nicBack: docs.nicBack,

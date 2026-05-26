@@ -3,13 +3,20 @@ import Committee from "@/app/api/models/Committee";
 import Notification from "@/app/api/models/Notification";
 import Asset from "@/app/api/models/Asset";
 import { createLog } from "@/app/utils/logger";
+import { unauthorizedResponse, verifyAdmin } from "@/app/utils/auth";
 
 export async function POST(req, { params }) {
-    await connectToDatabase();
-    const { id } = await params;
-    const body = await req.json();
-
     try {
+        const auth = verifyAdmin(req);
+        if (!auth.authorized) {
+            return unauthorizedResponse(auth);
+        }
+
+        await connectToDatabase();
+        const { id } = await params;
+        const body = await req.json();
+        body.adminId = auth.user.userId;
+
         const committee = await Committee.findById(id);
         if (!committee) return new Response(JSON.stringify({ error: "Committee not found" }), { status: 404 });
 

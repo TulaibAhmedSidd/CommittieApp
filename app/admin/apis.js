@@ -1,7 +1,10 @@
 export async function fetchCommittees(adminId) {
   try {
     const url = adminId ? `/api/committee?adminId=${adminId}` : "/api/committee";
-    const res = await fetch(url);
+    const token = typeof window !== "undefined" ? localStorage.getItem("admin_token") : null;
+    const res = await fetch(url, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
     if (!res.ok) throw new Error("Failed to fetch committees");
     return res.json();
 
@@ -16,9 +19,13 @@ export async function fetchCommitteebyId(id) {
 }
 
 export async function createCommittee(data) {
+  const token = typeof window !== "undefined" ? localStorage.getItem("admin_token") : null;
   const res = await fetch("/api/committee", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
     body: JSON.stringify(data),
   });
   if (!res.ok) throw new Error("Failed to create committee");
@@ -26,9 +33,13 @@ export async function createCommittee(data) {
 }
 
 export async function updateCommittee(id, data) {
+  const token = typeof window !== "undefined" ? localStorage.getItem("admin_token") : null;
   const res = await fetch("/api/committee", {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
     body: JSON.stringify({ id, ...data }),
   });
   if (!res.ok) throw new Error("Failed to update committee");
@@ -36,9 +47,13 @@ export async function updateCommittee(id, data) {
 }
 
 export async function deleteCommittee(id) {
+  const token = typeof window !== "undefined" ? localStorage.getItem("admin_token") : null;
   const res = await fetch("/api/committee", {
     method: "DELETE",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
     body: JSON.stringify({ id }),
   });
   if (!res.ok) throw new Error("Failed to delete committee");
@@ -47,7 +62,10 @@ export async function deleteCommittee(id) {
 
 // memebrs
 export const fetchMembers = async () => {
-  const res = await fetch("/api/member");
+  const token = typeof window !== "undefined" ? localStorage.getItem("admin_token") : null;
+  const res = await fetch("/api/member", {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
   return await res.json();
 };
 // export async function fetchCommittees() {
@@ -68,9 +86,13 @@ export async function approveMember(committeeId, memberId) {
 }
 
 export async function pingMember(committeeId, memberId, adminId, message) {
+  const token = typeof window !== "undefined" ? localStorage.getItem("admin_token") : null;
   const res = await fetch(`/api/committee/${committeeId}/ping`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
     body: JSON.stringify({ memberId, adminId, message }),
   });
   if (!res.ok) throw new Error("Failed to ping member");
@@ -78,9 +100,13 @@ export async function pingMember(committeeId, memberId, adminId, message) {
 }
 
 export async function updatePaymentStatus(committeeId, paymentId, status, adminId, memberId) {
+  const token = typeof window !== "undefined" ? localStorage.getItem("admin_token") : null;
   const res = await fetch(`/api/committee/${committeeId}/payment`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
     body: JSON.stringify({ paymentId, status, adminId, memberId }),
   });
   if (!res.ok) throw new Error("Failed to update payment status");
@@ -88,9 +114,13 @@ export async function updatePaymentStatus(committeeId, paymentId, status, adminI
 }
 
 export async function updateCommitteeStatus(committeeId, action, adminId) {
+  const token = typeof window !== "undefined" ? localStorage.getItem("admin_token") : null;
   const res = await fetch(`/api/committee/${committeeId}/status`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
     body: JSON.stringify({ action, adminId }),
   });
   if (!res.ok) throw new Error("Failed to update committee status");
@@ -106,9 +136,13 @@ export async function deleteMember(memberId) {
 }
 
 export async function manageComRequest(committeeId, memberId, action, adminId) {
+  const token = typeof window !== "undefined" ? localStorage.getItem("admin_token") : null;
   const res = await fetch(`/api/committee/${committeeId}/request`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
     body: JSON.stringify({ memberId, action, adminId })
   });
   const data = await res.json();

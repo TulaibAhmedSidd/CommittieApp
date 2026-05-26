@@ -22,6 +22,8 @@ import { useLanguage } from "../../Components/LanguageContext";
 import ChatBox from "../../Components/ChatBox";
 import Button from "@/app/Components/Theme/Button";
 import Card from "@/app/Components/Theme/Card";
+import SectionHeader from "@/app/Components/Theme/SectionHeader";
+import StatusPill from "@/app/Components/Theme/StatusPill";
 import Table, { TableCell, TableRow } from "@/app/Components/Theme/Table";
 import Input from "@/app/Components/Theme/Input";
 import MemberDocumentReview from "../../Components/Admin/MemberDocumentReview";
@@ -189,11 +191,26 @@ function ManageContent() {
 
     return (
         <div className="space-y-8 py-8 animate-in fade-in slide-in-from-bottom-4 duration-700 p-8">
-            <div className="flex items-center justify-between">
-                <Button variant="ghost" onClick={() => router.back()} className="text-slate-500 hover:text-primary-600 font-bold uppercase text-[10px] tracking-widest p-0">
-                    <FiArrowLeft className="mr-2" /> {t("back") || "Back"}
-                </Button>
-                <div className="flex gap-4">
+            <div className="dashboard-shell overflow-hidden p-8 md:p-10">
+                <div className="absolute inset-y-0 right-0 w-72 bg-gradient-to-l from-primary-500/10 to-transparent" />
+                <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+                    <div className="space-y-4">
+                        <Button variant="ghost" onClick={() => router.back()} className="w-fit text-slate-500 hover:text-primary-600 font-bold uppercase text-[10px] tracking-widest p-0">
+                            <FiArrowLeft className="mr-2" /> {t("back") || "Back"}
+                        </Button>
+                        <SectionHeader
+                            eyebrow="Committee Operations"
+                            icon={FiActivity}
+                            title={committee.name}
+                            description={`Month ${committee.currentMonth} of ${committee.monthDuration}. Review requests, verify payments, and keep beneficiary movement transparent.`}
+                        />
+                        <div className="flex flex-wrap gap-2">
+                            <StatusPill tone="info">Status: {committee.status}</StatusPill>
+                            <StatusPill tone="success">Members: {committee.members?.length || 0}</StatusPill>
+                            <StatusPill tone="warning">Pending: {committee.pendingMembers?.length || 0}</StatusPill>
+                        </div>
+                    </div>
+                    <div className="flex flex-wrap gap-4">
                     {committee.status !== "finished" && (
                         <>
                             <Button onClick={handleAdvanceMonth} loading={actionLoading} className="bg-amber-600 hover:bg-amber-700 text-[10px] tracking-widest font-black uppercase py-4 shadow-xl shadow-amber-500/20">
@@ -204,6 +221,7 @@ function ManageContent() {
                             </Button>
                         </>
                     )}
+                    </div>
                 </div>
             </div>
 

@@ -18,6 +18,8 @@ import {
 import { useState, useEffect } from "react";
 import Button from "./Components/Theme/Button";
 import Card from "./Components/Theme/Card";
+import SectionHeader from "./Components/Theme/SectionHeader";
+import StatusPill from "./Components/Theme/StatusPill";
 
 export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -118,10 +120,10 @@ export default function Home() {
 
         <div className="max-w-7xl mx-auto px-4 md:px-8 relative z-10 text-center">
 
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-            <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Trusted by 1000+ Members</span>
-          </div>
+          <StatusPill tone="success" className="mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700 bg-white/90 text-slate-700">
+            <span className="w-2 h-2 rounded-full bg-green-500" />
+            Trusted by 1000+ Members
+          </StatusPill>
 
           <h1 className="text-5xl md:text-7xl lg:text-8xl font-black text-slate-900 dark:text-white tracking-tighter mb-6 animate-in fade-in slide-in-from-bottom-8 duration-1000">
             Save Together.<br />
@@ -146,13 +148,42 @@ export default function Home() {
           </div>
 
           {/* 3D Dashboard Preview Mockup */}
-          <div className="mt-20 mx-auto max-w-5xl rounded-[2rem] bg-slate-900 p-2 md:p-4 shadow-2xl shadow-primary-500/20 rotate-x-12 animate-in fade-in zoom-in-95 duration-[1500ms]">
+          <div className="mt-20 mx-auto max-w-5xl rounded-[2rem] bg-slate-900 p-2 md:p-4 shadow-2xl shadow-primary-500/20 animate-in fade-in zoom-in-95 duration-[1500ms]">
             <div className="rounded-[1.5rem] overflow-hidden border border-slate-800 bg-slate-950 relative aspect-[16/9]">
               <div className="absolute inset-0 bg-gradient-to-tr from-slate-900 to-slate-800 opacity-50" />
               <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-center space-y-4">
-                  <FiActivity size={64} className="mx-auto text-primary-500" />
-                  <p className="text-slate-500 font-black uppercase tracking-widest">Interactive Dashboard Preview</p>
+                <div className="grid h-full w-full gap-4 p-6 md:grid-cols-[1.3fr_0.7fr]">
+                  <div className="rounded-[1.5rem] border border-white/10 bg-white/5 p-5 text-left">
+                    <div className="flex items-center justify-between">
+                      <StatusPill tone="success" className="border-white/10 bg-white/10 text-white">Live trust ledger</StatusPill>
+                      <FiActivity size={20} className="text-primary-400" />
+                    </div>
+                    <div className="mt-6 grid gap-4 md:grid-cols-3">
+                      <div className="rounded-2xl bg-white/5 p-4">
+                        <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Collected</p>
+                        <p className="mt-2 text-2xl font-black">PKR 120K</p>
+                      </div>
+                      <div className="rounded-2xl bg-white/5 p-4">
+                        <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Verified</p>
+                        <p className="mt-2 text-2xl font-black">11 / 12</p>
+                      </div>
+                      <div className="rounded-2xl bg-white/5 p-4">
+                        <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Month</p>
+                        <p className="mt-2 text-2xl font-black">04</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="grid gap-4">
+                    <div className="rounded-[1.5rem] border border-white/10 bg-primary-500/10 p-5 text-left">
+                      <p className="text-[10px] font-black uppercase tracking-[0.24em] text-primary-300">Next payout</p>
+                      <p className="mt-2 text-xl font-black">Amina Tariq</p>
+                      <p className="mt-2 text-sm text-slate-300">Organizer verifies each proof before a payout moves.</p>
+                    </div>
+                    <div className="rounded-[1.5rem] border border-white/10 bg-white/5 p-5 text-left">
+                      <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Interactive Dashboard Preview</p>
+                      <p className="mt-2 text-sm text-slate-300">Designed to show cycle clarity, payment evidence, and who acts next.</p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -165,12 +196,12 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 md:px-8 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <div className="space-y-8">
-              <h2 className="text-5xl font-black tracking-tighter uppercase leading-none">
-                Two Paths.<br /><span className="text-primary-500">Infinite Possibilities.</span>
-              </h2>
-              <p className="text-slate-400 text-lg font-medium leading-relaxed">
-                Whether you're looking to save for your future or help others achieve their dreams, CommittieApp provides the platform to grow together.
-              </p>
+              <SectionHeader
+                eyebrow="Choose Your Role"
+                title={<>Two Paths.<br /><span className="text-primary-500">Infinite Possibilities.</span></>}
+                description="Whether you're looking to save for your future or help others achieve their dreams, CommittieApp provides the platform to grow together."
+                className="!items-start !text-left"
+              />
 
               <div className="space-y-6">
                 <div className="flex gap-6 p-6 rounded-3xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors group">
@@ -333,9 +364,13 @@ export default function Home() {
       {/* Features Section */}
       <section id="features" className="py-20 md:py-32 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 relative">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
-          <div className="text-center mb-20 space-y-4">
-            <h2 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">Why Choose <span className="text-primary-600">Us?</span></h2>
-            <p className="text-slate-500 max-w-xl mx-auto font-medium">Built for transparency, designed for ease. Managing money circles has never been this simple.</p>
+          <div className="mb-20">
+            <SectionHeader
+              eyebrow="Platform Benefits"
+              title={<>Why Choose <span className="text-primary-600">Us?</span></>}
+              description="Built for transparency, designed for ease. Managing money circles has never been this simple."
+              align="center"
+            />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">

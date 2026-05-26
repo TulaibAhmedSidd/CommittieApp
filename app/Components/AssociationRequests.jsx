@@ -16,7 +16,10 @@ export default function AssociationRequests({ memberId }) {
 
     const fetchRequests = async () => {
         try {
-            const res = await fetch(`/api/member/${memberId}`);
+            const token = localStorage.getItem("token");
+            const res = await fetch(`/api/member/${memberId}`, {
+                headers: token ? { Authorization: `Bearer ${token}` } : {},
+            });
             const data = await res.json();
             // Data will have pendingOrganizers populated
             setRequests(data.pendingOrganizers || []);
@@ -29,9 +32,13 @@ export default function AssociationRequests({ memberId }) {
 
     const handleAction = async (adminId, action) => {
         try {
+            const token = localStorage.getItem("token");
             const res = await fetch("/api/member/respond-request", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
                 body: JSON.stringify({ memberId, adminId, action })
             });
             if (res.ok) {

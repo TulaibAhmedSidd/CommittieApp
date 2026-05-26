@@ -96,7 +96,7 @@ export async function GET(req) {
             };
             const total = await Member.countDocuments(memberQuery);
             results.members = await Member.find(memberQuery)
-                .select("name email city country verificationStatus location pendingOrganizers organizers nicFront nicBack electricityBill documents")
+                .select("name city country verificationStatus location pendingOrganizers organizers")
                 .populate("organizers", "name")
                 .skip(skip)
                 .limit(limit);

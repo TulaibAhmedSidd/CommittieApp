@@ -1,9 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { FiSearch, FiLayers, FiDollarSign, FiCalendar, FiUsers, FiPlusCircle, FiCheck } from "react-icons/fi";
+import { FiSearch, FiLayers, FiDollarSign, FiCalendar, FiUsers, FiPlusCircle, FiShield, FiTrendingUp } from "react-icons/fi";
 import Card from "../../Components/Theme/Card";
 import Button from "../../Components/Theme/Button";
+import EmptyState from "../../Components/Theme/EmptyState";
+import SectionHeader from "../../Components/Theme/SectionHeader";
+import StatusPill from "../../Components/Theme/StatusPill";
 import { formatMoney } from "../../utils/commonFunc";
 import { toast } from "react-toastify";
 import { useLanguage } from "../../Components/LanguageContext";
@@ -16,7 +19,6 @@ export default function ExplorePage() {
     const [joining, setJoining] = useState(null);
     const [userId, setUserId] = useState(null);
 
-    console.log("committees", committees)
     useEffect(() => {
         const userData = localStorage.getItem("member");
         if (userData) {
@@ -49,11 +51,15 @@ export default function ExplorePage() {
                 return;
             }
             const uid = JSON.parse(userData)._id;
+            const token = localStorage.getItem("token");
 
-            const res = await fetch("/api/committee/join", {
+            const res = await fetch(`/api/committee/${committeeId}/request`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ committeeId, userId: uid })
+                headers: {
+                    "Content-Type": "application/json",
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
+                body: JSON.stringify({ memberId: uid })
             });
 
             const data = await res.json();
@@ -73,24 +79,36 @@ export default function ExplorePage() {
     const router = useRouter();
     return (
         <div className="space-y-10 animate-in fade-in slide-in-from-bottom-8 duration-1000">
-            <div className="flex flex-col md:flex-row justify-between items-end border-b border-slate-200 dark:border-slate-800 pb-8 gap-6">
-                <div className="space-y-4">
-                    <div className="flex items-center gap-2 text-primary-600 font-black tracking-[0.2em] text-[10px] uppercase">
-                        <FiSearch /> Discover Opportunities
+            <div className="dashboard-shell overflow-hidden p-8 md:p-10">
+                <div className="absolute inset-y-0 right-0 w-72 bg-gradient-to-l from-primary-500/10 via-sky-500/5 to-transparent" />
+                <div className="relative z-10 grid gap-8 lg:grid-cols-[1.5fr_0.85fr]">
+                    <SectionHeader
+                        eyebrow="Market Discovery"
+                        icon={FiSearch}
+                        title="Find the next trustworthy saving circle before the best seats close."
+                        description="Browse open committees with clearer financial context, stronger trust cues, and faster access to the flows that matter."
+                    />
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
+                        <div className="metric-tile">
+                            <p className="eyebrow">Open committees</p>
+                            <p className="mt-3 text-3xl font-black tracking-tight text-slate-950 dark:text-white">{committees.length}</p>
+                            <p className="mt-2 text-sm font-medium text-slate-500 dark:text-slate-400">See live opportunities with active organizer oversight.</p>
+                        </div>
+                        <div className="metric-tile">
+                            <p className="eyebrow">Risk posture</p>
+                            <p className="mt-3 text-2xl font-black tracking-tight text-slate-950 dark:text-white">Proof-first</p>
+                            <p className="mt-2 text-sm font-medium text-slate-500 dark:text-slate-400">Every strong circle shows clearer payment discipline and trust controls.</p>
+                        </div>
                     </div>
-                    <h1 className="text-5xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">Explore Pools</h1>
-                    <p className="text-slate-500 font-medium max-w-xl italic">
-                        Find and join open committees. Secure your spot in the next high-value pool.
-                    </p>
                 </div>
             </div>
 
             {committees.length === 0 ? (
-                <Card className="py-24 text-center border-dashed">
-                    <FiLayers size={48} className="mx-auto text-slate-300 mb-4" />
-                    <h3 className="text-xl font-black uppercase text-slate-400">No Open Pools</h3>
-                    <p className="text-sm text-slate-400 mt-2">Check back later for new opportunities.</p>
-                </Card>
+                <EmptyState
+                    icon={FiLayers}
+                    title="No Open Pools"
+                    description="There are no live openings right now. New committees will appear here as organizers publish fresh monthly cycles."
+                />
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {committees.map((c) => (
@@ -106,6 +124,12 @@ export default function ExplorePage() {
                                     >{c.name}</h3>
                                 </div>
                                 <p className="text-sm text-slate-500 line-clamp-2 h-10 italic">{c.description}</p>
+                                <div className="flex flex-wrap gap-2">
+                                    <StatusPill tone="info"><FiTrendingUp size={12} /> Structured cycle</StatusPill>
+                                    <StatusPill tone={c.requireDocuments ? "warning" : "success"}>
+                                        <FiShield size={12} /> {c.requireDocuments ? "Screened entry" : "Fast onboarding"}
+                                    </StatusPill>
+                                </div>
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800 space-y-1">
@@ -124,6 +148,9 @@ export default function ExplorePage() {
 
                                 <div className="flex items-center justify-between text-xs font-bold text-slate-500 uppercase tracking-widest">
                                     <span className="flex items-center gap-2"><FiUsers /> {c.members.length} / {c.maxMembers} Filled</span>
+                                    <StatusPill tone={c.maxMembers - c.members.length > 3 ? "success" : "warning"}>
+                                        {c.maxMembers - c.members.length} seats left
+                                    </StatusPill>
                                 </div>
 
                                 <Button

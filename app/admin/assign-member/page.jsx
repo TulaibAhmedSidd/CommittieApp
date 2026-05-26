@@ -61,6 +61,7 @@ const AssignMembers = () => {
     const handleAssign = async () => {
         setLoading(true);
         try {
+            const token = localStorage.getItem("admin_token");
             const res = await fetch("/api/member/assign-members", {
                 method: "PATCH",
                 body: JSON.stringify({
@@ -68,7 +69,10 @@ const AssignMembers = () => {
                     committeeId: selectedCommittee,
                     adminId: userLoggedDetails?._id
                 }),
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
             });
 
             const data = await res.json();

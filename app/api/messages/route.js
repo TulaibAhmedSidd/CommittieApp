@@ -1,19 +1,27 @@
 import connectToDatabase from "@/app/utils/db";
 import Message from "@/app/api/models/Message";
 import Committee from "@/app/api/models/Committee";
-import Member from "@/app/api/models/Member";
-import Admin from "@/app/api/models/Admin";
+import { unauthorizedResponse, verifyAuthenticatedUser } from "@/app/utils/auth";
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req) {
-    await connectToDatabase();
     try {
+        const auth = verifyAuthenticatedUser(req);
+        if (!auth.authorized) {
+            return unauthorizedResponse(auth);
+        }
+
+        await connectToDatabase();
         const { senderId, senderModel, receiverId, receiverModel, committeeId, content } = await req.json();
 
         // Basic validation
         if (!content || !senderId || !receiverId) {
             return new Response(JSON.stringify({ error: "Missing required fields" }), { status: 400 });
+        }
+
+        if (auth.user.userId !== senderId || (!!auth.user.isAdmin) !== (senderModel === "Admin")) {
+            return new Response(JSON.stringify({ error: "Unauthorized sender identity" }), { status: 403 });
         }
 
         // Eligibility check
@@ -45,17 +53,26 @@ export async function POST(req) {
 }
 
 export async function GET(req) {
-    await connectToDatabase();
-    const { searchParams } = new URL(req.url);
-    const committeeId = searchParams.get("committeeId");
-    const userId = searchParams.get("userId"); // Could be Member or Admin ID
-    const otherId = searchParams.get("otherId"); // The person chatting with
-
-    if (!userId || !otherId) {
-        return new Response(JSON.stringify({ error: "Missing parameters" }), { status: 400 });
-    }
-
     try {
+        const auth = verifyAuthenticatedUser(req);
+        if (!auth.authorized) {
+            return unauthorizedResponse(auth);
+        }
+
+        await connectToDatabase();
+        const { searchParams } = new URL(req.url);
+        const committeeId = searchParams.get("committeeId");
+        const userId = searchParams.get("userId"); // Could be Member or Admin ID
+        const otherId = searchParams.get("otherId"); // The person chatting with
+
+        if (!userId || !otherId) {
+            return new Response(JSON.stringify({ error: "Missing parameters" }), { status: 400 });
+        }
+
+        if (auth.user.userId !== userId) {
+            return new Response(JSON.stringify({ error: "Unauthorized conversation access" }), { status: 403 });
+        }
+
         const query = {
             $or: [
                 { sender: userId, receiver: otherId },

@@ -1,14 +1,25 @@
 import connectToDatabase from "@/app/utils/db";
 import Member from "@/app/api/models/Member";
 import bcrypt from "bcryptjs";
+import { unauthorizedResponse, verifyAuthenticatedUser } from "@/app/utils/auth";
 
 export async function PATCH(req) {
     try {
+        const auth = verifyAuthenticatedUser(req);
+        if (!auth.authorized) {
+            return unauthorizedResponse(auth);
+        }
+
         await connectToDatabase();
         const { memberId, name, email, phone, country, city, nicNumber, nicImage, payoutDetails, password, requestVerification, location } = await req.json();
 
         if (!memberId) {
             return new Response(JSON.stringify({ error: "Member ID required" }), { status: 400 });
+        }
+
+        const isAdmin = !!auth.user?.isAdmin;
+        if (!isAdmin && auth.user.userId !== memberId) {
+            return new Response(JSON.stringify({ error: "Unauthorized to update this profile" }), { status: 403 });
         }
 
         const member = await Member.findById(memberId);

@@ -3,7 +3,7 @@ import MembersListing from '../AdminComponents/MembersListing';
 export default function ManageMembers() {
 
   return (
-    <div className='mt-20 p-6' >
+    <div className='p-6 md:p-8' >
       <MembersListing />
     </div>
   )

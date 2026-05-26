@@ -4,6 +4,8 @@ import React, { useEffect, useState } from 'react';
 import Committiee from './Committie';
 import { FiActivity, FiLayers, FiUsers, FiClock } from 'react-icons/fi';
 import Card from '../Components/Theme/Card';
+import SectionHeader from '../Components/Theme/SectionHeader';
+import StatusPill from '../Components/Theme/StatusPill';
 
 import { useLanguage } from '../Components/LanguageContext';
 
@@ -60,24 +62,35 @@ export default function AmdinPanel() {
     return (
         <div className="space-y-10 p-8">
             {/* Header Section */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-4 border-b border-slate-200 dark:border-slate-800">
-                <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-primary-600 font-black tracking-[0.2em] text-[10px] uppercase">
-                        <FiActivity className="animate-pulse" /> {t("infrastructureOverview")}
-                    </div>
-                    <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter">
-                        {greeting}, <span className="bg-gradient-to-r from-primary-600 to-indigo-500 bg-clip-text text-transparent">{t("commander")}</span>
-                    </h1>
-                    <p className="text-slate-500 dark:text-slate-400 font-medium max-w-lg italic">
-                        {t("welcomeToYourDashboard")}
-                    </p>
-                </div>
-
-                <div className="flex items-center gap-4">
-                    <div className="px-4 py-2 bg-white dark:bg-slate-900 rounded-2xl shadow-premium border border-slate-100 dark:border-slate-800 flex items-center gap-3">
-                        <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                        <span className="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-widest">Network Secure</span>
-                    </div>
+            <div className="dashboard-shell overflow-hidden p-8 md:p-10">
+                <div className="absolute inset-y-0 right-0 w-72 bg-gradient-to-l from-primary-500/10 via-sky-500/5 to-transparent" />
+                <div className="relative z-10 grid gap-8 lg:grid-cols-[1.6fr_0.9fr]">
+                    <SectionHeader
+                        eyebrow={t("infrastructureOverview")}
+                        icon={FiActivity}
+                        title={<>{greeting}, <span className="bg-gradient-to-r from-primary-600 to-indigo-500 bg-clip-text text-transparent">{t("commander")}</span></>}
+                        description={t("welcomeToYourDashboard")}
+                    />
+                    <Card className="border-none bg-slate-950 text-white shadow-[0_28px_70px_-34px_rgba(15,23,42,0.75)] dark:bg-slate-900">
+                        <div className="space-y-5 p-1">
+                            <StatusPill tone="success" className="w-fit border-white/10 bg-white/10 text-white">
+                                Network secure
+                            </StatusPill>
+                            <div className="grid gap-3 sm:grid-cols-2">
+                                <div className="rounded-[1.5rem] border border-white/10 bg-white/5 p-4">
+                                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Live committees</p>
+                                    <p className="mt-2 text-2xl font-black">{statsData.activeCommittees}</p>
+                                </div>
+                                <div className="rounded-[1.5rem] border border-white/10 bg-white/5 p-4">
+                                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Pending action</p>
+                                    <p className="mt-2 text-2xl font-black">{statsData.pendingApprovals}</p>
+                                </div>
+                            </div>
+                            <p className="text-sm font-medium leading-6 text-slate-300">
+                                Keep committee creation, approvals, and payout operations visible from one organizer command surface.
+                            </p>
+                        </div>
+                    </Card>
                 </div>
             </div>
 
@@ -89,7 +102,7 @@ export default function AmdinPanel() {
                             <div className={`p-3 rounded-2xl bg-white dark:bg-slate-800 shadow-sm ${stat.color}`}>
                                 <stat.icon size={24} />
                             </div>
-                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t("liveFeed")}</span>
+                            <StatusPill tone="info">{t("liveFeed")}</StatusPill>
                         </div>
                         <p className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">{stat.label}</p>
                         <h3 className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter">{stat.value}</h3>

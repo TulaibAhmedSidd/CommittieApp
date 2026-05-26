@@ -2,11 +2,21 @@ import Member from "@/app/api/models/Member";
 import Admin from "@/app/api/models/Admin";
 import bcrypt from "bcryptjs";
 import connectToDatabase from "@/app/utils/db";
+import { unauthorizedResponse, verifyAuthenticatedUser } from "@/app/utils/auth";
 
 // Handle Update (GET)
 export async function GET(req, { params }) {
   const { id } = params;
   try {
+    const auth = verifyAuthenticatedUser(req);
+    if (!auth.authorized) {
+      return unauthorizedResponse(auth);
+    }
+
+    if (!auth.user?.isAdmin && auth.user.userId !== id) {
+      return new Response(JSON.stringify({ message: "Unauthorized to view this member" }), { status: 403 });
+    }
+
     await connectToDatabase();
     const member = await Member.findById(id).populate("pendingOrganizers", "name email city country verificationStatus");
     if (!member) return new Response("Member not found", { status: 404 });
@@ -97,6 +107,15 @@ export async function PATCH(req, { params }) {
   const { payoutDetails, location, documents, city, country, nicNumber, nicFront, nicBack, electricityBill } = await req.json();
 
   try {
+    const auth = verifyAuthenticatedUser(req);
+    if (!auth.authorized) {
+      return unauthorizedResponse(auth);
+    }
+
+    if (!auth.user?.isAdmin && auth.user.userId !== id) {
+      return new Response(JSON.stringify({ message: "Unauthorized to update this member" }), { status: 403 });
+    }
+
     await connectToDatabase();
     const member = await Member.findById(id);
     if (!member) return new Response("Member not found", { status: 404 });

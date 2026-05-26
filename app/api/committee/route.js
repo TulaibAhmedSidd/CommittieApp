@@ -3,6 +3,7 @@ import Committee from "@/app/api/models/Committee";
 import Admin from "@/app/api/models/Admin";
 import Member from "@/app/api/models/Member";
 import { createLog } from "@/app/utils/logger";
+import { unauthorizedResponse, verifyAdmin } from "@/app/utils/auth";
 
 // Handle GET requests (fetch all committees)
 export async function GET(req) {
@@ -17,10 +18,15 @@ export async function GET(req) {
   try {
     let query = {};
     if (adminId) {
-      const requester = await Admin.findById(adminId);
+      const auth = verifyAdmin(req);
+      if (!auth.authorized) {
+        return unauthorizedResponse(auth);
+      }
+
+      const requester = await Admin.findById(auth.user.userId);
       // If requester is NOT super admin, filter by createdBy
       if (!requester?.isSuperAdmin) {
-        query.createdBy = adminId;
+        query.createdBy = auth.user.userId;
       }
     }
     if (q) {
@@ -70,9 +76,13 @@ export async function GET(req) {
 
 // Handle POST requests (create a new committee)
 export async function POST(req) {
-  await connectToDatabase();
-
   try {
+    const auth = verifyAdmin(req);
+    if (!auth.authorized) {
+      return unauthorizedResponse(auth);
+    }
+
+    await connectToDatabase();
     const body = await req.json();
     const {
       name,
@@ -81,7 +91,6 @@ export async function POST(req) {
       monthlyAmount,
       monthDuration,
       startDate,
-      createdBy,
       bankDetails,
       organizerFee,
       isFeeMandatory,
@@ -96,8 +105,7 @@ export async function POST(req) {
       !maxMembers ||
       !monthlyAmount ||
       !monthDuration ||
-      !startDate ||
-      !createdBy
+      !startDate
     ) {
       return new Response(
         JSON.stringify({ error: "All fields are required." }),
@@ -127,7 +135,7 @@ export async function POST(req) {
       startDate,
       endDate: calculatedEndDate.toISOString().split("T")[0],
       totalAmount,
-      createdBy,
+      createdBy: auth.user.userId,
       bankDetails,
       organizerFee: organizerFee || 0,
       isFeeMandatory: isFeeMandatory || false,
@@ -139,7 +147,7 @@ export async function POST(req) {
 
     await createLog({
       action: "CREATE_COMMITTEE",
-      performedBy: createdBy,
+      performedBy: auth.user.userId,
       onModel: "Admin",
       targetId: newCommittee._id,
       details: { name: newCommittee.name },
@@ -159,9 +167,13 @@ export async function POST(req) {
 
 // Handle PATCH requests (update a committee)
 export async function PATCH(req) {
-  await connectToDatabase();
-
   try {
+    const auth = verifyAdmin(req);
+    if (!auth.authorized) {
+      return unauthorizedResponse(auth);
+    }
+
+    await connectToDatabase();
     const body = await req.json();
     const {
       id,
@@ -172,23 +184,22 @@ export async function PATCH(req) {
       monthlyAmount,
       monthDuration,
       startDate,
-      createdBy,
       bankDetails,
       requireDocuments,
       mandatoryDocuments,
     } = body;
 
-    if (!id || !createdBy) {
+    if (!id) {
       return new Response(
-        JSON.stringify({ error: "Committee ID and createdBy are required." }),
+        JSON.stringify({ error: "Committee ID is required." }),
         { status: 400 }
       );
     }
 
     const committee = await Committee.findById(id);
-    const requester = await Admin.findById(createdBy);
+    const requester = await Admin.findById(auth.user.userId);
 
-    if (!committee || (committee.createdBy?.toString() !== createdBy.toString() && !requester?.isSuperAdmin)) {
+    if (!committee || (committee.createdBy?.toString() !== auth.user.userId.toString() && !requester?.isSuperAdmin)) {
       return new Response(
         JSON.stringify({
           error: "You are not authorized to update this committee.",
@@ -234,7 +245,7 @@ export async function PATCH(req) {
 
     await createLog({
       action: "UPDATE_COMMITTEE",
-      performedBy: createdBy,
+      performedBy: auth.user.userId,
       onModel: "Admin",
       targetId: updatedCommittee._id,
       details: { status: updatedCommittee.status },
@@ -254,23 +265,27 @@ export async function PATCH(req) {
 
 // Handle DELETE requests (delete a committee)
 export async function DELETE(req) {
-  await connectToDatabase();
-
   try {
-    const body = await req.json();
-    const { id, createdBy } = body;
+    const auth = verifyAdmin(req);
+    if (!auth.authorized) {
+      return unauthorizedResponse(auth);
+    }
 
-    if (!id || !createdBy) {
+    await connectToDatabase();
+    const body = await req.json();
+    const { id } = body;
+
+    if (!id) {
       return new Response(
-        JSON.stringify({ error: "Committee ID and createdBy are required." }),
+        JSON.stringify({ error: "Committee ID is required." }),
         { status: 400 }
       );
     }
 
     const committee = await Committee.findById(id);
-    const requester = await Admin.findById(createdBy);
+    const requester = await Admin.findById(auth.user.userId);
 
-    if (!committee || (committee.createdBy?.toString() !== createdBy.toString() && !requester?.isSuperAdmin)) {
+    if (!committee || (committee.createdBy?.toString() !== auth.user.userId.toString() && !requester?.isSuperAdmin)) {
       return new Response(
         JSON.stringify({ error: "You are not authorized to delete this committee." }),
         { status: 403 }
@@ -287,7 +302,7 @@ export async function DELETE(req) {
 
     await createLog({
       action: "DELETE_COMMITTEE",
-      performedBy: createdBy,
+      performedBy: auth.user.userId,
       onModel: "Admin",
       targetId: id,
       details: { name: committee.name },

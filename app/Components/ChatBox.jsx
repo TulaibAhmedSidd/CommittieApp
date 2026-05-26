@@ -36,7 +36,12 @@ export default function ChatBox({
 
     const fetchMessages = async () => {
         try {
-            const res = await fetch(`/api/messages?committeeId=${committeeId}&userId=${currentUserId}&otherId=${otherUserId}`);
+            const token = currentUserModel === "Admin"
+                ? localStorage.getItem("admin_token")
+                : localStorage.getItem("token");
+            const res = await fetch(`/api/messages?committeeId=${committeeId}&userId=${currentUserId}&otherId=${otherUserId}`, {
+                headers: token ? { Authorization: `Bearer ${token}` } : {},
+            });
             if (res.ok) {
                 const data = await res.json();
                 setMessages(prev => {
@@ -58,9 +63,15 @@ export default function ChatBox({
 
         setSending(true);
         try {
+            const token = currentUserModel === "Admin"
+                ? localStorage.getItem("admin_token")
+                : localStorage.getItem("token");
             const res = await fetch("/api/messages", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
                 body: JSON.stringify({
                     senderId: currentUserId,
                     senderModel: currentUserModel,

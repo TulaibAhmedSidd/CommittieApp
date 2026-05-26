@@ -11,6 +11,9 @@ import { toast } from "react-toastify";
 
 import Button from "../Components/Theme/Button";
 import Card from "../Components/Theme/Card";
+import EmptyState from "../Components/Theme/EmptyState";
+import SectionHeader from "../Components/Theme/SectionHeader";
+import StatusPill from "../Components/Theme/StatusPill";
 import { useLanguage } from "../Components/LanguageContext";
 
 export const dynamic = "force-dynamic";
@@ -143,29 +146,21 @@ export default function Committiee() {
 
       {/* Main List */}
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-2 h-8 bg-primary-600 rounded-full" />
-            <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">{t("operationalPools") || "Operational Pools"}</h2>
-          </div>
-          <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-            {t("totalPools") || "Total Pools"}: {committees.length}
-          </div>
-        </div>
+        <SectionHeader
+          eyebrow="Committee Portfolio"
+          icon={FiLayers}
+          title={t("operationalPools") || "Operational Pools"}
+          description="Review every live circle, spot action-required committees quickly, and move straight into the workflow that needs attention."
+          action={<StatusPill tone="info">{t("totalPools") || "Total Pools"}: {committees.length}</StatusPill>}
+        />
 
         {committees.length === 0 ? (
-          <Card className="py-24 border-dashed bg-transparent border-slate-300 dark:border-slate-800 flex flex-col items-center justify-center text-center space-y-6">
-            <div className="w-20 h-20 bg-slate-100 dark:bg-slate-900 rounded-3xl flex items-center justify-center text-slate-400">
-              <FiInfo size={40} />
-            </div>
-            <div className="space-y-1">
-              <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight uppercase">{t("noData")}</h3>
-              <p className="text-sm text-slate-500 max-w-xs italic">{t("noPoolsYet")}</p>
-            </div>
-            <Link href="/admin/create">
-              <Button variant="outline" className="border-2 font-black uppercase tracking-widest text-[10px]">{t("createPool")}</Button>
-            </Link>
-          </Card>
+          <EmptyState
+            icon={FiInfo}
+            title={t("noData")}
+            description={t("noPoolsYet")}
+            action={<Link href="/admin/create"><Button variant="outline" className="border-2 font-black uppercase tracking-widest text-[10px]">{t("createPool")}</Button></Link>}
+          />
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {committees.map((c) => {
@@ -188,6 +183,14 @@ export default function Committiee() {
                           <span className="text-[9px] font-black text-primary-600 uppercase tracking-[0.3em]">{t("uid")}://{c._id.substring(c._id.length - 8)}</span>
                         </div>
                         <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter leading-none group-hover:text-primary-600 transition-colors uppercase">{c.name}</h3>
+                        <div className="flex flex-wrap gap-2">
+                          <StatusPill tone={isReadyToAnnounce ? "warning" : "success"}>
+                            {isReadyToAnnounce ? "Awaiting draw announcement" : "Running smoothly"}
+                          </StatusPill>
+                          <StatusPill tone={c.requireDocuments ? "info" : "neutral"}>
+                            {c.requireDocuments ? "Document screened" : "Open onboarding"}
+                          </StatusPill>
+                        </div>
                       </div>
                       <div className="flex gap-2">
                         <Link href={`/admin/edit?id=${c._id}`}>

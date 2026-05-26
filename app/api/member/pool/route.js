@@ -2,9 +2,15 @@ import connectToDatabase from "@/app/utils/db";
 import Member from "@/app/api/models/Member";
 import Notification from "@/app/api/models/Notification";
 import Admin from "@/app/api/models/Admin";
+import { unauthorizedResponse, verifyAuthenticatedUser, verifyAdmin, verifyMember } from "@/app/utils/auth";
 
 export async function GET(req) {
     try {
+        const auth = verifyAdmin(req);
+        if (!auth.authorized) {
+            return unauthorizedResponse(auth);
+        }
+
         await connectToDatabase();
         const members = await Member.find({}, 'name email phone status organizers').populate('organizers', 'name email');
         return new Response(JSON.stringify(members), { status: 200 });
@@ -15,11 +21,21 @@ export async function GET(req) {
 
 export async function POST(req) {
     try {
+        const auth = verifyAuthenticatedUser(req);
+        if (!auth.authorized) {
+            return unauthorizedResponse(auth);
+        }
+
         await connectToDatabase();
         const { memberId, adminId } = await req.json();
 
         if (!memberId || !adminId) {
             return new Response(JSON.stringify({ error: "Member ID and Admin ID required" }), { status: 400 });
+        }
+
+        const isAdmin = !!auth.user?.isAdmin;
+        if ((!isAdmin && auth.user.userId !== memberId) || (isAdmin && auth.user.userId !== adminId)) {
+            return new Response(JSON.stringify({ error: "Unauthorized association request" }), { status: 403 });
         }
 
         const member = await Member.findById(memberId);

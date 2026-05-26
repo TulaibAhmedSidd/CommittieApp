@@ -1,13 +1,21 @@
 import connectToDatabase from "@/app/utils/db";
 import Member from "@/app/api/models/Member";
 import Committee from "@/app/api/models/Committee";
+import Admin from "@/app/api/models/Admin";
 import { createLog } from "@/app/utils/logger";
+import { unauthorizedResponse, verifyAdmin } from "@/app/utils/auth";
 
 export async function PATCH(req) {
   try {
+    const auth = verifyAdmin(req);
+    if (!auth.authorized) {
+      return unauthorizedResponse(auth);
+    }
+
     await connectToDatabase();
     const body = await req.json();
-    const { memberIds, committeeId, adminId } = body;
+    const { memberIds, committeeId } = body;
+    const adminId = auth.user.userId;
 
     if (!Array.isArray(memberIds) || memberIds.length === 0) {
       // Fallback for single memberId if still used
@@ -18,6 +26,11 @@ export async function PATCH(req) {
 
     const committee = await Committee.findById(committeeId);
     if (!committee) return new Response(JSON.stringify({ error: "Committee not found" }), { status: 404 });
+    const requester = await Admin.findById(adminId);
+    if (!requester) return new Response(JSON.stringify({ error: "Admin not found" }), { status: 404 });
+    if (committee.createdBy?.toString() !== adminId && !requester.isSuperAdmin) {
+      return new Response(JSON.stringify({ error: "Unauthorized to assign members to this committee" }), { status: 403 });
+    }
 
     const results = {
       success: [],
@@ -77,8 +90,13 @@ export async function PATCH(req) {
 async function handleSingleAssignment(memberId, committeeId, adminId) {
   const member = await Member.findById(memberId);
   const committee = await Committee.findById(committeeId);
+  const requester = await Admin.findById(adminId);
 
   if (!member || !committee) return new Response(JSON.stringify({ error: "Member or Committee not found" }), { status: 404 });
+  if (!requester) return new Response(JSON.stringify({ error: "Admin not found" }), { status: 404 });
+  if (committee.createdBy?.toString() !== adminId && !requester.isSuperAdmin) {
+    return new Response(JSON.stringify({ error: "Unauthorized to assign this member" }), { status: 403 });
+  }
 
   if (committee.members.length + committee.pendingMembers.length >= committee.maxMembers) {
     return new Response(JSON.stringify({ error: "Committee reached max capacity limit." }), { status: 400 });

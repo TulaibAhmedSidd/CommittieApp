@@ -1,16 +1,28 @@
 import connectToDatabase from "@/app/utils/db";
 import Committee from "@/app/api/models/Committee";
-import Notification from "@/app/api/models/Notification";
+import Admin from "@/app/api/models/Admin";
 import { createLog } from "@/app/utils/logger";
+import { unauthorizedResponse, verifyAdmin } from "@/app/utils/auth";
 
 export async function PATCH(req, { params }) {
-    await connectToDatabase();
-    const { id } = await params;
-    const { action, adminId } = await req.json();
-
     try {
+        const auth = verifyAdmin(req);
+        if (!auth.authorized) {
+            return unauthorizedResponse(auth);
+        }
+
+        await connectToDatabase();
+        const { id } = await params;
+        const { action } = await req.json();
+        const adminId = auth.user.userId;
+
         const committee = await Committee.findById(id).populate("members");
         if (!committee) return new Response(JSON.stringify({ error: "Committee not found" }), { status: 404 });
+        const requester = await Admin.findById(adminId);
+        if (!requester) return new Response(JSON.stringify({ error: "Admin not found" }), { status: 404 });
+        if (committee.createdBy?.toString() !== adminId && !requester.isSuperAdmin) {
+            return new Response(JSON.stringify({ error: "Unauthorized committee action" }), { status: 403 });
+        }
 
         if (action === "advance_month") {
             // Logic: All members must have 'verified' status for the currentMonth
@@ -59,6 +71,8 @@ export async function PATCH(req, { params }) {
                 targetId: committee._id,
                 details: { status: "finished" }
             });
+        } else {
+            return new Response(JSON.stringify({ error: "Invalid action" }), { status: 400 });
         }
 
         return new Response(JSON.stringify({ message: "Action successful" }), { status: 200 });

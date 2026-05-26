@@ -5,6 +5,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { FiCheckCircle, FiFileText, FiShield, FiAlertTriangle, FiArrowRight, FiInfo } from "react-icons/fi";
 import Card from "../../Components/Theme/Card";
 import Button from "../../Components/Theme/Button";
+import SectionHeader from "../../Components/Theme/SectionHeader";
+import StatusPill from "../../Components/Theme/StatusPill";
 import StepProgress from "../../Components/Theme/StepProgress";
 import Modal from "../../Components/Theme/Modal";
 import UploadCapture from "../../Components/Theme/UploadCapture";
@@ -88,6 +90,7 @@ function JoinCommitteeContent() {
         setShowConsent(false);
         setSubmitting(true);
         try {
+            const token = localStorage.getItem("token");
             // 1. Update member's documents in their profile (reuse capability)
             if (uploadedDocs.length > 0) {
                 const updatedDocs = [...(member.documents || []), ...uploadedDocs];
@@ -96,7 +99,10 @@ function JoinCommitteeContent() {
 
                 await fetch(`/api/member/${member._id}`, {
                     method: "PATCH",
-                    headers: { "Content-Type": "application/json" },
+                    headers: {
+                        "Content-Type": "application/json",
+                        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                    },
                     body: JSON.stringify({ documents: uniqueDocs })
                 });
             }
@@ -104,7 +110,10 @@ function JoinCommitteeContent() {
             // 2. Submit join request to committee
             const res = await fetch(`/api/committee/${committeeId}/request`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
                 body: JSON.stringify({ memberId: member._id })
             });
 
@@ -129,11 +138,30 @@ function JoinCommitteeContent() {
 
     return (
         <div className="max-w-4xl mx-auto py-12 px-6">
-            <div className="space-y-2 mb-12">
-                <h1 className="text-4xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">
-                    Join <span className="text-primary-600">{committee?.name}</span>
-                </h1>
-                <p className="text-slate-500 font-bold uppercase tracking-[0.2em] text-[10px]">Initialization Protocol active</p>
+            <div className="dashboard-shell mb-12 overflow-hidden p-8 md:p-10">
+                <div className="absolute inset-y-0 right-0 w-64 bg-gradient-to-l from-primary-500/10 to-transparent" />
+                <div className="relative z-10 grid gap-6 md:grid-cols-[1.4fr_0.8fr] md:items-end">
+                    <SectionHeader
+                        eyebrow="Application Review"
+                        icon={FiShield}
+                        title={<>Join <span className="text-primary-600">{committee?.name}</span></>}
+                        description="Review the financial commitment, confirm your documents, and submit a cleaner trust-first request to the organizer."
+                    />
+                    <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-1">
+                        <div className="metric-tile">
+                            <p className="eyebrow">Monthly amount</p>
+                            <p className="mt-3 text-2xl font-black tracking-tight text-slate-950 dark:text-white">
+                                PKR {committee?.monthlyAmount?.toLocaleString?.() || "0"}
+                            </p>
+                        </div>
+                        <div className="metric-tile">
+                            <p className="eyebrow">Entry requirement</p>
+                            <p className="mt-3 text-2xl font-black tracking-tight text-slate-950 dark:text-white">
+                                {committee?.requireDocuments ? "Verified docs" : "Quick request"}
+                            </p>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <Card className="p-8 md:p-12 border-none shadow-premium bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl">
@@ -188,7 +216,10 @@ function JoinCommitteeContent() {
                     <div className="space-y-10 animate-in slide-in-from-right duration-500">
                         <Card className="p-8 bg-slate-950 text-white border-none overflow-hidden relative">
                             <div className="relative z-10 space-y-6">
-                                <p className="text-[10px] font-black uppercase tracking-[0.4em] text-primary-500">Service Confirmation</p>
+                                <div className="flex flex-wrap gap-2">
+                                    <StatusPill tone="info" className="bg-white/10 text-white border-white/10">Transparent cycle</StatusPill>
+                                    <StatusPill tone="success" className="bg-white/10 text-white border-white/10">Organizer-reviewed</StatusPill>
+                                </div>
                                 <div className="space-y-1">
                                     <h4 className="text-3xl font-black uppercase tracking-tighter italic">Join {committee?.name}</h4>
                                     <p className="text-sm font-medium opacity-60 italic">You are requesting to join this financial circuit organized by {committee?.createdBy?.name || 'Authorized Organizer'}.</p>

@@ -8,6 +8,9 @@ import { fetchCommitteebyId, fetchCommittees } from "../apis";
 
 import Card from "@/app/Components/Theme/Card";
 import Button from "@/app/Components/Theme/Button";
+import EmptyState from "@/app/Components/Theme/EmptyState";
+import SectionHeader from "@/app/Components/Theme/SectionHeader";
+import StatusPill from "@/app/Components/Theme/StatusPill";
 import Table, { TableRow, TableCell } from "@/app/Components/Theme/Table";
 import { useLanguage } from "@/app/Components/LanguageContext";
 
@@ -99,17 +102,19 @@ export default function MembersListing() {
   return (
     <div className="space-y-12 animate-in fade-in duration-1000">
       {/* Upper Meta Section */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-slate-200 dark:border-slate-800">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2 text-primary-600 font-black tracking-[0.2em] text-[10px] uppercase">
-            <FiShield className="animate-pulse" /> {t("members")}
-          </div>
-          <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">{t("memberArchive")}</h1>
-          <p className="text-slate-500 font-medium italic">{t("memberArchiveDesc")}</p>
+      <div className="dashboard-shell overflow-hidden p-8 md:p-10">
+        <div className="absolute inset-y-0 right-0 w-72 bg-gradient-to-l from-primary-500/10 to-transparent" />
+        <div className="relative z-10 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+          <SectionHeader
+            eyebrow={t("members")}
+            icon={FiShield}
+            title={t("memberArchive")}
+            description={t("memberArchiveDesc")}
+          />
+          <Button onClick={() => router.push("/admin/addmember")} className="px-8 py-4 font-black uppercase text-xs tracking-[0.2em] shadow-xl shadow-primary-500/20">
+            <FiUserPlus className="mr-2" /> {t("initializeParticipant")}
+          </Button>
         </div>
-        <Button onClick={() => router.push("/admin/addmember")} className="px-8 py-4 font-black uppercase text-xs tracking-[0.2em] shadow-xl shadow-primary-500/20">
-          <FiUserPlus className="mr-2" /> {t("initializeParticipant")}
-        </Button>
       </div>
 
       <Card className="p-0 overflow-visible border-none bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl shadow-2xl">
@@ -174,9 +179,7 @@ export default function MembersListing() {
               <div className="flex items-center gap-3">
                 <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800" />
                 <h3 className="text-xs font-black text-slate-800 dark:text-white uppercase tracking-[0.2em]">Add Member Requests</h3>
-                <span className="text-[10px] font-black px-3 py-1 bg-amber-500/10 text-amber-600 rounded-full border border-amber-500/20 uppercase">
-                  {t("pending")}: {selectedCommittee.pendingMembers?.length || 0}
-                </span>
+                <StatusPill tone="warning">{t("pending")}: {selectedCommittee.pendingMembers?.length || 0}</StatusPill>
               </div>
 
               <div className="overflow-hidden rounded-[2rem] border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-950/30">
@@ -211,10 +214,7 @@ export default function MembersListing() {
                     ) : (
                       <TableRow className="w-full">
                         <TableCell colSpan={3} className="py-16 text-center">
-                          <div className="flex flex-col items-center gap-2 opacity-40">
-                            <FiUsers size={32} />
-                            <p className="font-black uppercase text-[10px] tracking-widest italic text-slate-400">No Pending Requests</p>
-                          </div>
+                          <EmptyState icon={FiUsers} title="No Pending Requests" description="Fresh join requests will show up here as screened applicants ask to enter this committee." className="border-0 bg-transparent shadow-none" />
                         </TableCell>
                       </TableRow>
                     )}
@@ -228,9 +228,7 @@ export default function MembersListing() {
               <div className="flex items-center gap-3">
                 <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800" />
                 <h3 className="text-xs font-black text-slate-800 dark:text-white uppercase tracking-[0.2em]">Member in Committee</h3>
-                <span className="text-[10px] font-black px-3 py-1 bg-green-500/10 text-green-600 rounded-full border border-green-500/20 uppercase">
-                  {t("approved")}: {selectedCommittee.members?.length || 0}
-                </span>
+                <StatusPill tone="success">{t("approved")}: {selectedCommittee.members?.length || 0}</StatusPill>
               </div>
 
               <div className="overflow-hidden rounded-[2rem] border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-950/30">
@@ -276,10 +274,7 @@ export default function MembersListing() {
                     ) : (
                       <TableRow>
                         <TableCell colSpan={3} className="py-16 text-center">
-                          <div className="flex flex-col items-center gap-2 opacity-40">
-                            <FiShield size={32} />
-                            <p className="font-black uppercase text-[10px] tracking-widest italic text-slate-400">Zero Active Nodes Found</p>
-                          </div>
+                          <EmptyState icon={FiShield} title="Zero Active Nodes Found" description="Approved members will appear here after you accept pending requests or assign linked participants." className="border-0 bg-transparent shadow-none" />
                         </TableCell>
                       </TableRow>
                     )}
@@ -289,17 +284,8 @@ export default function MembersListing() {
             </div>
           </div>
         ) : (
-          <div className="py-36 text-center space-y-8 animate-in zoom-in duration-1000">
-            <div className="relative mx-auto w-32 h-32">
-              <div className="absolute inset-0 bg-primary-500/20 rounded-[2.5rem] animate-ping" />
-              <div className="relative w-32 h-32 bg-slate-900 dark:bg-white rounded-[2.5rem] flex items-center justify-center text-primary-600 shadow-2xl rotate-12">
-                <FiActivity size={56} />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-widest uppercase">{t("systemAwaitingSelection")}</h3>
-              <p className="text-sm text-slate-500 max-w-xs mx-auto font-medium italic">{t("bridgeConnectionDesc")}</p>
-            </div>
+          <div className="p-10">
+            <EmptyState icon={FiActivity} title={t("systemAwaitingSelection")} description={t("bridgeConnectionDesc")} />
           </div>
         )}
       </Card>

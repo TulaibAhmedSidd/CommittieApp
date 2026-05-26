@@ -4,6 +4,7 @@ import Member from "@/app/api/models/Member";
 import Admin from "@/app/api/models/Admin";
 import bcrypt from "bcryptjs";
 import nodemailer from "nodemailer";
+import { unauthorizedResponse, verifyAdmin } from "@/app/utils/auth";
 
 // export async function GET() {
 //   await connectToDatabase();
@@ -139,8 +140,12 @@ import nodemailer from "nodemailer";
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(req) {
   try {
+    const auth = verifyAdmin(req);
+    if (!auth.authorized) {
+      return unauthorizedResponse(auth);
+    }
     await connectToDatabase();
     const members = await Member.find();
     return new Response(JSON.stringify(members), { status: 200 });
@@ -259,6 +264,11 @@ export async function POST(req) {
 // DELETE: Remove a member
 export async function DELETE(req) {
   try {
+    const auth = verifyAdmin(req);
+    if (!auth.authorized) {
+      return unauthorizedResponse(auth);
+    }
+
     const url = new URL(req.url);
     const id = url.searchParams.get("id");
 

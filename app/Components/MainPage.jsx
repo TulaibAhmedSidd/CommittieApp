@@ -9,11 +9,14 @@ import { FiGrid, FiLayers, FiCalendar, FiDollarSign, FiClock, FiCheckCircle, FiB
 
 import Button from "./Theme/Button";
 import Card from "./Theme/Card";
+import EmptyState from "./Theme/EmptyState";
 import Notifications from "./NotifList";
 import MyCommittie2 from "./MyCommittie2";
 import AssociationRequests from "./AssociationRequests";
 import AssociationTransparency from "./AssociationTransparency";
 import DiscoveryPanel from "./DiscoveryPanel";
+import SectionHeader from "./Theme/SectionHeader";
+import StatusPill from "./Theme/StatusPill";
 import VerifiedMember from "./VerifiedMember";
 import ChatBox from "./ChatBox";
 import { useLanguage } from "./LanguageContext";
@@ -29,7 +32,6 @@ export default function MainPage() {
   const [userLoggedData, setUserLoggedData] = useState(null);
   const [view, setView] = useState(searchParams.get("view") || "all");
   const [activeChat, setActiveChat] = useState(null);
-  console.log('committees', committees);
   useEffect(() => {
     const token = localStorage.getItem("token");
     const userData = localStorage.getItem("member");
@@ -50,9 +52,12 @@ export default function MainPage() {
 
   const fetchMemberById = async (id) => {
     try {
-      const res = await fetch(`/api/member/${id}`);
-      if (!res.ok) throw new Error(t("syncFailed"));
-      const data = await res.json();
+      const token = localStorage.getItem("token");
+      const securedRes = await fetch(`/api/member/${id}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!securedRes.ok) throw new Error(t("syncFailed"));
+      const data = await securedRes.json();
       setUserLoggedData(data);
       localStorage.setItem("member", JSON.stringify(data));
     } catch (err) {
@@ -94,7 +99,10 @@ export default function MainPage() {
         // Trigger auto-association
         await fetch("/api/member/pool", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
           body: JSON.stringify({
             memberId: userLoggedData?._id,
             adminId: adminId
@@ -102,12 +110,14 @@ export default function MainPage() {
         });
       }
 
-      const res = await fetch("/api/member/assign-members", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch(`/api/committee/${committeeId}/request`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
         body: JSON.stringify({
-          memberId: userLoggedData?._id,
-          committeeId: committeeId,
+          memberId: userLoggedData?._id
         }),
       });
       if (!res.ok) throw new Error(t("error"));
@@ -142,11 +152,81 @@ export default function MainPage() {
         <VerifiedMember member={userLoggedData} onUpdate={(updated) => setUserLoggedData(updated)} />
       ) : view === "all" ? (
         <>
-          <div className="flex flex-col gap-4 pb-10 border-b border-slate-200 dark:border-slate-800">
-            <h1 className="text-5xl font-black text-slate-900 dark:text-white tracking-tighter uppercase italic">
-              User <span className="text-primary-600">Command Center</span>
-            </h1>
-            <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">{t("browseParticipateDesc")}</p>
+          <div className="dashboard-shell p-8 md:p-10">
+            <div className="absolute inset-y-0 right-0 w-64 bg-gradient-to-l from-primary-500/10 to-transparent" />
+            <div className="relative z-10 grid gap-8 lg:grid-cols-[1.6fr_0.9fr]">
+              <div className="space-y-5">
+                <SectionHeader
+                  eyebrow="Member Command Center"
+                  icon={FiLayers}
+                  title={`Build your monthly saving momentum with more clarity.`}
+                  description={t("browseParticipateDesc")}
+                />
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <div className="metric-tile">
+                    <p className="eyebrow">Verification</p>
+                    <p className="mt-3 text-2xl font-black tracking-tight text-slate-950 dark:text-white">
+                      {userLoggedData?.verificationStatus === "verified" ? "Ready" : "Pending"}
+                    </p>
+                    <p className="mt-2 text-sm font-medium text-slate-500 dark:text-slate-400">
+                      Your identity status controls premium committee access.
+                    </p>
+                  </div>
+                  <div className="metric-tile">
+                    <p className="eyebrow">Open Requests</p>
+                    <p className="mt-3 text-2xl font-black tracking-tight text-slate-950 dark:text-white">
+                      {userLoggedData?.committees?.filter((item) => item.status === "pending").length || 0}
+                    </p>
+                    <p className="mt-2 text-sm font-medium text-slate-500 dark:text-slate-400">
+                      Track pending join approvals without chasing organizers.
+                    </p>
+                  </div>
+                  <div className="metric-tile">
+                    <p className="eyebrow">Active Circles</p>
+                    <p className="mt-3 text-2xl font-black tracking-tight text-slate-950 dark:text-white">
+                      {userLoggedData?.committees?.filter((item) => item.status === "approved").length || 0}
+                    </p>
+                    <p className="mt-2 text-sm font-medium text-slate-500 dark:text-slate-400">
+                      Keep sight of the circles already moving in your favor.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <Card className="border-none bg-slate-950 text-white shadow-[0_28px_70px_-34px_rgba(15,23,42,0.75)] dark:bg-slate-900">
+                <div className="space-y-5 p-1">
+                  <StatusPill tone={userLoggedData?.verificationStatus === "verified" ? "success" : "warning"} className="w-fit bg-white/10 text-white border-white/10">
+                    {userLoggedData?.verificationStatus === "verified" ? "Verified access" : "Verification required"}
+                  </StatusPill>
+                  <div className="space-y-2">
+                    <h3 className="text-3xl font-black tracking-tighter">Trust moves faster when your profile is complete.</h3>
+                    <p className="text-sm font-medium leading-6 text-slate-300">
+                      Complete verification, connect with proven organizers, and keep every payment trail visible.
+                    </p>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="rounded-[1.5rem] border border-white/10 bg-white/5 p-4">
+                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Organizer link</p>
+                      <p className="mt-2 text-lg font-black">
+                        {userLoggedData?.createdByAdminName || "Independent member"}
+                      </p>
+                    </div>
+                    <div className="rounded-[1.5rem] border border-white/10 bg-white/5 p-4">
+                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Next best action</p>
+                      <p className="mt-2 text-lg font-black">
+                        {userLoggedData?.verificationStatus === "verified" ? "Explore committees" : "Submit verification"}
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    className="w-full bg-white text-slate-950 hover:bg-slate-100 dark:bg-white dark:text-slate-950"
+                    onClick={() => router.push(userLoggedData?.verificationStatus === "verified" ? "/userDash/explore" : "/userDash?view=verification")}
+                  >
+                    {userLoggedData?.verificationStatus === "verified" ? "Explore committees" : "Finish verification"}
+                  </Button>
+                </div>
+              </Card>
+            </div>
           </div>
           <DiscoveryPanel
             member={userLoggedData}
@@ -155,12 +235,12 @@ export default function MainPage() {
           />
 
           {userLoggedData?.createdByAdminName && (
-            <div className="flex items-center gap-6 p-8 bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-premium">
+            <div className="dashboard-shell flex items-center gap-6 p-8">
               <div className="w-14 h-14 rounded-2xl bg-primary-600 flex items-center justify-center text-white shadow-xl shadow-primary-500/20 rotate-3">
                 <FiLayers size={26} />
               </div>
               <div>
-                <p className="text-[10px] font-black text-primary-600 uppercase tracking-[0.3em] mb-1">Authenticated Organizer</p>
+                <p className="text-[10px] font-black text-primary-600 uppercase tracking-[0.3em] mb-1">Connected organizer</p>
                 <p className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">
                   Member of Node: <span className="text-primary-600 italic">{userLoggedData.createdByAdminName}</span>
                 </p>
@@ -174,12 +254,12 @@ export default function MainPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {committees.length === 0 ? (
-              <Card className="col-span-full py-24 flex flex-col items-center gap-6 text-center bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl border-dashed">
-                <div className="p-6 bg-slate-100 dark:bg-slate-800 rounded-[2.5rem] text-slate-300">
-                  <FiAlertCircle size={64} />
-                </div>
-                <p className="text-slate-500 font-black uppercase tracking-widest text-xs italic">{t("noActiveCommittees")}</p>
-              </Card>
+              <EmptyState
+                icon={FiAlertCircle}
+                title={t("noActiveCommittees")}
+                description="Fresh circles will appear here as trusted organizers open new monthly opportunities."
+                className="col-span-full"
+              />
             ) : committees.map((c) => {
               const status = getMemberStatus(c._id);
               const spotsLeft = c.maxMembers - (c.members?.length || 0);
@@ -191,17 +271,22 @@ export default function MainPage() {
                       <div className="p-4 bg-slate-900 dark:bg-white rounded-[1.5rem] text-white dark:text-slate-900 shadow-xl rotate-3 group-hover:rotate-0 transition-transform">
                         <FiLayers size={24} />
                       </div>
-                      <div className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm ${spotsLeft > 0 ? "bg-green-500/10 text-green-600 border border-green-500/20" : "bg-red-500/10 text-red-600 border border-red-500/20"
-                        }`}>
+                      <StatusPill tone={spotsLeft > 0 ? "success" : "danger"}>
                         {spotsLeft > 0 ? `${spotsLeft} ${t("spotsOpen")}` : t("poolFull")}
-                      </div>
+                      </StatusPill>
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tighter line-clamp-1"
                         onClick={() => { router.push('/userDash/committee/' + c._id) }}
                       >{c.name}</h3>
                       <p className="text-slate-500 dark:text-slate-400 text-sm font-medium italic line-clamp-2 leading-relaxed">{c.description}</p>
+                      <div className="flex flex-wrap gap-2">
+                        <StatusPill tone="info">Protected payout trail</StatusPill>
+                        <StatusPill tone={c.requireDocuments ? "warning" : "neutral"}>
+                          {c.requireDocuments ? "Docs required" : "Quick apply"}
+                        </StatusPill>
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
@@ -264,25 +349,23 @@ export default function MainPage() {
 
       {/* Announcements */}
       <div id="notifications" className="pt-12 scroll-mt-24 space-y-8">
-        <div className="flex items-center gap-6">
-          <div className="p-4 bg-primary-600 rounded-2xl text-white shadow-lg shadow-primary-500/20 rotate-3">
-            <FiBell size={24} />
-          </div>
-          <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter uppercase italic">{t("recentAnnouncements")}</h2>
-          <div className="h-px flex-1 bg-slate-200 dark:bg-slate-800 opacity-50" />
-        </div>
+        <SectionHeader
+          eyebrow="Communication"
+          icon={FiBell}
+          title={t("recentAnnouncements")}
+          description="Keep a clean view of organizer messages, committee updates, and member-facing alerts."
+        />
         <Notifications user={true} userId={userLoggedData?._id} />
       </div>
 
       {/* Results Block */}
       <div className="pt-12 space-y-8">
-        <div className="flex items-center gap-6">
-          <div className="p-4 bg-green-500 rounded-2xl text-white shadow-lg shadow-green-500/20 -rotate-3">
-            <FiCheckCircle size={24} />
-          </div>
-          <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter uppercase italic">{t("drawingResults")}</h2>
-          <div className="h-px flex-1 bg-slate-200 dark:bg-slate-800 opacity-50" />
-        </div>
+        <SectionHeader
+          eyebrow="Payout Order"
+          icon={FiCheckCircle}
+          title={t("drawingResults")}
+          description="Review announced draw positions and understand who is scheduled first in each live committee."
+        />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {committees.filter(c => c.result?.length > 0).map((c) => (
             <Card key={c._id} className="border-none shadow-xl bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl p-8 relative overflow-hidden group">

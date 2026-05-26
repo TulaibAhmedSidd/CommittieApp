@@ -1,9 +1,16 @@
 import connectToDatabase from "@/app/utils/db";
 import Member from "@/app/api/models/Member";
 import Committee from "@/app/api/models/Committee";
+import Admin from "@/app/api/models/Admin";
+import { unauthorizedResponse, verifyAdmin } from "@/app/utils/auth";
 
 export async function PATCH(req) {
   try {
+    const auth = verifyAdmin(req);
+    if (!auth.authorized) {
+      return unauthorizedResponse(auth);
+    }
+
     // Connect to database
     await connectToDatabase();
 
@@ -32,6 +39,13 @@ export async function PATCH(req) {
       return new Response(JSON.stringify({ error: "Committee not found" }), {
         status: 404,
       });
+    }
+    const requester = await Admin.findById(auth.user.userId);
+    if (!requester) {
+      return new Response(JSON.stringify({ error: "Admin not found" }), { status: 404 });
+    }
+    if (committee.createdBy?.toString() !== auth.user.userId && !requester.isSuperAdmin) {
+      return new Response(JSON.stringify({ error: "Unauthorized to disapprove this member" }), { status: 403 });
     }
 
     // Find the specific committee in the member's committees array

@@ -33,7 +33,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
-    console.log('theme', theme);
     const applyTheme = (themeName: string) => {
         const html = document.documentElement;
         const body = document.body;

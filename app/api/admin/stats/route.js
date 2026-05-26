@@ -2,14 +2,23 @@ import connectToDatabase from "@/app/utils/db";
 import Committee from "@/app/api/models/Committee";
 import Member from "@/app/api/models/Member";
 import Admin from "@/app/api/models/Admin";
+import { unauthorizedResponse, verifyAdmin } from "@/app/utils/auth";
 
 export async function GET(req) {
     try {
+        const auth = verifyAdmin(req);
+        if (!auth.authorized) {
+            return unauthorizedResponse(auth);
+        }
+
         await connectToDatabase();
         const { searchParams } = new URL(req.url);
         const adminId = searchParams.get("adminId");
 
         if (!adminId) return new Response(JSON.stringify({ error: "Admin ID required" }), { status: 400 });
+        if (auth.user.userId !== adminId && !auth.user.isSuperAdmin) {
+            return new Response(JSON.stringify({ error: "Unauthorized to view these stats" }), { status: 403 });
+        }
 
         const admin = await Admin.findById(adminId);
         if (!admin) return new Response(JSON.stringify({ error: "Admin not found" }), { status: 404 });

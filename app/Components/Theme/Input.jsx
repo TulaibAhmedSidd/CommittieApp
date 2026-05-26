@@ -13,7 +13,7 @@ export default function Input({
     return (
         <div className={`flex flex-col gap-1.5 ${containerClassName}`}>
             {label && (
-                <label className="text-sm font-semibold text-secondary-700 dark:text-secondary-300">
+                <label className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
                     {label}
                 </label>
             )}
