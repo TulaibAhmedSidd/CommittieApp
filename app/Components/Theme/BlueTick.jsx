@@ -8,10 +8,10 @@ export default function BlueTick({ verified, size = 16, className = "" }) {
 
     return (
         <div
-            className={`inline-flex items-center justify-center text-blue-500 ${className}`}
+            className={`inline-flex items-center justify-center text-primary-600 ${className}`}
             title="Verified Identity"
         >
-            <FiCheckCircle size={size} fill="currentColor" className="text-white bg-blue-500 rounded-full" />
+            <FiCheckCircle size={size} fill="currentColor" className="text-white bg-primary-600 rounded-full" />
         </div>
     );
 }

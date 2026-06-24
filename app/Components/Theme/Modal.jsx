@@ -26,38 +26,36 @@ export default function Modal({ isOpen, onClose, title, children, size = "md" })
         md: "max-w-xl",
         lg: "max-w-3xl",
         xl: "max-w-5xl",
-        full: "max-w-[95vw]"
+        full: "max-w-[95vw]",
     };
 
     return createPortal(
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8">
-            {/* Backdrop */}
             <div
-                className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-300"
+                className="absolute inset-0 bg-ink-900/60 backdrop-blur-sm animate-in fade-in duration-300"
                 onClick={onClose}
             />
 
-            {/* Modal Content */}
-            <div className={`
-                relative w-full ${sizes[size]} bg-white dark:bg-slate-900 
-                rounded-[2.5rem] shadow-2xl shadow-primary-500/10 
-                border border-slate-200 dark:border-slate-800 
-                overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-10 duration-500
-            `}>
-                {/* Header */}
-                <div className="flex items-center justify-between p-8 border-b border-slate-100 dark:border-slate-800">
-                    <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tighter italic">
+            <div
+                className={`
+                    relative w-full ${sizes[size]} bg-surface-50 dark:bg-surface-100
+                    rounded-[2.5rem] shadow-floating
+                    border border-border-100 dark:border-border-200
+                    overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-10 duration-500
+                `}
+            >
+                <div className="flex items-center justify-between p-8 border-b border-border-100 dark:border-border-200">
+                    <h3 className="text-xl font-black text-ink-900 dark:text-ink-700 uppercase tracking-tighter italic">
                         {title}
                     </h3>
                     <button
                         onClick={onClose}
-                        className="p-3 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-red-500 transition-colors"
+                        className="p-3 rounded-2xl bg-surface-200 dark:bg-surface-200 text-muted-500 hover:text-danger-600 transition-colors"
                     >
                         <FiX size={20} />
                     </button>
                 </div>
 
-                {/* Body */}
                 <div className="p-8 max-h-[70vh] overflow-y-auto custom-scrollbar">
                     {children}
                 </div>

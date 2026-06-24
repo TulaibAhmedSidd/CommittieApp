@@ -11,7 +11,7 @@ export default function UploadCapture({
     id,
     required = false,
     placeholder = "Select or Capture Image",
-    memberId = null
+    memberId = null,
 }) {
     const [mode, setMode] = useState("idle"); // idle, gallery, camera, library
     const [preview, setPreview] = useState(value);
@@ -72,7 +72,7 @@ export default function UploadCapture({
         setError(null);
         try {
             const stream = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: "environment" }
+                video: { facingMode: "environment" },
             });
             if (videoRef.current) {
                 videoRef.current.srcObject = stream;
@@ -92,9 +92,8 @@ export default function UploadCapture({
             canvas.getContext("2d").drawImage(video, 0, 0);
             const dataUrl = canvas.toDataURL("image/jpeg");
 
-            // Stop stream
             const stream = video.srcObject;
-            stream.getTracks().forEach(track => track.stop());
+            stream.getTracks().forEach((track) => track.stop());
 
             setPreview(dataUrl);
             if (onUpload) onUpload(dataUrl, "capture.jpg");
@@ -113,21 +112,23 @@ export default function UploadCapture({
     return (
         <div className="space-y-3">
             {label && (
-                <label className="text-[11px] font-black uppercase text-slate-400 tracking-widest ml-1">
-                    {label} {required && <span className="text-red-500">*</span>}
+                <label className="text-[11px] font-black uppercase text-muted-500 tracking-widest ml-1">
+                    {label} {required && <span className="text-danger-500">*</span>}
                 </label>
             )}
 
-            <div className={`relative min-h-[220px] rounded-[2.5rem] border-2 border-dashed overflow-hidden transition-all duration-500 flex flex-col items-center justify-center p-6 ${preview
-                    ? "border-green-500/50 bg-green-500/5"
-                    : "border-slate-200 dark:border-slate-800 hover:border-primary-500/50 bg-slate-50 dark:bg-slate-950/50"
-                }`}>
-
+            <div
+                className={`relative min-h-[220px] rounded-[2.5rem] border-2 border-dashed overflow-hidden transition-all duration-500 flex flex-col items-center justify-center p-6 ${
+                    preview
+                        ? "border-success-500/50 bg-success-500/5"
+                        : "border-border-100 dark:border-border-200 hover:border-primary-500/50 bg-surface-50 dark:bg-surface-100/50"
+                }`}
+            >
                 {mode === "idle" && (
                     <>
                         {preview ? (
                             <div className="relative w-full h-full flex flex-col items-center gap-6 animate-in zoom-in-95">
-                                <div className="w-32 h-32 rounded-3xl overflow-hidden shadow-2xl border-4 border-white dark:border-slate-800 rotate-3 hover:rotate-0 transition-transform duration-500">
+                                <div className="w-32 h-32 rounded-3xl overflow-hidden shadow-2xl border-4 border-surface-50 dark:border-surface-200 rotate-3 hover:rotate-0 transition-transform duration-500">
                                     <img src={preview} alt="Preview" className="w-full h-full object-cover" />
                                 </div>
                                 <div className="flex gap-3">
@@ -137,11 +138,11 @@ export default function UploadCapture({
                                             setPreview(null);
                                             if (onUpload) onUpload(null, null);
                                         }}
-                                        className="p-3 bg-red-500 text-white rounded-xl shadow-lg shadow-red-500/20 hover:scale-110 transition-transform"
+                                        className="p-3 bg-danger-500 text-white rounded-xl shadow-[0_14px_30px_-12px_rgb(var(--danger-500)/0.45)] hover:scale-110 transition-transform"
                                     >
                                         <FiRefreshCw />
                                     </button>
-                                    <div className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-green-500/20">
+                                    <div className="flex items-center gap-2 px-4 py-2 bg-success-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-[0_14px_30px_-12px_rgb(var(--success-500)/0.45)]">
                                         <FiCheckCircle /> Verified Asset
                                     </div>
                                 </div>
@@ -152,22 +153,26 @@ export default function UploadCapture({
                                     <FiImage size={32} />
                                 </div>
                                 <div>
-                                    <p className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">{placeholder}</p>
-                                    <p className="text-[10px] text-slate-400 font-medium mt-1">Select from gallery, camera, or your asset library</p>
+                                    <p className="text-sm font-black text-ink-900 dark:text-ink-700 uppercase tracking-tight">
+                                        {placeholder}
+                                    </p>
+                                    <p className="text-[10px] text-muted-500 font-medium mt-1">
+                                        Select from gallery, camera, or your asset library
+                                    </p>
                                 </div>
 
                                 <div className="flex flex-wrap justify-center gap-4">
                                     <button
                                         type="button"
                                         onClick={() => fileInputRef.current.click()}
-                                        className="flex items-center gap-2 px-6 py-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:border-primary-500 hover:text-primary-600 transition-all shadow-sm"
+                                        className="flex items-center gap-2 px-6 py-4 bg-surface-50 dark:bg-surface-100 border border-border-100 dark:border-border-200 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:border-primary-500 hover:text-primary-600 transition-all shadow-sm"
                                     >
                                         <FiUpload /> Gallery
                                     </button>
                                     <button
                                         type="button"
                                         onClick={startCamera}
-                                        className="flex items-center gap-2 px-6 py-4 bg-primary-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-primary-700 transition-all shadow-xl shadow-primary-500/20"
+                                        className="flex items-center gap-2 px-6 py-4 bg-primary-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-primary-700 transition-all shadow-glow"
                                     >
                                         <FiCamera /> Camera
                                     </button>
@@ -175,7 +180,7 @@ export default function UploadCapture({
                                         <button
                                             type="button"
                                             onClick={() => setMode("library")}
-                                            className="flex items-center gap-2 px-6 py-4 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl"
+                                            className="flex items-center gap-2 px-6 py-4 bg-ink-900 text-surface-50 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-ink-800 transition-all shadow-xl"
                                         >
                                             <FiLayers /> Library
                                         </button>
@@ -212,9 +217,9 @@ export default function UploadCapture({
                             <button
                                 type="button"
                                 onClick={capturePhoto}
-                                className="w-16 h-16 bg-white rounded-full flex items-center justify-center text-slate-900 shadow-2xl hover:scale-110 active:scale-95 transition-all"
+                                className="w-16 h-16 bg-white rounded-full flex items-center justify-center text-ink-900 shadow-2xl hover:scale-110 active:scale-95 transition-all"
                             >
-                                <div className="w-12 h-12 border-2 border-slate-900 rounded-full" />
+                                <div className="w-12 h-12 border-2 border-ink-900 rounded-full" />
                             </button>
                         </div>
                         <canvas ref={canvasRef} className="hidden" />
@@ -224,8 +229,16 @@ export default function UploadCapture({
                 {mode === "library" && (
                     <div className="w-full space-y-6 animate-in slide-in-from-bottom-4 duration-500">
                         <div className="flex justify-between items-center px-2">
-                            <h5 className="text-[10px] font-black uppercase tracking-widest text-slate-400">Your Asset Repository</h5>
-                            <button type="button" onClick={() => setMode("idle")} className="text-[10px] font-black uppercase text-red-500 font-black">Cancel</button>
+                            <h5 className="text-[10px] font-black uppercase tracking-widest text-muted-500">
+                                Your Asset Repository
+                            </h5>
+                            <button
+                                type="button"
+                                onClick={() => setMode("idle")}
+                                className="text-[10px] font-black uppercase text-danger-500"
+                            >
+                                Cancel
+                            </button>
                         </div>
 
                         {loadingAssets ? (
@@ -233,7 +246,7 @@ export default function UploadCapture({
                                 <div className="w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
                             </div>
                         ) : assets.length === 0 ? (
-                            <div className="h-32 flex flex-col items-center justify-center text-slate-400 italic text-[10px]">
+                            <div className="h-32 flex flex-col items-center justify-center text-muted-500 italic text-[10px]">
                                 No previous assets found in your profile.
                             </div>
                         ) : (
@@ -248,7 +261,7 @@ export default function UploadCapture({
                                         <div className="absolute inset-0 bg-primary-600/0 group-hover:bg-primary-600/20 transition-all flex items-center justify-center">
                                             <FiCheckCircle className="text-white opacity-0 group-hover:opacity-100 transition-all" size={24} />
                                         </div>
-                                        <div className="absolute bottom-0 inset-x-0 p-2 bg-gradient-to-t from-black/60 to-transparent">
+                                        <div className="absolute bottom-0 inset-x-0 p-2 bg-gradient-to-t from-ink-900/60 to-transparent">
                                             <p className="text-[8px] font-black text-white uppercase truncate">{asset.name}</p>
                                         </div>
                                     </div>
@@ -260,7 +273,7 @@ export default function UploadCapture({
             </div>
 
             {error && (
-                <p className="text-[10px] font-bold text-red-500 ml-1 animate-pulse uppercase tracking-tighter">
+                <p className="text-[10px] font-bold text-danger-500 ml-1 animate-pulse uppercase tracking-tighter">
                     -- FAILURE: {error}
                 </p>
             )}

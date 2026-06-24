@@ -1,439 +1,601 @@
 "use client";
 
 import Link from "next/link";
+import { useState, useEffect } from "react";
 import {
   FiArrowRight,
   FiCheckCircle,
-  FiActivity,
   FiShield,
-  FiSearch,
-  FiEdit,
-  FiBell,
-  FiDollarSign,
-  FiUsers,
-  FiTarget,
   FiMenu,
-  FiX
+  FiX,
+  FiUsers,
+  FiTrendingUp,
+  FiAward,
+  FiSmartphone,
+  FiCamera,
+  FiClock,
+  FiHeart,
+  FiMapPin,
+  FiZap,
+  FiChevronDown,
+  FiCreditCard,
 } from "react-icons/fi";
-import { useState, useEffect } from "react";
+
 import Button from "./Components/Theme/Button";
 import Card from "./Components/Theme/Card";
-import SectionHeader from "./Components/Theme/SectionHeader";
 import StatusPill from "./Components/Theme/StatusPill";
+import Stat from "./Components/Theme/Stat";
+import Money from "./Components/Theme/Money";
+import BilingualLabel from "./Components/Theme/BilingualLabel";
+import CycleProgress from "./Components/Theme/CycleProgress";
+import BlueTick from "./Components/Theme/BlueTick";
+
+const SAMPLE_MEMBERS = [
+  { name: "Aliya Khan", city: "Karachi", paid: true, verified: true },
+  { name: "Hassan Raza", city: "Lahore", paid: true, verified: true },
+  { name: "Fatima Bilal", city: "Islamabad", paid: true, verified: false },
+  { name: "Bilal Ahmed", city: "Rawalpindi", paid: false, verified: true },
+];
+
+const TRUST_PILLARS = [
+  {
+    icon: FiShield,
+    en: "CNIC verified",
+    ur: "شناختی کارڈ تصدیق شدہ",
+    body: "Members and organizers both upload CNIC + selfie. No anonymous accounts.",
+  },
+  {
+    icon: FiCamera,
+    en: "Proof-first payments",
+    ur: "ادائیگی کا ثبوت",
+    body: "Every monthly contribution needs a JazzCash / EasyPaisa / bank screenshot. Organizer verifies before the month advances.",
+  },
+  {
+    icon: FiUsers,
+    en: "Organizer reputation",
+    ur: "منتظم کی ساکھ",
+    body: "Verified organizers carry a Blue Tick and a public review history — so you know who you're trusting with your committee.",
+  },
+];
+
+const HOW_STEPS = [
+  {
+    n: "01",
+    en: "Find a committee near you",
+    ur: "اپنے قریب کمیٹی ڈھونڈیں",
+    body: "Browse verified committees in Karachi, Lahore, Islamabad and beyond.",
+  },
+  {
+    n: "02",
+    en: "Send a join request",
+    ur: "شامل ہونے کی درخواست بھیجیں",
+    body: "Organizer sees your CNIC verification and approves you for the pool.",
+  },
+  {
+    n: "03",
+    en: "Pay monthly with proof",
+    ur: "ماہانہ ادائیگی ثبوت کے ساتھ",
+    body: "Upload your receipt — organizer verifies, the month moves forward.",
+  },
+  {
+    n: "04",
+    en: "Receive your payout",
+    ur: "اپنی رقم وصول کریں",
+    body: "When your month comes, get the full pool — every rupee accounted for.",
+  },
+];
+
+const SAMPLE_COMMITTEES = [
+  {
+    name: "Gulshan Mothers' Circle",
+    city: "Karachi",
+    monthly: 10000,
+    total: 120000,
+    current: 4,
+    months: 12,
+    paid: 11,
+    members: 12,
+    tone: "ongoing" as const,
+  },
+  {
+    name: "DHA Lahore Saver Pool",
+    city: "Lahore",
+    monthly: 25000,
+    total: 300000,
+    current: 1,
+    months: 12,
+    paid: 8,
+    members: 12,
+    tone: "ongoing" as const,
+  },
+  {
+    name: "F-7 Islamabad Trust",
+    city: "Islamabad",
+    monthly: 50000,
+    total: 500000,
+    current: 0,
+    months: 10,
+    paid: 0,
+    members: 10,
+    tone: "open" as const,
+  },
+];
+
+const TESTIMONIALS = [
+  {
+    quote:
+      "Pehle har mahine WhatsApp pe ledger likhna parta tha. Ab sab kuch app pe — kis ne diya, kis ka turn hai, sab clear.",
+    name: "Aliya Khan",
+    role: "Member · Karachi",
+  },
+  {
+    quote:
+      "Three committees chala raha hoon. Verification aur proof upload se members ka bharosa double ho gaya.",
+    name: "Hassan Raza",
+    role: "Organizer · Lahore",
+  },
+  {
+    quote:
+      "Payment screenshot upload kiya, 6 ghante mein verified ho gaya. Receipt bhi mil gayi PDF mein.",
+    name: "Fatima Bilal",
+    role: "Member · Islamabad",
+  },
+];
+
+const FAQS = [
+  {
+    q: "Is this a money-lending platform?",
+    a: "No — CommittieApp is a digital ledger for traditional rotating savings (BC / committee). The money moves between members directly; we never hold funds.",
+  },
+  {
+    q: "How are organizers verified?",
+    a: "Every organizer uploads CNIC front/back, a selfie, and proof of address. Super-admin approves before they can create a committee. Verified organizers get a Blue Tick.",
+  },
+  {
+    q: "What if a member doesn't pay one month?",
+    a: "Organizer can't advance the cycle until 100% of non-beneficiary members pay. Reminders go out automatically. Disputes are logged in the audit trail.",
+  },
+  {
+    q: "Does it work for committees that already started offline?",
+    a: "Yes. An organizer can create the committee at its current month and import the past payment history before going live on the app.",
+  },
+];
 
 export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [counts, setCounts] = useState({ members: 0, organizers: 0, pooled: 0 });
+  const [openFaq, setOpenFaq] = useState<number | null>(0);
 
+  // close mobile menu when route hash changes (anchor links)
   useEffect(() => {
-    // simple animated counters to add life to trust metrics
-    const targets = { members: 1200, organizers: 85, pooled: 50000 };
-    const duration = 1200;
-    const steps = 60;
-    const interval = Math.floor(duration / steps);
-    let step = 0;
-    const t = setInterval(() => {
-      step++;
-      setCounts({
-        members: Math.min(targets.members, Math.floor((targets.members * step) / steps)),
-        organizers: Math.min(targets.organizers, Math.floor((targets.organizers * step) / steps)),
-        pooled: Math.min(targets.pooled, Math.floor((targets.pooled * step) / steps)),
-      });
-      if (step >= steps) clearInterval(t);
-    }, interval);
-    return () => clearInterval(t);
+    const onHash = () => setMobileMenuOpen(false);
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
   }, []);
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans selection:bg-primary-500/30">
-
-      {/* Navbar */}
-      <nav className="fixed w-full z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-lg border-b border-slate-200 dark:border-slate-800">
-        <div className="max-w-7xl mx-auto px-4 md:px-8">
-          <div className="flex items-center justify-between h-20">
-            {/* Logo */}
-            <div className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-primary-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary-500/20">
-                <FiActivity size={22} />
-              </div>
-              <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter uppercase italic">
+    <main className="min-h-screen text-ink-900">
+      {/* ───────────── Nav ───────────── */}
+      <header className="sticky top-0 z-50 border-b border-border-100 bg-surface-50/85 backdrop-blur-xl">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 md:h-20 md:px-8">
+          <Link href="/" className="flex items-center gap-2.5">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary-600 text-white shadow-glow">
+              <span className="font-black tracking-tighter">BC</span>
+            </div>
+            <div className="leading-none">
+              <p className="text-lg font-black tracking-tighter text-ink-900">
                 Committie<span className="text-primary-600">App</span>
-              </span>
+              </p>
+              <p className="font-urdu text-[11px] text-muted-500" dir="rtl">
+                بھروسے کی بی سی
+              </p>
             </div>
+          </Link>
 
-            {/* Desktop Links */}
-            <div className="hidden md:flex items-center gap-8">
-              <a href="#features" className="text-sm font-bold text-slate-500 hover:text-primary-600 uppercase tracking-widest transition-colors">Features</a>
-              <a href="#reviews" className="text-sm font-bold text-slate-500 hover:text-primary-600 uppercase tracking-widest transition-colors">Reviews</a>
-              <a href="#faq" className="text-sm font-bold text-slate-500 hover:text-primary-600 uppercase tracking-widest transition-colors">FAQ</a>
-            </div>
+          <nav className="hidden items-center gap-8 md:flex">
+            <a href="#how" className="text-xs font-black uppercase tracking-[0.18em] text-ink-700 hover:text-primary-600">
+              How it works
+            </a>
+            <a href="#trust" className="text-xs font-black uppercase tracking-[0.18em] text-ink-700 hover:text-primary-600">
+              Trust
+            </a>
+            <a href="#committees" className="text-xs font-black uppercase tracking-[0.18em] text-ink-700 hover:text-primary-600">
+              Live pools
+            </a>
+            <a href="#faq" className="text-xs font-black uppercase tracking-[0.18em] text-ink-700 hover:text-primary-600">
+              FAQ
+            </a>
+          </nav>
 
-            {/* Auth Buttons */}
-            <div className="hidden md:flex items-center gap-4">
-              <Link href="/admin/login">
-                <button className="text-slate-500 hover:text-slate-900 dark:hover:text-white font-bold text-xs uppercase tracking-widest transition-colors mr-4">
-                  Organizer Login
-                </button>
-              </Link>
-              <Link href="/login">
-                <button className="text-slate-900 dark:text-white font-black uppercase text-xs tracking-widest hover:text-primary-600 transition-colors">
-                  Login
-                </button>
-              </Link>
-              <Link href="/register">
-                <Button className="font-black uppercase text-xs tracking-widest px-6 py-3 bg-primary-600 hover:bg-primary-700 shadow-xl shadow-primary-500/20">
-                  Get Started
-                </Button>
-              </Link>
-            </div>
-
-            {/* Mobile Menu Toggle */}
-            <div className="md:hidden">
-              <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2 text-slate-900 dark:text-white">
-                {mobileMenuOpen ? <FiX size={24} /> : <FiMenu size={24} />}
-              </button>
-            </div>
+          <div className="hidden items-center gap-3 md:flex">
+            <Link
+              href="/admin/login"
+              className="text-xs font-black uppercase tracking-[0.18em] text-muted-500 hover:text-primary-600"
+            >
+              Organizer
+            </Link>
+            <Link href="/login">
+              <Button variant="ghost" size="sm">
+                Login
+              </Button>
+            </Link>
+            <Link href="/register">
+              <Button variant="primary" size="sm">
+                Get started
+              </Button>
+            </Link>
           </div>
+
+          <button
+            onClick={() => setMobileMenuOpen((v) => !v)}
+            className="rounded-xl border border-border-100 bg-surface-50 p-2 text-ink-700 md:hidden"
+            aria-label="Toggle menu"
+          >
+            {mobileMenuOpen ? <FiX size={20} /> : <FiMenu size={20} />}
+          </button>
         </div>
 
-        {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 animate-in slide-in-from-top-4 duration-200">
-            <div className="flex flex-col p-4 space-y-4">
-              <a href="#features" onClick={() => setMobileMenuOpen(false)} className="text-sm font-black uppercase text-slate-600">Features</a>
-              <a href="#reviews" onClick={() => setMobileMenuOpen(false)} className="text-sm font-black uppercase text-slate-600">Reviews</a>
-              <Link href="/admin/login" onClick={() => setMobileMenuOpen(false)} className="text-sm font-black uppercase text-slate-600">Organizer Login</Link>
-              <Link href="/login" onClick={() => setMobileMenuOpen(false)} className="text-sm font-black uppercase text-primary-600">Login</Link>
-              <Link href="/register" onClick={() => setMobileMenuOpen(false)}>
-                <Button className="w-full font-black uppercase text-xs tracking-widest">Get Started</Button>
+          <div className="border-t border-border-100 bg-surface-50 md:hidden">
+            <div className="flex flex-col gap-3 px-4 py-4">
+              <a href="#how" className="text-sm font-black uppercase text-ink-700">
+                How it works
+              </a>
+              <a href="#trust" className="text-sm font-black uppercase text-ink-700">
+                Trust
+              </a>
+              <a href="#committees" className="text-sm font-black uppercase text-ink-700">
+                Live pools
+              </a>
+              <a href="#faq" className="text-sm font-black uppercase text-ink-700">
+                FAQ
+              </a>
+              <div className="desi-divider" />
+              <Link href="/admin/login" className="text-sm font-black uppercase text-muted-500">
+                Organizer login
+              </Link>
+              <Link href="/login">
+                <Button variant="ghost" size="sm" className="w-full">
+                  Member login
+                </Button>
+              </Link>
+              <Link href="/register">
+                <Button variant="primary" size="sm" className="w-full">
+                  Get started
+                </Button>
               </Link>
             </div>
           </div>
         )}
-      </nav>
+      </header>
 
-      {/* Hero Section */}
-      <section className="pt-32 pb-20 md:pt-48 md:pb-32 relative overflow-hidden">
-        {/* Background Gradients */}
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
+      {/* ───────────── Hero ───────────── */}
+      <section className="relative overflow-hidden">
+        {/* decorative jaali corners */}
+        <div className="jaali-border pointer-events-none absolute right-0 top-0 h-72 w-72 opacity-60" />
+        <div className="jaali-border pointer-events-none absolute -bottom-12 left-0 h-56 w-56 opacity-40" />
 
-        <div className="max-w-7xl mx-auto px-4 md:px-8 relative z-10 text-center">
+        <div className="mx-auto grid max-w-6xl gap-12 px-4 py-16 md:grid-cols-[1.2fr_1fr] md:px-8 md:py-24">
+          {/* Left — copy */}
+          <div className="space-y-7">
+            <div className="inline-flex items-center gap-2 rounded-full border border-accent-500/30 bg-accent-500/10 px-3 py-1.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-success-500 animate-pulse" />
+              <span className="text-[10px] font-black uppercase tracking-[0.22em] text-accent-700">
+                BC / بی سی
+              </span>
+              <span className="font-urdu text-[11px] text-accent-700" dir="rtl">
+                بھروسے سے چلنے والی
+              </span>
+            </div>
 
-          <StatusPill tone="success" className="mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700 bg-white/90 text-slate-700">
-            <span className="w-2 h-2 rounded-full bg-green-500" />
-            Trusted by 1000+ Members
-          </StatusPill>
+            <div className="space-y-3">
+              <h1 className="text-4xl font-black leading-[1.05] tracking-tighter text-ink-900 md:text-6xl">
+                Ghar ka committee
+                <br />
+                <span className="text-primary-700">phone par.</span>
+              </h1>
+              <p className="font-urdu text-2xl leading-relaxed text-muted-500 md:text-3xl" dir="rtl">
+                آپ کی بی سی — اب آپ کے فون پر۔
+              </p>
+            </div>
 
-          <h1 className="text-5xl md:text-7xl lg:text-8xl font-black text-slate-900 dark:text-white tracking-tighter mb-6 animate-in fade-in slide-in-from-bottom-8 duration-1000">
-            Save Together.<br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-blue-600">Achieve Together.</span>
-          </h1>
+            <p className="max-w-xl text-base font-medium leading-7 text-muted-600 md:text-lg">
+              Track every committee — kis ne diya, kis ka turn hai, kitna baqi hai. Verified members,
+              proof-based payments, and a clean monthly ledger. No more WhatsApp screenshots that
+              get lost.
+            </p>
 
-          <p className="text-lg md:text-xl text-slate-500 max-w-2xl mx-auto mb-10 font-medium leading-relaxed animate-in fade-in slide-in-from-bottom-10 duration-[1200ms]">
-            Explore, join, and manage committees with ease — all in one app. Secure payments, transparent tracking, and automated payouts.
-          </p>
+            <div className="flex flex-wrap items-center gap-3">
+              <Link href="/register">
+                <Button variant="primary" size="lg">
+                  <BilingualLabel en="Start saving" ur="بچت شروع کریں" /> <FiArrowRight />
+                </Button>
+              </Link>
+              <Link href="/register">
+                <Button variant="accent" size="lg">
+                  <BilingualLabel en="Become an organizer" ur="منتظم بنیں" />
+                </Button>
+              </Link>
+            </div>
 
-          <div className="flex flex-col md:flex-row items-center justify-center gap-4 animate-in fade-in slide-in-from-bottom-12 duration-[1400ms]">
-            <Link href="/register">
-              <Button className="h-14 px-10 text-sm font-black uppercase tracking-widest bg-slate-900 text-white hover:bg-slate-800 hover:scale-105 transition-all shadow-2xl">
-                Start Saving <FiArrowRight className="ml-2" />
-              </Button>
-            </Link>
-            <Link href="/register">
-              <button className="h-14 px-10 text-sm font-black uppercase tracking-widest bg-white dark:bg-slate-900 border-2 border-primary-600 text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/10 transition-all rounded-xl shadow-lg">
-                Become an Organizer
-              </button>
-            </Link>
+            <div className="flex flex-wrap items-center gap-6 pt-4 text-xs text-muted-500">
+              <span className="inline-flex items-center gap-2">
+                <FiShield className="text-primary-600" /> CNIC verification
+              </span>
+              <span className="inline-flex items-center gap-2">
+                <FiCreditCard className="text-primary-600" /> JazzCash · EasyPaisa · Bank
+              </span>
+              <span className="inline-flex items-center gap-2">
+                <FiMapPin className="text-primary-600" /> Pakistan-wide
+              </span>
+            </div>
           </div>
 
-          {/* 3D Dashboard Preview Mockup */}
-          <div className="mt-20 mx-auto max-w-5xl rounded-[2rem] bg-slate-900 p-2 md:p-4 shadow-2xl shadow-primary-500/20 animate-in fade-in zoom-in-95 duration-[1500ms]">
-            <div className="rounded-[1.5rem] overflow-hidden border border-slate-800 bg-slate-950 relative aspect-[16/9]">
-              <div className="absolute inset-0 bg-gradient-to-tr from-slate-900 to-slate-800 opacity-50" />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="grid h-full w-full gap-4 p-6 md:grid-cols-[1.3fr_0.7fr]">
-                  <div className="rounded-[1.5rem] border border-white/10 bg-white/5 p-5 text-left">
-                    <div className="flex items-center justify-between">
-                      <StatusPill tone="success" className="border-white/10 bg-white/10 text-white">Live trust ledger</StatusPill>
-                      <FiActivity size={20} className="text-primary-400" />
-                    </div>
-                    <div className="mt-6 grid gap-4 md:grid-cols-3">
-                      <div className="rounded-2xl bg-white/5 p-4">
-                        <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Collected</p>
-                        <p className="mt-2 text-2xl font-black">PKR 120K</p>
-                      </div>
-                      <div className="rounded-2xl bg-white/5 p-4">
-                        <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Verified</p>
-                        <p className="mt-2 text-2xl font-black">11 / 12</p>
-                      </div>
-                      <div className="rounded-2xl bg-white/5 p-4">
-                        <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Month</p>
-                        <p className="mt-2 text-2xl font-black">04</p>
-                      </div>
-                    </div>
+          {/* Right — committee snapshot card */}
+          <div className="relative">
+            <div className="absolute -inset-3 rounded-[2.5rem] bg-gradient-to-br from-primary-500/10 via-accent-500/10 to-transparent blur-xl" />
+            <Card className="relative">
+              <div className="space-y-5">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="eyebrow">Live committee</p>
+                    <h3 className="mt-1 text-xl font-black text-ink-900">Gulshan Mothers' Circle</h3>
+                    <p className="text-xs text-muted-500">Karachi · 12 members · Monthly</p>
                   </div>
-                  <div className="grid gap-4">
-                    <div className="rounded-[1.5rem] border border-white/10 bg-primary-500/10 p-5 text-left">
-                      <p className="text-[10px] font-black uppercase tracking-[0.24em] text-primary-300">Next payout</p>
-                      <p className="mt-2 text-xl font-black">Amina Tariq</p>
-                      <p className="mt-2 text-sm text-slate-300">Organizer verifies each proof before a payout moves.</p>
-                    </div>
-                    <div className="rounded-[1.5rem] border border-white/10 bg-white/5 p-5 text-left">
-                      <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Interactive Dashboard Preview</p>
-                      <p className="mt-2 text-sm text-slate-300">Designed to show cycle clarity, payment evidence, and who acts next.</p>
-                    </div>
-                  </div>
+                  <StatusPill tone="success">Verified</StatusPill>
+                </div>
+
+                <div className="rounded-2xl border border-border-100 bg-surface-100/60 p-4">
+                  <p className="eyebrow mb-1">Monthly installment</p>
+                  <Money amount={10000} size="lg" suffix="per member" tone="primary" />
+                </div>
+
+                <CycleProgress
+                  current={4}
+                  total={12}
+                  paidCount={11}
+                  memberCount={12}
+                  status="ongoing"
+                />
+
+                <div className="space-y-2">
+                  <p className="eyebrow">This month's status</p>
+                  <ul className="divide-y divide-border-100">
+                    {SAMPLE_MEMBERS.map((m, i) => (
+                      <li key={i} className="flex items-center justify-between py-2.5 text-sm">
+                        <span className="inline-flex items-center gap-2 font-semibold text-ink-700">
+                          {m.name}
+                          {m.verified ? <BlueTick verified size={14} /> : null}
+                          <span className="text-xs font-medium text-muted-500">· {m.city}</span>
+                        </span>
+                        <StatusPill tone={m.paid ? "success" : "warning"}>
+                          {m.paid ? "Paid" : "Pending"}
+                        </StatusPill>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="rounded-2xl border border-accent-500/30 bg-accent-500/5 p-4">
+                  <p className="eyebrow mb-1">Next payout</p>
+                  <p className="text-sm font-semibold text-ink-900">
+                    Aliya Khan · Month 4 · <Money amount={120000} size="sm" tone="accent" />
+                  </p>
                 </div>
               </div>
-            </div>
+            </Card>
           </div>
         </div>
       </section>
 
-      {/* Role Marketing Section */}
-      <section className="py-24 bg-slate-900 text-white overflow-hidden relative">
-        <div className="max-w-7xl mx-auto px-4 md:px-8 relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-            <div className="space-y-8">
-              <SectionHeader
-                eyebrow="Choose Your Role"
-                title={<>Two Paths.<br /><span className="text-primary-500">Infinite Possibilities.</span></>}
-                description="Whether you're looking to save for your future or help others achieve their dreams, CommittieApp provides the platform to grow together."
-                className="!items-start !text-left"
+      {/* ───────────── Trust strip ───────────── */}
+      <section className="border-y border-border-100 bg-surface-100/60">
+        <div className="mx-auto grid max-w-6xl gap-4 px-4 py-10 md:grid-cols-4 md:px-8">
+          <Stat
+            label="Active members"
+            urduLabel="فعال اراکین"
+            value="1,200+"
+            hint="Across 14 cities"
+            icon={FiUsers}
+            tone="primary"
+          />
+          <Stat
+            label="Verified organizers"
+            urduLabel="تصدیق شدہ منتظمین"
+            value="85"
+            hint="CNIC + address verified"
+            icon={FiAward}
+            tone="accent"
+          />
+          <Stat
+            label="Total pooled"
+            urduLabel="کل جمع رقم"
+            value={<Money amount={50000000} size="md" tone="primary" />}
+            hint="Across all live committees"
+            icon={FiTrendingUp}
+            tone="success"
+          />
+          <Stat
+            label="Payout success"
+            urduLabel="کامیاب ادائیگیاں"
+            value="100%"
+            hint="Every cycle, every member"
+            icon={FiCheckCircle}
+            tone="success"
+          />
+        </div>
+      </section>
+
+      {/* ───────────── Why trust us ───────────── */}
+      <section id="trust" className="mx-auto max-w-6xl px-4 py-20 md:px-8 md:py-28">
+        <div className="mb-10 max-w-2xl space-y-3">
+          <p className="eyebrow">Bharosa · ٹرسٹ</p>
+          <h2 className="text-3xl font-black tracking-tighter text-ink-900 md:text-5xl">
+            Aap kyun bharosa karein?
+            <span className="block text-primary-700">Why members trust us.</span>
+          </h2>
+          <p className="text-base font-medium text-muted-600">
+            Traditional BC works on word-of-mouth. We layer verification, proof, and audit on top —
+            so the same trusted social system runs without the WhatsApp anxiety.
+          </p>
+        </div>
+
+        <div className="grid gap-5 md:grid-cols-3">
+          {TRUST_PILLARS.map((p, i) => {
+            const Icon = p.icon;
+            return (
+              <Card key={i} className="group">
+                <div className="space-y-4">
+                  <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-500/10 text-primary-600 transition group-hover:bg-primary-500 group-hover:text-white">
+                    <Icon size={22} />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-black text-ink-900">{p.en}</h3>
+                    <p className="font-urdu text-sm text-muted-500" dir="rtl">
+                      {p.ur}
+                    </p>
+                  </div>
+                  <p className="text-sm font-medium leading-6 text-muted-600">{p.body}</p>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* ───────────── How it works ───────────── */}
+      <section id="how" className="border-y border-border-100 bg-surface-100/60">
+        <div className="mx-auto max-w-6xl px-4 py-20 md:px-8 md:py-28">
+          <div className="mb-12 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+            <div className="max-w-2xl space-y-3">
+              <p className="eyebrow">Tareeqa · طریقہ</p>
+              <h2 className="text-3xl font-black tracking-tighter text-ink-900 md:text-5xl">
+                Aik committee kese chalti hai?
+                <span className="block text-primary-700">A cycle, end to end.</span>
+              </h2>
+            </div>
+            <div className="rounded-2xl border border-accent-500/30 bg-accent-500/10 px-4 py-2.5 text-xs font-bold text-accent-700">
+              Average join → first payout: <span className="font-black">4 to 6 days</span>
+            </div>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-4">
+            {HOW_STEPS.map((step, i) => (
+              <div
+                key={i}
+                className="relative rounded-[1.5rem] border border-border-100 bg-surface-50 p-5 transition hover:-translate-y-1 hover:shadow-card"
+              >
+                <div className="mb-3 flex items-center justify-between">
+                  <span className="text-3xl font-black tracking-tighter text-primary-700">{step.n}</span>
+                  {i < HOW_STEPS.length - 1 && (
+                    <FiArrowRight className="hidden text-muted-500 md:block" />
+                  )}
+                </div>
+                <h3 className="text-sm font-black uppercase tracking-tight text-ink-900">
+                  {step.en}
+                </h3>
+                <p className="font-urdu text-xs text-muted-500 mt-0.5" dir="rtl">
+                  {step.ur}
+                </p>
+                <p className="mt-3 text-xs font-medium leading-5 text-muted-600">{step.body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ───────────── Live committees ───────────── */}
+      <section id="committees" className="mx-auto max-w-6xl px-4 py-20 md:px-8 md:py-28">
+        <div className="mb-10 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div className="max-w-2xl space-y-3">
+            <p className="eyebrow">Open pools · کھلے پول</p>
+            <h2 className="text-3xl font-black tracking-tighter text-ink-900 md:text-5xl">
+              Committees joining ke liye open hain.
+            </h2>
+            <p className="text-base font-medium text-muted-600">
+              Real examples. Pick a city, pick a monthly amount, send a join request.
+            </p>
+          </div>
+          <Link href="/userDash/explore">
+            <Button variant="outline">
+              Explore all committees <FiArrowRight />
+            </Button>
+          </Link>
+        </div>
+
+        <div className="grid gap-5 md:grid-cols-3">
+          {SAMPLE_COMMITTEES.map((c, i) => (
+            <Card key={i} className="flex h-full flex-col gap-5">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h3 className="text-lg font-black text-ink-900">{c.name}</h3>
+                  <p className="text-xs font-medium text-muted-500">
+                    <FiMapPin className="-mt-0.5 mr-1 inline" />
+                    {c.city}
+                  </p>
+                </div>
+                <StatusPill tone={c.tone === "open" ? "info" : "success"}>
+                  {c.tone === "open" ? "Open" : "Ongoing"}
+                </StatusPill>
+              </div>
+
+              <div className="rounded-2xl border border-border-100 bg-surface-100/60 p-4">
+                <p className="eyebrow mb-1">Monthly</p>
+                <Money amount={c.monthly} size="lg" tone="primary" suffix="per member" />
+                <p className="mt-2 text-xs font-medium text-muted-500">
+                  Total pool · <Money amount={c.total} size="sm" tone="accent" />
+                </p>
+              </div>
+
+              <CycleProgress
+                current={c.current}
+                total={c.months}
+                paidCount={c.tone === "open" ? null : c.paid}
+                memberCount={c.tone === "open" ? null : c.members}
+                status={c.tone}
               />
 
-              <div className="space-y-6">
-                <div className="flex gap-6 p-6 rounded-3xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors group">
-                  <div className="w-14 h-14 bg-primary-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <FiUsers size={28} />
-                  </div>
-                  <div>
-                    <h4 className="text-xl font-black uppercase tracking-tight mb-1">Become a Member</h4>
-                    <p className="text-sm text-slate-400">Join verified circles, save consistently, and get your payout when you need it most. No hidden fees, just pure community growth.</p>
-                  </div>
-                </div>
-
-                <div className="flex gap-6 p-6 rounded-3xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors group">
-                  <div className="w-14 h-14 bg-indigo-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <FiTarget size={28} />
-                  </div>
-                  <div>
-                    <h4 className="text-xl font-black uppercase tracking-tight mb-1">Lead as an Organizer</h4>
-                    <p className="text-sm text-slate-400">Launch your own committees, set custom rules, and earn through optional organizer fees. Build trust and connections for the future.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="relative">
-              <div className="absolute -inset-4 bg-primary-500/20 blur-[100px] rounded-full" />
-              <Card className="bg-slate-800/50 border-white/10 p-10 relative z-10 space-y-8 backdrop-blur-xl">
-                <div className="flex justify-between items-center">
-                  <p className="text-xs font-black uppercase tracking-[0.3em] text-primary-500">Network Statistics</p>
-                  <FiActivity className="text-slate-500" />
-                </div>
-                <div className="grid grid-cols-2 gap-8">
-                  <div className="space-y-1">
-                    <p className="text-3xl font-black tracking-tight">1.2K+</p>
-                    <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Active Members</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-3xl font-black tracking-tight">85+</p>
-                    <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Verified Organizers</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-3xl font-black tracking-tight">RS 50M</p>
-                    <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Total Pooled</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-3xl font-black tracking-tight">100%</p>
-                    <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Payout Rate</p>
-                  </div>
-                </div>
-                <Link href="/register" className="block">
-                  <Button className="w-full py-5 font-black uppercase tracking-widest text-xs">Start Your Journey Now</Button>
-                </Link>
-              </Card>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* How It Works & Trust Builders */}
-      <section className="py-16 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800">
-        <div className="max-w-7xl mx-auto px-4 md:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-start">
-            <div className="space-y-6">
-              <h3 className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter">How CommittieApp Keeps It Transparent</h3>
-              <p className="text-slate-500 font-medium">A short, clear flow so members and organizers always know what's happening — verification, proof uploads, approvals, and payout tracking.</p>
-
-              <div className="space-y-4">
-                <div className="flex gap-4 items-start">
-                  <div className="p-3 bg-primary-50 rounded-lg text-primary-600">
-                    <FiShield size={20} />
-                  </div>
-                  <div>
-                    <p className="font-black">Verified Accounts</p>
-                    <p className="text-sm text-slate-500">Users and organizers complete identity checks and receive a Blue Tick for trust.</p>
-                  </div>
-                </div>
-
-                <div className="flex gap-4 items-start">
-                  <div className="p-3 bg-slate-50 rounded-lg text-primary-600">
-                    <FiEdit size={20} />
-                  </div>
-                  <div>
-                    <p className="font-black">Proof-First Payouts</p>
-                    <p className="text-sm text-slate-500">All payments require proof uploads and organizer verification before payout.</p>
-                  </div>
-                </div>
-
-                <div className="flex gap-4 items-start">
-                  <div className="p-3 bg-blue-50 rounded-lg text-blue-600">
-                    <FiSearch size={20} />
-                  </div>
-                  <div>
-                    <p className="font-black">Local Discovery</p>
-                    <p className="text-sm text-slate-500">Find committees near you and join communities you trust without exposing exact locations.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="col-span-1 lg:col-span-1">
-              <div className="grid grid-cols-3 gap-4">
-                <div className="py-3 px-5 rounded-2xl bg-slate-50 dark:bg-slate-950 text-center">
-                  <p className="text-2xl font-black">{counts.members.toLocaleString()}</p>
-                  <p className="text-xs uppercase tracking-widest text-slate-500 mt-2">Active Members</p>
-                </div>
-                <div className="py-3 px-5 rounded-2xl bg-slate-50 dark:bg-slate-950 text-center">
-                  <p className="text-2xl font-black">{counts.organizers}</p>
-                  <p className="text-xs uppercase tracking-widest text-slate-500 mt-2">Verified Organizers</p>
-                </div>
-                <div className="py-3 px-5 rounded-2xl bg-slate-50 dark:bg-slate-950 text-center">
-                  <p className="text-2xl font-black">Rs {Math.floor(counts.pooled / 1000).toLocaleString()}K</p>
-                  <p className="text-xs uppercase tracking-widest text-slate-500 mt-2">Total Pooled</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="col-span-1 lg:col-span-1 space-y-6">
-              <h4 className="text-xl font-black">Watch a quick walkthrough</h4>
-              <div className="rounded-2xl overflow-hidden border border-slate-100 dark:border-slate-800">
-                <div className="aspect-video bg-black/5">
-                  <iframe className="w-full h-full" src="https://www.youtube.com/embed/ysz5S6PUM-U" title="CommittieApp walkthrough" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
-                </div>
-              </div>
-              <p className="text-sm text-slate-500">Short demo: create a committee, verify members, collect proofs, and automate payouts — all visible to participants.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Organizer Upsell */}
-      <section className="py-12 bg-gradient-to-r from-primary-50 to-white dark:from-slate-900/60 dark:to-slate-900">
-        <div className="max-w-7xl mx-auto px-4 md:px-8">
-          <div className="rounded-3xl p-8 md:p-12 bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-800 shadow-lg grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
-            <div className="md:col-span-2">
-              <h3 className="text-2xl font-black text-slate-900 dark:text-white">Organizers: Grow your circle with confidence</h3>
-              <p className="text-slate-500 mt-2">Use our tools to scale committees, collect payments with proof, and build your reputation with verified Blue Ticks. Earn through optional organizer fees and referral rewards.</p>
-
-              <ul className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <li className="flex gap-3 items-start"><div className="p-2 bg-primary-50 rounded-md text-primary-600"><FiEdit /></div><span className="font-black">Organizer Dashboard</span></li>
-                <li className="flex gap-3 items-start"><div className="p-2 bg-primary-50 rounded-md text-primary-600"><FiCheckCircle /></div><span className="font-black">Verified Members</span></li>
-                <li className="flex gap-3 items-start"><div className="p-2 bg-primary-50 rounded-md text-primary-600"><FiBell /></div><span className="font-black">Automated Notifications</span></li>
-                <li className="flex gap-3 items-start"><div className="p-2 bg-primary-50 rounded-md text-primary-600"><FiDollarSign /></div><span className="font-black">Flexible Fee Options</span></li>
-              </ul>
-            </div>
-
-            <div className="md:col-span-1">
-              <div className="p-6 rounded-2xl bg-primary-600 text-white">
-                <p className="text-sm uppercase tracking-widest font-black">Organizer Starter</p>
-                <p className="text-3xl font-black mt-4">Free</p>
-                <p className="text-sm mt-2">Create up to 3 committees, access verification tools, and full transparency features.</p>
-                <Link href="/admin/register" className="block mt-6">
-                  <Button className="w-full py-3 font-black uppercase tracking-widest">Become an Organizer</Button>
+              <div className="mt-auto">
+                <Link href="/register">
+                  <Button variant="primary" className="w-full">
+                    <BilingualLabel en="Request to join" ur="شامل ہوں" />
+                  </Button>
                 </Link>
               </div>
-            </div>
-          </div>
+            </Card>
+          ))}
         </div>
       </section>
 
-      {/* Features Section */}
-      <section id="features" className="py-20 md:py-32 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 relative">
-        <div className="max-w-7xl mx-auto px-4 md:px-8">
-          <div className="mb-20">
-            <SectionHeader
-              eyebrow="Platform Benefits"
-              title={<>Why Choose <span className="text-primary-600">Us?</span></>}
-              description="Built for transparency, designed for ease. Managing money circles has never been this simple."
-              align="center"
-            />
+      {/* ───────────── Voices ───────────── */}
+      <section className="border-y border-border-100 bg-surface-100/60">
+        <div className="mx-auto max-w-6xl px-4 py-20 md:px-8 md:py-28">
+          <div className="mb-10 max-w-2xl space-y-3">
+            <p className="eyebrow">Voices · آوازیں</p>
+            <h2 className="text-3xl font-black tracking-tighter text-ink-900 md:text-5xl">
+              Members ki zubani.
+            </h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {[
-              {
-                icon: FiSearch,
-                title: "Explore Committees",
-                desc: "Find verified money circles near you with varying contribution amounts."
-              },
-              {
-                icon: FiCheckCircle,
-                title: "Join with Ease",
-                desc: "Apply to your choice and get approved fast with secure verification."
-              },
-              {
-                icon: FiEdit,
-                title: "Organizer Tools",
-                desc: "Create and manage your own committees with automated tracking."
-              },
-              {
-                icon: FiBell,
-                title: "Stay Updated",
-                desc: "Real-time notifications for payment turns, cycles, and announcements."
-              }
-            ].map((feature, i) => (
-              <div key={i} className="group p-8 rounded-[2rem] bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 hover:border-primary-500/50 hover:shadow-xl hover:shadow-primary-500/10 transition-all duration-300">
-                <div className="w-14 h-14 bg-white dark:bg-slate-900 rounded-2xl flex items-center justify-center text-primary-600 shadow-sm mb-6 group-hover:scale-110 transition-transform">
-                  <feature.icon size={28} />
-                </div>
-                <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight mb-3">{feature.title}</h3>
-                <p className="text-sm text-slate-500 leading-relaxed font-medium">{feature.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Social Proof Section */}
-      <section id="reviews" className="py-20 bg-slate-50 dark:bg-slate-950 overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 md:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-black uppercase tracking-widest text-slate-900 dark:text-white">Trusted by the Community</h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              { quote: "Easy to explore and join circle savings! The dashboard is super intuitive.", author: "Sarah K.", role: "Member" },
-              { quote: "I manage my group without confusion. The automated turn calculator is a lifesaver.", author: "Ahmed R.", role: "Organizer" },
-              { quote: "Clear updates & transparency! I verified my payment in seconds.", author: "John D.", role: "Participant" }
-            ].map((testimonial, i) => (
-              <Card key={i} className="bg-white dark:bg-slate-900 border-none p-8 relative">
-                <div className="absolute top-6 right-8 text-6xl text-slate-100 dark:text-slate-800 font-serif leading-none">"</div>
-                <div className="relative z-10 space-y-6">
-                  <p className="text-slate-600 dark:text-slate-300 font-medium text-lg leading-relaxed">
-                    {testimonial.quote}
-                  </p>
-                  <div className="flex items-center gap-4 pt-4 border-t border-slate-100 dark:border-slate-800">
-                    <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-blue-500 rounded-full flex items-center justify-center text-white font-black text-xs">
-                      {testimonial.author.charAt(0)}
+          <div className="grid gap-5 md:grid-cols-3">
+            {TESTIMONIALS.map((t, i) => (
+              <Card key={i} className="relative overflow-visible">
+                <span
+                  aria-hidden
+                  className="absolute -top-4 left-6 font-serif text-7xl leading-none text-accent-500/40"
+                >
+                  &ldquo;
+                </span>
+                <div className="space-y-4 pt-3">
+                  <p className="text-base font-medium leading-7 text-ink-700">{t.quote}</p>
+                  <div className="flex items-center gap-3 border-t border-border-100 pt-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-600 text-sm font-black text-white">
+                      {t.name.charAt(0)}
                     </div>
                     <div>
-                      <p className="text-sm font-black uppercase text-slate-900 dark:text-white">{testimonial.author}</p>
-                      <p className="text-xs text-slate-400 font-black uppercase tracking-widest">{testimonial.role}</p>
+                      <p className="text-sm font-black text-ink-900">{t.name}</p>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-muted-500">
+                        {t.role}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -443,69 +605,163 @@ export default function Home() {
         </div>
       </section>
 
-      {/* FAQ Section */}
-      <section id="faq" className="py-20 bg-white dark:bg-slate-900">
-        <div className="max-w-3xl mx-auto px-4 md:px-8 space-y-12">
-          <div className="text-center">
-            <h2 className="text-3xl font-black uppercase tracking-tighter text-slate-900 dark:text-white">Frequently Asked Questions</h2>
-          </div>
+      {/* ───────────── Organizer CTA ───────────── */}
+      <section className="mx-auto max-w-6xl px-4 py-20 md:px-8 md:py-28">
+        <div className="relative overflow-hidden rounded-[2.5rem] border border-primary-500/20 bg-gradient-to-br from-primary-50 via-surface-100 to-accent-500/10 p-8 md:p-14">
+          <div className="jaali-border pointer-events-none absolute right-0 top-0 h-full w-1/3 opacity-30" />
 
-          <div className="space-y-4">
-            {[
-              { q: "How do I join a committee?", a: "Simply create an account, browse available committees in the 'Explore' section, and send a request. Once approved by the admin, you're in!" },
-              { q: "Can I create my own committee?", a: "Yes! Any registered user can become an organizer. Navigate to your dashboard and select 'Create Committee' to set your rules." },
-              { q: "Is it safe?", a: "We prioritize security. All accounts are verified, and we maintain a strict log of all transactions and activities for full transparency." }
-            ].map((faq, i) => (
-              <div key={i} className="p-6 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
-                <h4 className="text-lg font-black text-slate-900 dark:text-white mb-2">{faq.q}</h4>
-                <p className="text-slate-500 font-medium text-sm">{faq.a}</p>
+          <div className="relative grid gap-10 md:grid-cols-[1.4fr_1fr]">
+            <div className="space-y-5">
+              <p className="eyebrow">Organizer plan · منتظم</p>
+              <h2 className="text-3xl font-black tracking-tighter text-ink-900 md:text-4xl">
+                Apni committee chalayein —
+                <br />
+                <span className="text-primary-700">platform aap ka sahara hai.</span>
+              </h2>
+              <p className="max-w-lg text-base font-medium text-muted-600">
+                Member onboarding, payment verification, monthly cycle, payout receipt — sab ek
+                jagah. Optional organizer fee bhi set kar sakte hain, transparent rakhi jaayegi.
+              </p>
+              <div className="flex flex-wrap items-center gap-4 pt-2">
+                <Link href="/register">
+                  <Button variant="primary" size="lg">
+                    Become an organizer <FiArrowRight />
+                  </Button>
+                </Link>
+                <Link href="/admin/login" className="text-xs font-black uppercase tracking-[0.18em] text-primary-700 hover:text-primary-800">
+                  Already organizing? Login →
+                </Link>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Trust & Safety */}
-      <section className="py-16 bg-primary-600 text-white relative overflow-hidden">
-        <FiShield className="absolute -left-10 -bottom-20 text-white/5 rotate-12" size={400} />
-        <div className="max-w-7xl mx-auto px-4 md:px-8 relative z-10">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-            {[
-              { icon: FiShield, text: "Secure Platform" },
-              { icon: FiUsers, text: "Real Committees" },
-              { icon: FiCheckCircle, text: "Transparent Process" },
-              { icon: FiDollarSign, text: "No Hidden Fees" },
-            ].map((badge, i) => (
-              <div key={i} className="flex flex-col items-center gap-4 animate-in zoom-in-50 duration-700" style={{ animationDelay: `${i * 100}ms` }}>
-                <div className="p-4 bg-white/10 rounded-2xl backdrop-blur-sm">
-                  <badge.icon size={32} />
-                </div>
-                <p className="text-sm font-black uppercase tracking-widest">{badge.text}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="py-12 bg-slate-950 text-white border-t border-slate-800">
-        <div className="max-w-7xl mx-auto px-4 md:px-8 flex flex-col md:flex-row justify-between items-center gap-8">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center text-white">
-              <FiActivity size={18} />
             </div>
-            <span className="text-xl font-black tracking-tighter">
-              Committie<span className="text-primary-600">App</span>
-            </span>
+
+            <Card className="bg-surface-50">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <p className="eyebrow">Free forever</p>
+                  <StatusPill tone="accent">Most popular</StatusPill>
+                </div>
+                <Money amount={0} size="xl" tone="primary" suffix="organizer fee" />
+                <ul className="space-y-2.5 text-sm font-medium text-ink-700">
+                  <li className="flex items-center gap-2">
+                    <FiCheckCircle className="text-success-600" /> Up to 3 active committees
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <FiCheckCircle className="text-success-600" /> CNIC + selfie verification
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <FiCheckCircle className="text-success-600" /> Payment proof workflow
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <FiCheckCircle className="text-success-600" /> Member messaging
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <FiCheckCircle className="text-success-600" /> Audit trail + receipts
+                  </li>
+                </ul>
+              </div>
+            </Card>
           </div>
-          <div className="flex gap-8 text-slate-400 text-xs font-black uppercase tracking-widest">
-            <a href="/privacy" className="hover:text-white transition-colors">Privacy</a>
-            <a href="/terms" className="hover:text-white transition-colors">Terms</a>
-            <a href="/contact" className="hover:text-white transition-colors">Contact</a>
+        </div>
+      </section>
+
+      {/* ───────────── FAQ ───────────── */}
+      <section id="faq" className="border-t border-border-100 bg-surface-100/60">
+        <div className="mx-auto max-w-3xl px-4 py-20 md:px-8 md:py-28">
+          <div className="mb-10 space-y-3 text-center">
+            <p className="eyebrow">FAQ · سوالات</p>
+            <h2 className="text-3xl font-black tracking-tighter text-ink-900 md:text-5xl">
+              Questions, jawab.
+            </h2>
           </div>
-          <p className="text-slate-600 text-xs font-medium">© 2026 CommittieApp. All rights reserved.</p>
+
+          <div className="space-y-3">
+            {FAQS.map((faq, i) => {
+              const open = openFaq === i;
+              return (
+                <button
+                  type="button"
+                  key={i}
+                  onClick={() => setOpenFaq(open ? null : i)}
+                  className={`block w-full rounded-2xl border bg-surface-50 px-5 py-4 text-left transition ${
+                    open ? "border-primary-500/40 shadow-card" : "border-border-100 hover:border-primary-500/30"
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <h4 className="text-base font-black text-ink-900">{faq.q}</h4>
+                    <FiChevronDown
+                      className={`text-muted-500 transition-transform ${open ? "rotate-180 text-primary-600" : ""}`}
+                    />
+                  </div>
+                  {open ? (
+                    <p className="mt-3 text-sm font-medium leading-6 text-muted-600">{faq.a}</p>
+                  ) : null}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ───────────── Final CTA ───────────── */}
+      <section className="mx-auto max-w-6xl px-4 py-20 md:px-8 md:py-28">
+        <div className="rounded-[2.5rem] border border-border-100 bg-surface-50 p-10 text-center md:p-16">
+          <FiHeart className="mx-auto mb-4 text-accent-500" size={28} />
+          <h2 className="mx-auto max-w-2xl text-3xl font-black tracking-tighter text-ink-900 md:text-5xl">
+            Apni committee, apne haath mein.
+          </h2>
+          <p className="mx-auto mt-3 max-w-xl font-urdu text-lg text-muted-500" dir="rtl">
+            آپ کی بی سی، آپ کے کنٹرول میں۔
+          </p>
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+            <Link href="/register">
+              <Button variant="primary" size="lg">
+                Get started — free <FiArrowRight />
+              </Button>
+            </Link>
+            <Link href="/userDash/explore">
+              <Button variant="outline" size="lg">
+                Browse committees
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ───────────── Footer ───────────── */}
+      <footer className="border-t border-border-100 bg-surface-100/60">
+        <div className="mx-auto max-w-6xl px-4 py-10 md:px-8">
+          <div className="desi-divider mb-8" />
+          <div className="flex flex-col items-center justify-between gap-6 md:flex-row">
+            <Link href="/" className="flex items-center gap-2.5">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary-600 text-white">
+                <span className="text-xs font-black">BC</span>
+              </div>
+              <span className="text-base font-black tracking-tighter text-ink-900">
+                Committie<span className="text-primary-600">App</span>
+              </span>
+            </Link>
+
+            <div className="flex flex-wrap items-center gap-6 text-xs font-black uppercase tracking-[0.18em] text-muted-500">
+              <Link href="/privacy" className="hover:text-primary-600">
+                Privacy
+              </Link>
+              <Link href="/terms" className="hover:text-primary-600">
+                Terms
+              </Link>
+              <Link href="/contact" className="hover:text-primary-600">
+                Contact
+              </Link>
+              <Link href="/theme-guide" className="hover:text-primary-600">
+                Design system
+              </Link>
+            </div>
+
+            <p className="text-xs text-muted-500">
+              Made in Pakistan · <span className="font-urdu" dir="rtl">پاکستان میں بنا</span>
+            </p>
+          </div>
         </div>
       </footer>
-    </div>
+    </main>
   );
 }

@@ -3,11 +3,12 @@
 import React from "react";
 
 const tones = {
-    success: "bg-emerald-500/10 text-emerald-700 border-emerald-500/20 dark:text-emerald-300",
-    warning: "bg-amber-500/10 text-amber-700 border-amber-500/20 dark:text-amber-300",
-    danger: "bg-rose-500/10 text-rose-700 border-rose-500/20 dark:text-rose-300",
-    info: "bg-sky-500/10 text-sky-700 border-sky-500/20 dark:text-sky-300",
-    neutral: "bg-slate-500/10 text-slate-700 border-slate-500/20 dark:text-slate-300",
+    success: "bg-success-500/10 text-success-700 border-success-500/20 dark:text-success-500",
+    warning: "bg-warning-500/10 text-warning-700 border-warning-500/25 dark:text-warning-500",
+    danger: "bg-danger-500/10 text-danger-700 border-danger-500/20 dark:text-danger-500",
+    info: "bg-info-500/10 text-info-700 border-info-500/20 dark:text-info-500",
+    accent: "bg-accent-500/10 text-accent-700 border-accent-500/25 dark:text-accent-500",
+    neutral: "bg-ink-500/10 text-ink-700 border-ink-500/15 dark:text-ink-500",
 };
 
 export default function StatusPill({ children, tone = "neutral", className = "" }) {
