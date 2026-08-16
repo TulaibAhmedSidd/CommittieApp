@@ -16,6 +16,9 @@ import {
   FiBell,
   FiUpload,
   FiAward,
+  FiTrendingUp,
+  FiDollarSign,
+  FiActivity,
 } from "react-icons/fi";
 
 import Button from "../Components/Theme/Button";
@@ -128,6 +131,14 @@ function UserDashboardContent() {
   }, []);
 
   const verification = member?.verificationStatus ?? "unverified";
+
+  const ongoingCommittees = useMemo(() => {
+    return approved.filter((c) => c.status === "ongoing");
+  }, [approved]);
+
+  const otherCommittees = useMemo(() => {
+    return approved.filter((c) => c.status !== "ongoing");
+  }, [approved]);
 
   const dueThisMonth = useMemo(() => {
     if (!member) return { count: 0, amount: 0 };
@@ -248,11 +259,11 @@ function UserDashboardContent() {
       {/* ─────── Stats strip ─────── */}
       <section className="grid gap-4 md:grid-cols-4">
         <Stat
-          label="My committees"
-          urduLabel="میری کمیٹیاں"
-          value={String(totalCommittees)}
-          hint={`${approved.length} active · ${pending.length} pending`}
-          icon={FiAward}
+          label="Ongoing committees"
+          urduLabel="جاری کمیٹیاں"
+          value={String(ongoingCommittees.length)}
+          hint={`${approved.length} total active`}
+          icon={FiTrendingUp}
           tone="primary"
         />
         <Stat
@@ -313,39 +324,66 @@ function UserDashboardContent() {
         </div>
       </section>
 
-      {/* ─────── My committees ─────── */}
-      <section>
-        <div className="mb-4 flex items-end justify-between">
+      {/* ─────── My Ongoing / Current Committees ─────── */}
+      <section className="space-y-4">
+        <div className="flex items-end justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
           <div>
-            <p className="eyebrow">Active · فعال</p>
-            <h2 className="text-2xl font-black tracking-tight text-ink-900">My committees</h2>
+            <p className="eyebrow text-primary-600 font-black">Live Circuit · جاری کمیٹیاں</p>
+            <h2 className="text-2xl font-black tracking-tight text-ink-900 dark:text-white flex items-center gap-2">
+              <FiTrendingUp className="text-primary-600" /> My Ongoing / Current Committees
+            </h2>
           </div>
-          <Link href="/userDash/explore">
-            <Button variant="ghost" size="sm">
-              Explore more <FiArrowRight />
-            </Button>
-          </Link>
+          <span className="text-xs font-black uppercase text-slate-400">
+            {ongoingCommittees.length} Active Circuit{ongoingCommittees.length === 1 ? "" : "s"}
+          </span>
         </div>
 
-        {approved.length === 0 ? (
-          <EmptyState
-            icon={FiAward}
-            title="No active committees yet"
-            description="Browse open pools and send a join request. Verified members get priority approval."
-            action={
-              <Link href="/userDash/explore">
-                <Button variant="primary">Explore committees</Button>
-              </Link>
-            }
-          />
+        {ongoingCommittees.length === 0 ? (
+          <Card className="p-8 text-center bg-slate-50/50 dark:bg-slate-900/50 border-dashed">
+            <div className="w-12 h-12 rounded-2xl bg-primary-500/10 text-primary-600 flex items-center justify-center mx-auto mb-3">
+              <FiTrendingUp size={24} />
+            </div>
+            <h3 className="text-base font-black text-slate-900 dark:text-white mb-1">No Ongoing Active Committees</h3>
+            <p className="text-xs text-slate-500 max-w-md mx-auto mb-4">
+              You are not currently participating in an active ongoing savings cycle. Explore open pools to request membership!
+            </p>
+            <Link href="/userDash/explore">
+              <Button variant="primary" size="sm">
+                Explore Open Committees <FiArrowRight />
+              </Button>
+            </Link>
+          </Card>
         ) : (
           <div className="grid gap-4 md:grid-cols-2">
-            {approved.map((c) => (
-              <MemberCommitteeCard key={c._id} committee={c} memberId={member?._id} />
+            {ongoingCommittees.map((c) => (
+              <OngoingCommitteeCard key={c._id} committee={c} memberId={member?._id} />
             ))}
           </div>
         )}
       </section>
+
+      {/* ─────── My Joined / Open Committees ─────── */}
+      {otherCommittees.length > 0 && (
+        <section>
+          <div className="mb-4 flex items-end justify-between">
+            <div>
+              <p className="eyebrow">My Pool Membership · دیگر کمیٹیاں</p>
+              <h2 className="text-2xl font-black tracking-tight text-ink-900">Joined & Completed Committees</h2>
+            </div>
+            <Link href="/userDash/explore">
+              <Button variant="ghost" size="sm">
+                Explore more <FiArrowRight />
+              </Button>
+            </Link>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            {otherCommittees.map((c) => (
+              <MemberCommitteeCard key={c._id} committee={c} memberId={member?._id} />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* ─────── Pending requests ─────── */}
       {pending.length > 0 ? (
@@ -482,6 +520,98 @@ function ActionTile({
         </p>
       </div>
     </Link>
+  );
+}
+
+function OngoingCommitteeCard({
+  committee,
+  memberId,
+}: {
+  committee: Committee;
+  memberId?: string;
+}) {
+  const paidThisMonth = committee.payments?.find(
+    (p: any) =>
+      p.member?.toString?.() === memberId && p.month === committee.currentMonth,
+  );
+  const paidStatus = paidThisMonth?.status || "unpaid";
+
+  const paidCount = (committee.payments || []).filter(
+    (p: any) => p.month === committee.currentMonth && p.status === "verified",
+  ).length;
+
+  return (
+    <Card className="border-primary-500/30 bg-primary-500/[0.02] shadow-premium hover:shadow-2xl transition-all">
+      <div className="space-y-4">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="px-2.5 py-0.5 bg-primary-600 text-white rounded-full text-[9px] font-black uppercase tracking-wider">
+                Month {committee.currentMonth} of {committee.monthDuration}
+              </span>
+            </div>
+            <h3 className="text-lg font-black text-ink-900 dark:text-white uppercase tracking-tight">{committee.name}</h3>
+            <p className="text-xs text-muted-500">
+              Organizer: <span className="font-bold text-slate-700 dark:text-slate-300">{committee.adminDetails?.name || committee.createdBy?.name || "—"}</span>
+            </p>
+          </div>
+          <StatusPill tone="success">
+            <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse mr-1" />
+            Ongoing Cycle
+          </StatusPill>
+        </div>
+
+        <CycleProgress
+          current={committee.currentMonth}
+          total={committee.monthDuration}
+          paidCount={paidCount}
+          memberCount={committee.members?.length}
+          status="ongoing"
+        />
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="rounded-2xl border border-primary-100 dark:border-primary-900/30 bg-white/60 dark:bg-slate-900/60 p-3">
+            <p className="eyebrow mb-0.5 text-slate-400">Monthly Contribution</p>
+            <Money amount={committee.monthlyAmount} size="md" tone="primary" />
+          </div>
+          <div className="rounded-2xl border border-primary-100 dark:border-primary-900/30 bg-white/60 dark:bg-slate-900/60 p-3">
+            <p className="eyebrow mb-0.5 text-slate-400">Payment Due Status</p>
+            <StatusPill
+              tone={
+                paidStatus === "verified"
+                  ? "success"
+                  : paidStatus === "pending"
+                    ? "warning"
+                    : paidStatus === "rejected"
+                      ? "danger"
+                      : "warning"
+              }
+            >
+              {paidStatus === "verified" ? "Paid & Verified" : paidStatus === "pending" ? "Proof Under Review" : "Payment Due"}
+            </StatusPill>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2 pt-1">
+          <Link href={`/userDash/committee/${committee._id}`}>
+            <Button variant="secondary" size="sm" className="w-full">
+              Full Circuit Details
+            </Button>
+          </Link>
+          {paidStatus !== "verified" ? (
+            <Link href={`/userDash/committee/${committee._id}?action=pay`}>
+              <Button variant="primary" size="sm" className="w-full shadow-lg shadow-primary-500/20">
+                <FiUpload /> Pay PKR {committee.monthlyAmount?.toLocaleString()}
+              </Button>
+            </Link>
+          ) : (
+            <Button variant="ghost" size="sm" className="w-full text-green-600 font-black" disabled>
+              <FiCheckCircle /> Paid for Month {committee.currentMonth}
+            </Button>
+          )}
+        </div>
+      </div>
+    </Card>
   );
 }
 

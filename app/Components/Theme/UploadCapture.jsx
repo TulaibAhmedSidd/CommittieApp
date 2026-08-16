@@ -35,7 +35,10 @@ export default function UploadCapture({
     const fetchAssets = async () => {
         setLoadingAssets(true);
         try {
-            const res = await fetch(`/api/member/${memberId}/assets`);
+            const token = localStorage.getItem("token") || localStorage.getItem("admin_token");
+            const headers = {};
+            if (token) headers["Authorization"] = `Bearer ${token}`;
+            const res = await fetch(`/api/member/${memberId}/assets`, { headers });
             if (res.ok) {
                 const data = await res.json();
                 setAssets(data);

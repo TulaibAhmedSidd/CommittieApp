@@ -32,7 +32,8 @@ export async function middleware(req) {
     const isAuthRoute = pathname.startsWith('/api/admin/login') ||
         pathname.startsWith('/api/login') ||
         (pathname === '/api/admin' && req.method === 'POST') ||
-        (pathname === '/api/member' && req.method === 'POST');
+        (pathname === '/api/member' && req.method === 'POST') ||
+        (pathname.includes('/assets') && req.method === 'GET');
 
     if ((pathname.startsWith('/api/admin') || pathname.startsWith('/api/member')) && !isAuthRoute) {
         // For now, we'll just check if Authorization header exists to prevent completely open access.
