@@ -278,15 +278,22 @@ export default function MembersListing() {
     setSelectedCommittee(committee);
   };
 
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem("admin_token") || localStorage.getItem("token");
+    const headers = { "Content-Type": "application/json" };
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+    return headers;
+  };
+
   const handledisApproveMemberdisapprove = async (memberId) => {
     try {
       const response = await fetch("/api/member/disapprove", {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           memberId: memberId,
           updates: { status: "approved" },
-          committeeId: selectedCommittee._id, // Send the committee ID
+          committeeId: selectedCommittee._id,
         }),
       });
 
@@ -299,15 +306,14 @@ export default function MembersListing() {
         position: "bottom-center",
       });
 
-      // Update the UI state
       const updatedCommittee = {
         ...selectedCommittee,
         members: selectedCommittee.pendingMembers.filter(
           (m) => m._id !== memberId
-        ), // Remove from pending members
+        ),
         pendingMembers: selectedCommittee.pendingMembers
           .filter((m) => m._id !== memberId)
-          .map((m) => (m._id === memberId ? { ...m, status: "approved" } : m)), // Mark as approved
+          .map((m) => (m._id === memberId ? { ...m, status: "approved" } : m)),
       };
 
       setSelectedCommittee(updatedCommittee);
@@ -321,11 +327,11 @@ export default function MembersListing() {
     try {
       const response = await fetch("/api/member/unassign-member", {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           memberId: memberId,
           updates: { status: "approved" },
-          committeeId: selectedCommittee._id, // Send the committee ID
+          committeeId: selectedCommittee._id,
         }),
       });
 
@@ -338,15 +344,14 @@ export default function MembersListing() {
         position: "bottom-center",
       });
 
-      // Update the UI state
       const updatedCommittee = {
         ...selectedCommittee,
         members: selectedCommittee.pendingMembers.filter(
           (m) => m._id !== memberId
-        ), // Remove from pending members
+        ),
         pendingMembers: selectedCommittee.pendingMembers
           .filter((m) => m._id !== memberId)
-          .map((m) => (m._id === memberId ? { ...m, status: "approved" } : m)), // Mark as approved
+          .map((m) => (m._id === memberId ? { ...m, status: "approved" } : m)),
       };
 
       setSelectedCommittee(updatedCommittee);
@@ -360,11 +365,11 @@ export default function MembersListing() {
     try {
       const response = await fetch("/api/member/approve", {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           memberId: memberId,
           updates: { status: "approved" },
-          committeeId: selectedCommittee._id, // Send the committee ID
+          committeeId: selectedCommittee._id,
         }),
       });
 

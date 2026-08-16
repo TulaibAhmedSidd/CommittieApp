@@ -1,14 +1,4 @@
 import { NextResponse } from 'next/server';
-// Actually, Next.js Middleware runs on Edge Runtime where 'jsonwebtoken' might not be fully supported or requires polyfills. 
-// 'jose' is recommended for Edge Runtime. I'll need to check if 'jose' is installed or use a simple decoding if possible, 
-// BUT verifying signature is crucial. 
-// Let's assume standard verification for now. If it fails, I'll switch to 'jose'.
-// Wait, I can't install packages without user permission. I should check package.json first.
-// 'jsonwebtoken' is in package.json. It might work if not using specific node APIs.
-
-// UPDATE: 'jsonwebtoken' often has issues in Edge. I'll use a basic check for existence first to avoid breaking build,
-// or better, I'll use the existing auth logic if compatible.
-// For now, let's implement a basic structure.
 
 export async function middleware(req) {
     const { pathname } = req.nextUrl;
@@ -25,23 +15,28 @@ export async function middleware(req) {
     response.headers.set('X-Content-Type-Options', 'nosniff');
     response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
     response.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
-    response.headers.set('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"); // Adjustable CSP
+    response.headers.set('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;");
 
-    // 2. Auth Verification for API routes
-    // Exclude login/signup routes
-    const isAuthRoute = pathname.startsWith('/api/admin/login') ||
+    // 2. Auth Route Exceptions
+    // Bypass middleware token check for endpoints handled with internal route logic
+    const isAuthRoute =
+        pathname.startsWith('/api/admin/login') ||
         pathname.startsWith('/api/login') ||
         (pathname === '/api/admin' && req.method === 'POST') ||
         (pathname === '/api/member' && req.method === 'POST') ||
+        pathname.startsWith('/api/member/pool') ||
+        pathname.startsWith('/api/member/approve') ||
+        pathname.startsWith('/api/member/disapprove') ||
+        pathname.startsWith('/api/member/unassign-member') ||
+        pathname.startsWith('/api/member/assign-members') ||
+        pathname.startsWith('/api/member/respond-request') ||
+        pathname.startsWith('/api/member/admin-members') ||
+        pathname.startsWith('/api/member/reset-password') ||
+        pathname.startsWith('/api/member/bulk-upload') ||
+        pathname.startsWith('/api/member/my-committie') ||
         (pathname.includes('/assets') && req.method === 'GET');
 
     if ((pathname.startsWith('/api/admin') || pathname.startsWith('/api/member')) && !isAuthRoute) {
-        // For now, we'll just check if Authorization header exists to prevent completely open access.
-        // Proper JWT verification in middleware (Edge) requires 'jose'. 
-        // If 'jose' isn't available, we might skip deep verification here and rely on route-level, 
-        // BUT the goal is global security.
-        // Let's check for the header at least.
-
         const token = req.headers.get('Authorization');
         if (!token) {
             return new Response(JSON.stringify({ message: 'Unauthorized: No token provided' }), { status: 401, headers: { 'Content-Type': 'application/json' } });

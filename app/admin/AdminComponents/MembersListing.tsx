@@ -12,15 +12,13 @@ import EmptyState from "@/app/Components/Theme/EmptyState";
 import SectionHeader from "@/app/Components/Theme/SectionHeader";
 import StatusPill from "@/app/Components/Theme/StatusPill";
 import Table, { TableRow, TableCell } from "@/app/Components/Theme/Table";
-import { useLanguage } from "@/app/Components/LanguageContext";
 
 export default function MembersListing() {
-  const { t } = useLanguage();
   const router = useRouter();
-  const [committees, setCommittees] = useState([]);
-  const [selectedCommittee, setSelectedCommittee] = useState(null);
+  const [committees, setCommittees] = useState<any[]>([]);
+  const [selectedCommittee, setSelectedCommittee] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [userLoggedDetails, setUserLoggedDetails] = useState(null);
+  const [userLoggedDetails, setUserLoggedDetails] = useState<any>(null);
 
   useEffect(() => {
     const detail = localStorage.getItem("admin_detail");
@@ -39,38 +37,42 @@ export default function MembersListing() {
       const data = await fetchCommittees();
       setCommittees(data?.committees || []);
     } catch (err) {
-      toast.error(t("error") + ": Registry unreachable");
+      toast.error("Registry unreachable");
     } finally {
       setLoading(false);
     }
   };
 
-  const loadCommitteById = async (id) => {
+  const loadCommitteById = async (id: string) => {
     try {
       setLoading(true);
       const data = await fetchCommitteebyId(id);
       setSelectedCommittee(data);
     } catch (err) {
-      toast.error(t("error") + ": Failed to load data");
+      toast.error("Failed to load data");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSelectCommittee = (committeeId) => {
-    const committee = committees.find((c) => c._id === committeeId);
+  const handleSelectCommittee = (committeeId: string) => {
+    const committee = committees.find((c: any) => c._id === committeeId);
     setSelectedCommittee(committee);
   };
 
-  const handleMemberAction = async (memberId, action, successMessage) => {
+  const handleMemberAction = async (memberId: string, action: string, successMessage: string) => {
     try {
+      const adminToken = localStorage.getItem("admin_token") || localStorage.getItem("token");
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (adminToken) headers["Authorization"] = `Bearer ${adminToken}`;
+
       const response = await fetch(
         action === "delete"
           ? "/api/member/unassign-member"
           : `/api/member/${action}`,
         {
           method: "PATCH",
-          headers: { "Content-Type": "application/json" },
+          headers,
           body: JSON.stringify({
             memberId,
             committeeId: selectedCommittee._id,
@@ -81,9 +83,9 @@ export default function MembersListing() {
       if (!response.ok) throw new Error("Internal failure.");
 
       toast.success(successMessage);
-      loadCommitteById(selectedCommittee._id);
-    } catch (err) {
-      toast.error(err.message || t("error"));
+      if (selectedCommittee?._id) loadCommitteById(selectedCommittee._id);
+    } catch (err: any) {
+      toast.error(err.message || "Action failed");
     }
   };
 
@@ -94,7 +96,7 @@ export default function MembersListing() {
           <div className="w-16 h-16 border-4 border-primary-500/10 rounded-full" />
           <div className="absolute top-0 w-16 h-16 border-4 border-primary-600 border-t-transparent rounded-full animate-spin" />
         </div>
-        <p className="text-slate-400 font-black tracking-widest uppercase text-[10px] animate-pulse">{t("loading")}</p>
+        <p className="text-slate-400 font-black tracking-widest uppercase text-[10px] animate-pulse">Loading...</p>
       </div>
     );
   }
@@ -106,13 +108,13 @@ export default function MembersListing() {
         <div className="absolute inset-y-0 right-0 w-72 bg-gradient-to-l from-primary-500/10 to-transparent" />
         <div className="relative z-10 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
           <SectionHeader
-            eyebrow={t("members")}
+            eyebrow="Members"
             icon={FiShield}
-            title={t("memberArchive")}
-            description={t("memberArchiveDesc")}
+            title="Member Archive"
+            description="Manage committee participants, authorized identity status, and assignments."
           />
           <Button onClick={() => router.push("/admin/addmember")} className="px-8 py-4 font-black uppercase text-xs tracking-[0.2em] shadow-xl shadow-primary-500/20">
-            <FiUserPlus className="mr-2" /> {t("initializeParticipant")}
+            <FiUserPlus className="mr-2" /> Add Participant
           </Button>
         </div>
       </div>
@@ -121,171 +123,103 @@ export default function MembersListing() {
         {/* Hub Selector */}
         <div className="p-8 bg-slate-900 dark:bg-white rounded-t-[2.5rem] border-b border-white/5 dark:border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <label className="block w-full max-w-md">
-            <span className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-[0.2em] mb-3 block">{t("neuralPoolSelector")}</span>
+            <span className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-[0.2em] mb-3 block">Committee Circuit Selector</span>
             <div className="relative group">
               <select
-                className="w-full bg-slate-800 dark:bg-slate-100 border-none rounded-2xl px-6 py-4 text-sm font-black text-white dark:text-slate-900 appearance-none focus:ring-4 focus:ring-primary-500/30 transition-all cursor-pointer shadow-lg pr-12"
                 onChange={(e) => handleSelectCommittee(e.target.value)}
                 value={selectedCommittee?._id || ""}
+                className="w-full h-14 pl-6 pr-12 bg-white/10 dark:bg-slate-100 text-white dark:text-slate-900 border border-white/10 dark:border-slate-200 rounded-2xl text-xs font-black uppercase tracking-wider outline-none focus:ring-2 focus:ring-primary-500 transition-all appearance-none cursor-pointer"
               >
-                <option value="" disabled className="text-slate-500 font-bold uppercase italic">-- {t("calibrateSelection")} --</option>
-                {committees.map((c) => {
-                  const isManaged = c.createdBy === userLoggedDetails?._id || userLoggedDetails?.email?.toLowerCase() === "tulaib@gmail.com";
-                  return (
-                    <option key={c._id} value={c._id} disabled={!isManaged} className="font-bold py-2 uppercase">
-                      {c.name} {!isManaged ? " [READ ONLY]" : " [ACTIVE]"}
-                    </option>
-                  );
-                })}
+                <option value="" disabled className="text-slate-900 dark:text-slate-900">Select Committee Circuit</option>
+                {committees.map((c) => (
+                  <option key={c._id} value={c._id} className="text-slate-900 font-bold">
+                    {c.name} — RS {c.monthlyAmount?.toLocaleString()}
+                  </option>
+                ))}
               </select>
-              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
-                <FiLayers size={18} />
-              </div>
             </div>
           </label>
 
           {selectedCommittee && (
-            <div className="flex items-center gap-8">
-              <div className="text-right">
-                <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none mb-1">{t("loadBalance")}</p>
-                <p className="text-2xl font-black text-primary-500 tracking-tighter italic leading-none">{selectedCommittee?.members?.length || 0} / {selectedCommittee.maxMembers}</p>
-              </div>
-              <Button variant="ghost" size="sm" onClick={() => loadCommitteById(selectedCommittee._id)} className="h-14 w-14 rounded-2xl bg-slate-800 dark:bg-slate-200 text-slate-400 dark:text-slate-600 hover:text-primary-500 transition-all">
-                <FiRefreshCw className={loading ? "animate-spin" : "scale-110"} size={20} />
-              </Button>
+            <div className="flex items-center gap-4">
+              <StatusPill tone="info">Ref: {selectedCommittee._id?.substring(0, 8)}</StatusPill>
+              <StatusPill tone="success">Approved: {selectedCommittee.members?.length || 0}</StatusPill>
             </div>
           )}
         </div>
 
-        {selectedCommittee ? (
-          <div className="p-10 space-y-16 animate-in slide-in-from-bottom-8 duration-700">
-            {/* Tactical Header */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-8 border-b border-slate-100 dark:border-slate-800">
-              <div className="space-y-2">
-                <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter uppercase leading-none">{selectedCommittee.name}</h2>
-                <p className="text-sm text-slate-500 max-w-2xl font-medium italic">"{selectedCommittee.description || t("noDescription")}"</p>
-              </div>
-              <div className="flex items-center gap-4 p-4 rounded-2xl bg-primary-600 shadow-xl shadow-primary-500/20 text-white min-w-[200px]">
-                <FiTrendingUp size={24} className="opacity-50" />
-                <div>
-                  <p className="text-[10px] font-black uppercase tracking-widest opacity-60">{t("successRate")}</p>
-                  <p className="text-xl font-black tracking-tighter leading-none italic uppercase">100.0% {t("approved")}</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Pending Section */}
-            <div className="space-y-6">
-              <div className="flex items-center gap-3">
-                <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800" />
-                <h3 className="text-xs font-black text-slate-800 dark:text-white uppercase tracking-[0.2em]">Add Member Requests</h3>
-                <StatusPill tone="warning">{t("pending")}: {selectedCommittee.pendingMembers?.length || 0}</StatusPill>
-              </div>
-
-              <div className="overflow-hidden rounded-[2rem] border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-950/30">
-                <Table>
-                  <thead className="w-full">
-                    <tr className="w-full bg-slate-50 dark:bg-slate-900/50">
-                      <th className="px-8 py-5 text-left text-[10px] font-black uppercase text-slate-400 tracking-widest">{t("temporalSubject")}</th>
-                      <th className="px-8 py-5 text-left text-[10px] font-black uppercase text-slate-400 tracking-widest">{t("sublinkGateway")}</th>
-                      <th className="px-8 py-5 text-right text-[10px] font-black uppercase text-slate-400 tracking-widest">{t("protocolOverride")}</th>
-                    </tr>
-                  </thead>
-                  <tbody className="w-full divide-y divide-slate-100 dark:divide-slate-800">
-                    {selectedCommittee.pendingMembers && selectedCommittee.pendingMembers.length > 0 ? (
-                      selectedCommittee.pendingMembers.map((m) => (
-                        <TableRow key={m._id} className="w-full group hover:bg-amber-500/5 transition-all">
-                          <TableCell>
-                            <div className="flex items-center gap-4 ml-2">
-                              <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center font-black text-xs text-amber-600">
-                                {m.name?.substring(0, 2).toUpperCase()}
-                              </div>
-                              <span className="font-black text-slate-900 dark:text-white uppercase tracking-tighter">{m.name}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-slate-500 italic lowercase pl-8">{m.email}</TableCell>
-                          <TableCell className="pr-8 text-right">
-                            <Button size="sm" onClick={() => handleMemberAction(m._id, "approve", t("identityAuthorized"))} className="bg-amber-500 hover:bg-amber-600 shadow-lg shadow-amber-500/20 border-none font-black text-[10px] tracking-widest py-3 px-6 uppercase">
-                              <FiCheckCircle className="mr-2" /> {t("unlock")}
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow className="w-full">
-                        <TableCell colSpan={3} className="py-16 text-center">
-                          <EmptyState icon={FiUsers} title="No Pending Requests" description="Fresh join requests will show up here as screened applicants ask to enter this committee." className="border-0 bg-transparent shadow-none" />
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </tbody>
-                </Table>
-              </div>
-            </div>
-
-            {/* Participation Registry */}
-            <div className="space-y-6">
-              <div className="flex items-center gap-3">
-                <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800" />
-                <h3 className="text-xs font-black text-slate-800 dark:text-white uppercase tracking-[0.2em]">Member in Committee</h3>
-                <StatusPill tone="success">{t("approved")}: {selectedCommittee.members?.length || 0}</StatusPill>
-              </div>
-
-              <div className="overflow-hidden rounded-[2rem] border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-950/30">
-                <Table>
-                  <thead className="w-full">
-                    <tr className="w-full bg-slate-50 dark:bg-slate-900/50">
-                      <th className="px-8 py-5 text-left text-[10px] font-black uppercase text-slate-400 tracking-widest">{t("activeNode")}</th>
-                      <th className="px-8 py-5 text-left text-[10px] font-black uppercase text-slate-400 tracking-widest">{t("sublinkGateway")}</th>
-                      <th className="px-8 py-5 text-right text-[10px] font-black uppercase text-slate-400 tracking-widest">{t("manualOverride")}</th>
-                    </tr>
-                  </thead>
-                  <tbody className="w-full divide-y divide-slate-100 dark:divide-slate-800">
-                    {selectedCommittee.members && selectedCommittee.members.length > 0 ? (
-                      selectedCommittee.members.map((m) => (
-                        <TableRow key={m._id} className="w-full group hover:bg-primary-500/5 transition-all">
-                          <TableCell>
-                            <div className="flex items-center gap-4 ml-2">
-                              <div className="w-10 h-10 rounded-xl bg-primary-600 text-white flex items-center justify-center font-black text-xs shadow-lg rotate-3 group-hover:rotate-0 transition-transform">
-                                {m.name?.substring(0, 2).toUpperCase()}
-                              </div>
-                              <div className="flex flex-col">
-                                <span className="font-black text-slate-900 dark:text-white uppercase tracking-tighter leading-none mb-1">{m.name}</span>
-                                <div className="flex items-center gap-2">
-                                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{t("uid")}://{m._id?.substring(0, 8)}</span>
-                                  <span className="text-[8px] font-black px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded uppercase">{t("managedBy")}: {m.createdByAdminName || "Root"}</span>
-                                </div>
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-slate-500 italic lowercase pl-8">{m.email}</TableCell>
-                          <TableCell className="pr-8 text-right">
-                            <div className="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all">
-                              <Button variant="ghost" size="sm" className="text-amber-500 bg-amber-500/5 hover:bg-amber-500/10 p-3 h-10 w-10 flex items-center justify-center rounded-xl" onClick={() => handleMemberAction(m._id, "pending", t("identityRecycled"))}>
-                                <FiMinusCircle size={18} />
-                              </Button>
-                              <Button variant="ghost" size="sm" onClick={() => handleMemberAction(m._id, "delete", t("physicalLinkSevered"))} className="text-red-500 bg-red-500/5 hover:bg-red-500/10 p-3 h-10 w-10 flex items-center justify-center rounded-xl">
-                                <FiXCircle size={18} />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={3} className="py-16 text-center">
-                          <EmptyState icon={FiShield} title="Zero Active Nodes Found" description="Approved members will appear here after you accept pending requests or assign linked participants." className="border-0 bg-transparent shadow-none" />
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </tbody>
-                </Table>
-              </div>
-            </div>
+        {/* Member Table */}
+        {!selectedCommittee ? (
+          <div className="p-16">
+            <EmptyState
+              icon={FiLayers}
+              title="No Circuit Selected"
+              description="Select a committee circuit above to view and manage participants."
+            />
           </div>
         ) : (
-          <div className="p-10">
-            <EmptyState icon={FiActivity} title={t("systemAwaitingSelection")} description={t("bridgeConnectionDesc")} />
+          <div className="p-8 space-y-8">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">{selectedCommittee.name}</h3>
+                <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Active Participants List</p>
+              </div>
+              <Button variant="secondary" onClick={() => loadCommitteById(selectedCommittee._id)}>
+                <FiRefreshCw />
+              </Button>
+            </div>
+
+            <Table headers={["Participant", "Contact Number", "Role", "Status", "Actions"]}>
+              {selectedCommittee.members?.map((m: any) => (
+                <TableRow key={m._id}>
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-primary-600/10 text-primary-600 flex items-center justify-center font-black text-xs">
+                        {m.name?.substring(0, 2).toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="font-black text-slate-900 dark:text-white text-sm uppercase">{m.name}</p>
+                        <p className="text-[10px] text-slate-400 font-mono">{m.email || m._id}</p>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell className="font-mono text-xs text-slate-600 dark:text-slate-400">
+                    {m.phone || "N/A"}
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-primary-600">
+                      {m.role || "Member"}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <StatusPill tone={m.status === "approved" ? "success" : "warning"}>
+                      {m.status || "Approved"}
+                    </StatusPill>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      {m.status !== "approved" && (
+                        <Button
+                          size="sm"
+                          onClick={() => handleMemberAction(m._id, "approve", "Member Authorized")}
+                          className="bg-amber-500 hover:bg-amber-600 border-none font-black text-[10px] py-2 px-4 uppercase"
+                        >
+                          <FiCheckCircle className="mr-1" /> Authorize
+                        </Button>
+                      )}
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => handleMemberAction(m._id, "delete", "Member Unassigned")}
+                        className="text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 border-none font-black text-[10px] py-2 px-4 uppercase"
+                      >
+                        <FiMinusCircle className="mr-1" /> Unassign
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </Table>
           </div>
         )}
       </Card>
