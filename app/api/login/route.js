@@ -44,6 +44,7 @@ connectToDatabase();
 
 export async function POST(req) {
   try {
+    await connectToDatabase();
     const { email, password } = await req.json(); // Retrieve the data from the request body
 
     if (typeof email !== 'string' || typeof password !== 'string') {

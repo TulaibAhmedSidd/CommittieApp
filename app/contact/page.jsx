@@ -1,28 +1,35 @@
-import React from 'react'
+"use client";
+
+import React from 'react';
+import Card from '../Components/Theme/Card';
+import Button from '../Components/Theme/Button';
+import Input from '../Components/Theme/Input';
+import { FiMail, FiUser, FiMessageSquare, FiMapPin, FiSend } from 'react-icons/fi';
 
 const Contact = () => {
   return (
-    <main className="flex-1 min-h-screen relative overflow-x-hidden py-4 md:pt-0 g-[#0f172a]">
-      <div className="mt-40 max-w-7xl mx-auto px-4 md:px-8 animate-in fade-in slide-in-from-bottom-6 duration-1000">
+    <main className="flex-1 min-h-screen relative overflow-x-hidden py-12 bg-slate-950 text-white">
+      <div className="mt-16 max-w-7xl mx-auto px-4 md:px-8 animate-in fade-in slide-in-from-bottom-6 duration-1000">
 
         {/* Heading */}
-        <h1 className="text-3xl md:text-4xl font-bold text-slate-100 tracking-tighter mb-4">
+        <span className="eyebrow mb-2">Support & Feedback</span>
+        <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight mb-4">
           Contact Us
         </h1>
-        <p className="text-lg md:text-xl text-slate-500 max-w-3xl mb-12 font-medium leading-relaxed">
-          Have questions, suggestions, or need support? We’re here to help you with everything related to committees.
+        <p className="text-lg md:text-xl text-slate-400 max-w-3xl mb-12 font-medium leading-relaxed">
+          Have questions, suggestions, or need support? We’re here to help you with everything related to your saving circles.
         </p>
 
         {/* Contact Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
 
           {/* Left Side – Contact Info */}
-          <div className="bg-white rounded-2xl shadow-md p-6 md:p-8 border border-slate-200">
-            <h2 className="text-2xl font-semibold text-slate-900 mb-4">
+          <Card className="bg-slate-900/90 border-slate-800 p-6 md:p-8 space-y-6">
+            <h2 className="text-2xl font-black text-white tracking-tight">
               Get in Touch
             </h2>
 
-            <p className="text-slate-600 mb-6 leading-relaxed">
+            <p className="text-slate-300 leading-relaxed">
               You can reach us directly via WhatsApp or email. We usually respond within 24 hours.
             </p>
 
@@ -31,33 +38,38 @@ const Contact = () => {
               href="https://wa.me/923394054520"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-center w-full mb-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white py-3 font-semibold transition"
+              className="flex items-center justify-center w-full rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white py-4 font-bold transition-all shadow-lg shadow-emerald-600/20"
             >
               📱 Chat on WhatsApp
             </a>
 
             {/* Email */}
             <a
-              href="mailto:ahsidtullu@gmail.com"
-              className="flex items-center justify-center w-full rounded-xl border border-slate-300 text-slate-700 py-3 font-semibold hover:bg-slate-100 transition"
+              href="mailto:support@committieapp.com"
+              className="flex items-center justify-center w-full rounded-2xl border border-slate-700 bg-slate-800 text-slate-200 py-4 font-bold hover:bg-slate-700 transition-all"
             >
               ✉️ support@committieapp.com
             </a>
 
             {/* Location */}
-            <div className="mt-8">
-              <h3 className="text-lg font-semibold text-slate-900 mb-2">
-                Location
-              </h3>
-              <p className="text-slate-600">
-                Karachi, Pakistan 🇵🇰
-              </p>
+            <div className="pt-6 border-t border-slate-800 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-primary-600/20 text-primary-400 flex items-center justify-center">
+                <FiMapPin size={20} />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+                  Location
+                </h3>
+                <p className="text-slate-400 text-sm font-medium">
+                  Karachi, Pakistan 🇵🇰
+                </p>
+              </div>
             </div>
-          </div>
+          </Card>
 
           {/* Right Side – Contact Form */}
-          <div className="bg-white rounded-2xl shadow-md p-6 md:p-8 border border-slate-200">
-            <h2 className="text-2xl font-semibold text-slate-900 mb-6">
+          <Card className="bg-slate-900/90 border-slate-800 p-6 md:p-8 space-y-6">
+            <h2 className="text-2xl font-black text-white tracking-tight">
               Send Us a Message
             </h2>
 
@@ -65,60 +77,64 @@ const Contact = () => {
               action="mailto:support@committieapp.com"
               method="POST"
               encType="text/plain"
-              className="space-y-4"
+              className="space-y-5"
             >
-              <input
+              <Input
+                icon={FiUser}
                 type="text"
                 name="name"
                 placeholder="Your Name"
                 required
-                className="w-full rounded-xl border border-slate-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
 
-              <input
+              <Input
+                icon={FiMail}
                 type="email"
                 name="email"
                 placeholder="Your Email"
                 required
-                className="w-full rounded-xl border border-slate-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
 
-              <textarea
-                name="message"
-                rows="5"
-                placeholder="Your Message"
-                required
-                className="w-full rounded-xl border border-slate-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
+              <div className="space-y-1">
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                  <FiMessageSquare /> Message
+                </label>
+                <textarea
+                  name="message"
+                  rows={4}
+                  placeholder="Your Message..."
+                  required
+                  className="w-full rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-white outline-none transition-all focus:border-primary-400 focus:ring-4 focus:ring-primary-500/10"
+                />
+              </div>
 
-              <button
+              <Button
                 type="submit"
-                className="w-full rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white py-3 font-semibold transition"
+                variant="primary"
+                size="lg"
+                className="w-full"
               >
-                Send Message
-              </button>
+                <FiSend className="mr-2" /> Send Message
+              </Button>
             </form>
-          </div>
+          </Card>
         </div>
 
         {/* About Founder Section */}
-        <div className="mt-20 bg-white rounded-2xl shadow-md p-6 md:p-10 border border-slate-200">
-          <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-4 tracking-tighter">
-            About the Founder
+        <Card className="mt-12 bg-slate-900/80 border-slate-800 p-6 md:p-10 space-y-4">
+          <span className="eyebrow">Our Mission</span>
+          <h2 className="text-2xl md:text-3xl font-black text-white tracking-tight">
+            About the Platform
           </h2>
 
-          <p className="text-slate-600 text-lg leading-relaxed mb-4">
+          <p className="text-slate-300 leading-relaxed">
             CommittieApp was founded after identifying a real and common problem: users were unable to find trusted committees, and organizers struggled to manage members transparently and securely.
           </p>
 
-          <p className="text-slate-600 text-lg leading-relaxed mb-4">
-            Many users faced fraud, lack of visibility, and zero accountability. On the other side, genuine organizers had no proper platform to build trust, manage payments, or verify members.
-          </p>
-
-          <p className="text-slate-600 text-lg leading-relaxed">
+          <p className="text-slate-300 leading-relaxed">
             CommittieApp solves both sides of the problem by providing a transparent, location-based, and review-driven committee system — empowering users and organizers with trust, structure, and peace of mind.
           </p>
-        </div>
+        </Card>
 
       </div>
     </main>

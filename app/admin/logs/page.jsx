@@ -11,6 +11,7 @@ import {
 
 import Card from "../../Components/Theme/Card";
 import Button from "../../Components/Theme/Button";
+import Input from "../../Components/Theme/Input";
 import Table, { TableRow, TableCell } from "../../Components/Theme/Table";
 import { useLanguage } from "../../Components/LanguageContext";
 
@@ -75,24 +76,22 @@ export default function LogsPage() {
         <div className="p-8 space-y-12 animate-in fade-in slide-in-from-bottom-6 duration-1000">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 border-b border-slate-200 dark:border-slate-800 pb-10">
                 <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-primary-600 font-black tracking-[0.2em] text-[10px] uppercase">
+                    <span className="eyebrow flex items-center gap-2">
                         <FiShield className="animate-spin-slow" /> Security Architecture
-                    </div>
-                    <h1 className="text-5xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">Audit Logs</h1>
+                    </span>
+                    <h1 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">Audit Logs</h1>
                     <p className="text-slate-500 font-medium italic">Comprehensive ledger of all system operations and administrative actions.</p>
                 </div>
-                <div className="flex gap-4">
-                    <div className="relative">
-                        <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-                        <input
-                            type="text"
+                <div className="flex items-center gap-4">
+                    <div className="w-64">
+                        <Input
+                            icon={FiSearch}
                             placeholder="Filter actions..."
                             value={filter}
                             onChange={(e) => setFilter(e.target.value)}
-                            className="h-14 pl-12 pr-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl text-sm font-black uppercase tracking-tight w-64 focus:ring-2 focus:ring-primary-500/20 transition-all outline-none"
                         />
                     </div>
-                    <Button onClick={() => fetchLogs(admin._id)} className="h-14 px-8 bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-white hover:bg-slate-200 transition-all">
+                    <Button onClick={() => fetchLogs(admin._id)} className="h-12 px-5 bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-white hover:bg-slate-200 transition-all">
                         <FiRefreshCcw />
                     </Button>
                 </div>

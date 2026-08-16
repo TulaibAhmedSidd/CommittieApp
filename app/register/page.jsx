@@ -35,10 +35,9 @@ function RegisterContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const referralCode = searchParams.get("ref");
-    const initialRole = searchParams.get("role") === "organizer" ? "organizer" : "member";
-
-    const [role, setRole] = useState(initialRole);
-    const [form, setForm] = useState({
+    const urlRole = searchParams.get("role");
+    const [role, setRole] = useState(urlRole === "organizer" ? "organizer" : "member");
+    const [formData, setFormData] = useState({
         name: "",
         email: "",
         password: "",

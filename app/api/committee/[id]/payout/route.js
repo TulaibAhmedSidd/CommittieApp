@@ -47,9 +47,10 @@ export async function POST(req, { params }) {
         committee.payouts.push(payoutData);
         await committee.save();
 
-        // Notify member
+        // Notify member (fixed recipient/recipientModel)
         const notification = new Notification({
-            userId: body.memberId,
+            recipient: body.memberId,
+            recipientModel: 'Member',
             message: `PAYOUT RECEIVED: ${committee.name} (Month ${body.month}). Info: ${body.transactionId}`,
             details: `Admin has recorded a payout of ${body.amount}. Check your dashboard for proof.`,
         });

@@ -1,14 +1,15 @@
-'use client'
+'use client';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'react-toastify';
+import Card from '../Components/Theme/Card';
+import Button from '../Components/Theme/Button';
+import Input from '../Components/Theme/Input';
+import { FiLock, FiKey } from 'react-icons/fi';
 
 export default function ResetPassword(params) {
     const router = useRouter();
     const token = params?.searchParams?.token;
-    console.log("params", params)
-    console.log("token", token)
-    //   const { token } = router.query; // Get token from the query string
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [loading, setLoading] = useState(false);
@@ -25,7 +26,6 @@ export default function ResetPassword(params) {
         setLoading(true);
 
         try {
-            // Call your API to reset the password with the token and new password
             const response = await fetch('/api/member/reset-password', {
                 method: 'POST',
                 body: JSON.stringify({ token, password }),
@@ -38,9 +38,9 @@ export default function ResetPassword(params) {
                 toast.success('Password reset successful', {
                     position: 'bottom-center',
                 });
-                router.push('/login'); // Redirect to login page
+                router.push('/login');
             } else {
-                toast.error(result.error, {
+                toast.error(result.error || 'Failed to reset password', {
                     position: 'bottom-center',
                 });
             }
@@ -54,39 +54,52 @@ export default function ResetPassword(params) {
     };
 
     return (
-        <div className="min-h-[100vh] flex justify-center items-center ">
-            <div className=" flex-col  max-w-lg mx-auto p-6 bg-white shadow rounded">
-                <h1 className="text-2xl font-bold mb-4">Reset Your Password</h1>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <div>
-                        <label className="block font-semibold">New Password</label>
-                        <input
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            className="w-full border border-gray-300 rounded px-4 py-2"
-                            required
-                        />
+        <div className="min-h-screen flex justify-center items-center bg-slate-50 dark:bg-slate-950 px-4 py-12">
+            <Card className="w-full max-w-md p-8 md:p-10 shadow-2xl border-slate-200/80 dark:border-slate-800 backdrop-blur-xl">
+                <div className="flex flex-col items-center text-center mb-8">
+                    <div className="w-14 h-14 rounded-2xl bg-primary-600 flex items-center justify-center text-white shadow-xl shadow-primary-500/20 mb-4">
+                        <FiKey size={28} />
                     </div>
-                    <div>
-                        <label className="block font-semibold">Confirm Password</label>
-                        <input
-                            type="password"
-                            value={confirmPassword}
-                            onChange={(e) => setConfirmPassword(e.target.value)}
-                            className="w-full border border-gray-300 rounded px-4 py-2"
-                            required
-                        />
-                    </div>
-                    <button
+                    <span className="eyebrow mb-2">Account Security</span>
+                    <h1 className="text-3xl font-black tracking-tight text-slate-950 dark:text-white">Reset Your Password</h1>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
+                        Enter your new password below to regain access to your account.
+                    </p>
+                </div>
+
+                <form onSubmit={handleSubmit} className="space-y-5">
+                    <Input
+                        label="New Password"
+                        icon={FiLock}
+                        type="password"
+                        placeholder="••••••••"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                    />
+
+                    <Input
+                        label="Confirm Password"
+                        icon={FiLock}
+                        type="password"
+                        placeholder="••••••••"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        required
+                    />
+
+                    <Button
                         type="submit"
-                        className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600"
                         disabled={loading}
+                        loading={loading}
+                        variant="primary"
+                        size="lg"
+                        className="w-full mt-4"
                     >
                         {loading ? 'Resetting...' : 'Reset Password'}
-                    </button>
+                    </Button>
                 </form>
-            </div>
+            </Card>
         </div>
     );
 }

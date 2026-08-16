@@ -14,14 +14,15 @@ export async function GET(req) {
       });
     }
 
-    const notifications = await Notification.find({ userId }).sort({
+    // Query by recipient instead of non-existent userId field
+    const notifications = await Notification.find({ recipient: userId }).sort({
       createdAt: -1,
     });
 
     return new Response(JSON.stringify(notifications), { status: 200 });
   } catch (err) {
     return new Response(
-      JSON.stringify({ error: "Failed to fetch notifications.", details: err }),
+      JSON.stringify({ error: "Failed to fetch notifications.", details: err.message }),
       { status: 500 }
     );
   }
@@ -31,17 +32,20 @@ export async function POST(req) {
   await connectToDatabase();
 
   try {
-    const { userId, message, details } = await req.json();
+    const { userId, recipient, recipientModel, message, details } = await req.json();
+    const targetRecipient = recipient || userId;
+    const targetModel = recipientModel || 'Member';
 
-    if (!userId || !message) {
+    if (!targetRecipient || !message) {
       return new Response(
-        JSON.stringify({ error: "User ID and message are required." }),
+        JSON.stringify({ error: "Recipient and message are required." }),
         { status: 400 }
       );
     }
 
     const newNotification = new Notification({
-      userId,
+      recipient: targetRecipient,
+      recipientModel: targetModel,
       message,
       details,
     });
@@ -51,7 +55,7 @@ export async function POST(req) {
     return new Response(JSON.stringify(newNotification), { status: 201 });
   } catch (err) {
     return new Response(
-      JSON.stringify({ error: "Failed to create notification.", details: err }),
+      JSON.stringify({ error: "Failed to create notification.", details: err.message }),
       { status: 500 }
     );
   }

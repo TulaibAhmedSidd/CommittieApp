@@ -219,7 +219,8 @@ export default function MainPage() {
                     </div>
                   </div>
                   <Button
-                    className="w-full bg-white text-slate-950 hover:bg-slate-100 dark:bg-white dark:text-slate-950"
+                    style={{ backgroundColor: '#ffffff', color: '#0f172a' }}
+                    className="w-full hover:bg-slate-100"
                     onClick={() => router.push(userLoggedData?.verificationStatus === "verified" ? "/userDash/explore" : "/userDash?view=verification")}
                   >
                     {userLoggedData?.verificationStatus === "verified" ? "Explore committees" : "Finish verification"}

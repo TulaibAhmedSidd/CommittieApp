@@ -206,7 +206,8 @@ export async function POST(req) {
 
       // Save notification
       const notification = new Notification({
-        userId: entry?.member?.memberId,
+        recipient: entry?.member?.memberId,
+        recipientModel: "Member",
         message: `Congratulations! You have been assigned position ${entry?.member?.position} in the committee ${committee.name}.`,
         isRead: false,
       });
