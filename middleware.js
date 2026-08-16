@@ -18,12 +18,13 @@ export async function middleware(req) {
     response.headers.set('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;");
 
     // 2. Auth Route Exceptions
-    // Bypass middleware token check for endpoints handled with internal route logic
+    // Bypass middleware edge check for endpoints that implement their own route-level token verification
     const isAuthRoute =
         pathname.startsWith('/api/admin/login') ||
         pathname.startsWith('/api/login') ||
         (pathname === '/api/admin' && req.method === 'POST') ||
         (pathname === '/api/member' && req.method === 'POST') ||
+        pathname.startsWith('/api/committee') ||
         pathname.startsWith('/api/member/pool') ||
         pathname.startsWith('/api/member/approve') ||
         pathname.startsWith('/api/member/disapprove') ||

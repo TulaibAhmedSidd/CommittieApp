@@ -50,7 +50,10 @@ export default function ManageCommittiePage() {
 
     const fetchCommittees = async () => {
         try {
-            const res = await fetch(`/api/committee?adminId=${currentAdmin._id}&page=${page}&limit=10&q=${search}`);
+            const token = localStorage.getItem("admin_token") || localStorage.getItem("token");
+            const headers = {};
+            if (token) headers["Authorization"] = `Bearer ${token}`;
+            const res = await fetch(`/api/committee?adminId=${currentAdmin._id}&page=${page}&limit=10&q=${search}`, { headers });
             const data = await res.json();
             setCommittees(data.committees || []);
             setPagination(data.pagination || { total: 0, pages: 1, page: 1 });
@@ -64,7 +67,10 @@ export default function ManageCommittiePage() {
     const handleDelete = async (id) => {
         if (!confirm("Are you sure you want to decommission this pool?")) return;
         try {
-            const res = await fetch(`/api/committee?id=${id}`, { method: "DELETE" });
+            const token = localStorage.getItem("admin_token") || localStorage.getItem("token");
+            const headers = { "Content-Type": "application/json" };
+            if (token) headers["Authorization"] = `Bearer ${token}`;
+            const res = await fetch(`/api/committee?id=${id}`, { method: "DELETE", headers });
             if (res.ok) {
                 setCommittees(committees.filter(c => c._id !== id));
                 toast.success("Committee decommissioned successfully");
