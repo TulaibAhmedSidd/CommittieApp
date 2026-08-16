@@ -19,6 +19,12 @@ import {
   FiZap,
   FiChevronDown,
   FiCreditCard,
+  FiTarget,
+  FiActivity,
+  FiEdit,
+  FiSearch,
+  FiBell,
+  FiDollarSign,
 } from "react-icons/fi";
 
 import Button from "./Components/Theme/Button";
@@ -164,6 +170,7 @@ const FAQS = [
 export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
+  const counts = { members: 1200, organizers: 85, pooled: 50000000 };
 
   // close mobile menu when route hash changes (anchor links)
   useEffect(() => {
@@ -554,59 +561,69 @@ export default function Home() {
                 status={c.tone}
               />
 
-              <div className="space-y-6">
-                <div className="flex gap-6 p-6 rounded-3xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors group">
-                  <div className="w-14 h-14 bg-primary-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <FiUsers size={28} />
-                  </div>
-                  <div>
-                    <h4 className="text-xl font-black uppercase tracking-tight mb-1">Become a Member</h4>
-                    <p className="text-sm text-slate-400">Join verified circles, save consistently, and get your payout when you need it most. No hidden fees, just pure community growth.</p>
-                  </div>
-                </div>
+              <div className="mt-auto">
+                <Link href="/register">
+                  <Button variant="primary" className="w-full">
+                    <BilingualLabel en="Request to join" ur="شامل ہوں" />
+                  </Button>
+                </Link>
+              </div>
+            </Card>
+          ))}
+        </div>
 
-                <div className="flex gap-6 p-6 rounded-3xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors group">
-                  <div className="w-14 h-14 bg-indigo-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <FiTarget size={28} />
-                  </div>
-                  <div>
-                    <h4 className="text-xl font-black uppercase tracking-tight mb-1">Lead as an Organizer</h4>
-                    <p className="text-sm text-slate-400">Launch your own committees, set custom rules, and earn through optional organizer fees. Build trust and connections for the future.</p>
-                  </div>
-                </div>
+        <div className="mt-16 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          <div className="space-y-6">
+            <div className="flex gap-6 p-6 rounded-3xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors group">
+              <div className="w-14 h-14 bg-primary-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                <FiUsers size={28} />
+              </div>
+              <div>
+                <h4 className="text-xl font-black uppercase tracking-tight mb-1 text-white">Become a Member</h4>
+                <p className="text-sm text-slate-400">Join verified circles, save consistently, and get your payout when you need it most. No hidden fees, just pure community growth.</p>
               </div>
             </div>
 
-            <div className="relative">
-              <div className="absolute -inset-4 bg-primary-500/20 blur-[100px] rounded-full" />
-              <Card className="bg-slate-800/50 border-white/10 p-10 relative z-10 space-y-8 backdrop-blur-xl">
-                <div className="flex justify-between items-center">
-                  <p className="text-xs font-black uppercase tracking-[0.3em] text-primary-500">Network Statistics</p>
-                  <FiActivity className="text-slate-500" />
-                </div>
-                <div className="grid grid-cols-2 gap-8">
-                  <div className="space-y-1">
-                    <p className="text-3xl font-black tracking-tight">1.2K+</p>
-                    <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Active Members</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-3xl font-black tracking-tight">85+</p>
-                    <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Verified Organizers</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-3xl font-black tracking-tight">RS 50M</p>
-                    <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Total Pooled</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-3xl font-black tracking-tight">100%</p>
-                    <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Payout Rate</p>
-                  </div>
-                </div>
-                <Link href="/register" className="block">
-                  <Button className="w-full py-5 font-black uppercase tracking-widest text-xs">Start Your Journey Now</Button>
-                </Link>
-              </Card>
+            <div className="flex gap-6 p-6 rounded-3xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors group">
+              <div className="w-14 h-14 bg-indigo-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                <FiTarget size={28} />
+              </div>
+              <div>
+                <h4 className="text-xl font-black uppercase tracking-tight mb-1 text-white">Lead as an Organizer</h4>
+                <p className="text-sm text-slate-400">Launch your own committees, set custom rules, and earn through optional organizer fees. Build trust and connections for the future.</p>
+              </div>
             </div>
+          </div>
+
+          <div className="relative">
+            <div className="absolute -inset-4 bg-primary-500/20 blur-[100px] rounded-full" />
+            <Card className="bg-slate-800/50 border-white/10 p-10 relative z-10 space-y-8 backdrop-blur-xl">
+              <div className="flex justify-between items-center">
+                <p className="text-xs font-black uppercase tracking-[0.3em] text-primary-500">Network Statistics</p>
+                <FiActivity className="text-slate-500" />
+              </div>
+              <div className="grid grid-cols-2 gap-8 text-white">
+                <div className="space-y-1">
+                  <p className="text-3xl font-black tracking-tight">1.2K+</p>
+                  <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Active Members</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-3xl font-black tracking-tight">85+</p>
+                  <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Verified Organizers</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-3xl font-black tracking-tight">RS 50M</p>
+                  <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Total Pooled</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-3xl font-black tracking-tight">100%</p>
+                  <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Payout Rate</p>
+                </div>
+              </div>
+              <Link href="/register" className="block">
+                <Button className="w-full py-5 font-black uppercase tracking-widest text-xs">Start Your Journey Now</Button>
+              </Link>
+            </Card>
           </div>
         </div>
       </section>
@@ -707,8 +724,8 @@ export default function Home() {
                   <Button className="w-full py-3 font-black uppercase tracking-widest">Become an Organizer</Button>
                 </Link>
               </div>
-            </Card>
-          ))}
+            </div>
+          </div>
         </div>
       </section>
 

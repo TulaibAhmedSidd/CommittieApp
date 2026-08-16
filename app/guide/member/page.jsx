@@ -18,6 +18,7 @@ import {
 } from "react-icons/fi";
 
 import Card from "../../Components/Theme/Card";
+import BlueTick from "../../Components/Theme/BlueTick";
 import Button from "../../Components/Theme/Button";
 import StatusPill from "../../Components/Theme/StatusPill";
 import Money from "../../Components/Theme/Money";

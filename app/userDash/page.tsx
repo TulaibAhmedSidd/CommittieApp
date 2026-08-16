@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { toast } from "react-toastify";
@@ -57,7 +57,7 @@ type Committee = {
   adminDetails?: { name?: string; email?: string };
 };
 
-export default function UserDashboard() {
+function UserDashboardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [member, setMember] = useState<Member | null>(null);
@@ -423,6 +423,14 @@ export default function UserDashboard() {
         )}
       </section>
     </div>
+  );
+}
+
+export default function UserDashboard() {
+  return (
+    <Suspense fallback={<div className="p-20 text-center font-black uppercase text-slate-400">Loading Dashboard...</div>}>
+      <UserDashboardContent />
+    </Suspense>
   );
 }
 

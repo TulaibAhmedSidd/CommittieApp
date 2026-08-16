@@ -4,13 +4,23 @@ import React from "react";
 
 export default function Input({
     label,
-    icon: Icon,
+    icon: Icon = null,
     error = "",
     type = "text",
     className = "",
     containerClassName = "",
     ...props
 }) {
+    const renderIcon = () => {
+        if (!Icon) return null;
+        if (React.isValidElement(Icon)) return Icon;
+        if (typeof Icon === "function" || typeof Icon === "object") {
+            const Component = Icon;
+            return <Component size={18} />;
+        }
+        return Icon;
+    };
+
     return (
         <div className={`flex flex-col gap-1.5 ${containerClassName}`}>
             {label && (
@@ -20,8 +30,8 @@ export default function Input({
             )}
             <div className="relative flex items-center">
                 {Icon && (
-                    <div className="absolute left-4 text-slate-400 pointer-events-none">
-                        {typeof Icon === "function" || typeof Icon === "object" ? <Icon size={18} /> : Icon}
+                    <div className="absolute left-4 text-slate-400 pointer-events-none flex items-center justify-center">
+                        {renderIcon()}
                     </div>
                 )}
                 <input
