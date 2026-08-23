@@ -27,6 +27,7 @@ import {
   FiDollarSign,
 } from "react-icons/fi";
 
+import Image from "next/image";
 import Button from "./Components/Theme/Button";
 import Card from "./Components/Theme/Card";
 import StatusPill from "./Components/Theme/StatusPill";
@@ -35,6 +36,7 @@ import Money from "./Components/Theme/Money";
 import BilingualLabel from "./Components/Theme/BilingualLabel";
 import CycleProgress from "./Components/Theme/CycleProgress";
 import BlueTick from "./Components/Theme/BlueTick";
+import Logo from "./Components/Theme/Logo";
 
 const SAMPLE_MEMBERS = [
   { name: "Aliya Khan", city: "Karachi", paid: true, verified: true },
@@ -184,19 +186,7 @@ export default function Home() {
       {/* ───────────── Nav ───────────── */}
       <header className="sticky top-0 z-50 border-b border-border-100 bg-surface-50/85 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 md:h-20 md:px-8">
-          <Link href="/" className="flex items-center gap-2.5">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary-600 text-white shadow-glow">
-              <span className="font-black tracking-tighter">BC</span>
-            </div>
-            <div className="leading-none">
-              <p className="text-lg font-black tracking-tighter text-ink-900">
-                Committie<span className="text-primary-600">App</span>
-              </p>
-              <p className="font-urdu text-[11px] text-muted-500" dir="rtl">
-                بھروسے کی بی سی
-              </p>
-            </div>
-          </Link>
+          <Logo size="md" />
 
           <nav className="hidden items-center gap-8 md:flex">
             <a href="#how" className="text-xs font-black uppercase tracking-[0.18em] text-ink-700 hover:text-primary-600">
@@ -428,6 +418,52 @@ export default function Home() {
             hint="Every cycle, every member"
             icon={FiCheckCircle}
             tone="success"
+          />
+        </div>
+      </section>
+
+      {/* ───────────── Video & Brand Showcase ───────────── */}
+      <section className="mx-auto max-w-6xl px-4 py-16 md:px-8 md:py-24">
+        <div className="mb-10 text-center max-w-3xl mx-auto space-y-3">
+          <p className="eyebrow">Video Preview · کمیٹی ایپ ویڈیو دیکھیں</p>
+          <h2 className="text-3xl font-black tracking-tighter text-ink-900 md:text-5xl">
+            See CommittieApp In Action
+            <span className="block text-primary-700">Digital, Transparent & Verified Savings.</span>
+          </h2>
+          <p className="text-base font-medium text-muted-600">
+            Watch how CommittieApp digitizes Pakistan's traditional committee savings circles with instant identity checks, automated draws, and proof-based receipt verification.
+          </p>
+        </div>
+
+        <div className="relative rounded-[2.5rem] p-3 bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-800 shadow-2xl overflow-hidden group">
+          <div className="absolute inset-0 bg-primary-600/10 blur-3xl pointer-events-none" />
+          <div className="relative rounded-[2rem] overflow-hidden aspect-video bg-black flex items-center justify-center">
+            <video
+              autoPlay
+              loop
+              muted
+              playsInline
+              poster="/images/youtube_banner_committie.jpg"
+              className="w-full h-full object-cover"
+            >
+              <source src="/video/Cinematic_K_promotional_comme.mp4" type="video/mp4" />
+              Your browser does not support video playback.
+            </video>
+            <div className="absolute top-4 right-4 flex items-center gap-2 bg-slate-950/80 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
+              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+              <span className="text-[10px] font-black uppercase text-white tracking-widest">CommittieApp Commercial</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Brand Banner Card Showcase */}
+        <div className="mt-12 rounded-[2.5rem] overflow-hidden border border-slate-200 dark:border-slate-800 shadow-xl relative group">
+          <Image
+            src="/images/youtube_banner_committie.jpg"
+            alt="CommittieApp Visual Brand Showcase"
+            width={2560}
+            height={1440}
+            className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105"
           />
         </div>
       </section>
