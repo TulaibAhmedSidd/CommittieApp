@@ -1,4 +1,4 @@
-# CommitteeApp Comprehensive Platform Specifications & Feature Summary
+# CommitteeApp Comprehensive Platform Specifications & Feature Breakdown
 **Date of Reference**: August 23, 2026  
 **File Location**: `/2026-08-23/APP_DOCUMENTATION.md`
 
@@ -66,72 +66,206 @@ Built on **Next.js 14 (App Router)**, **Tailwind CSS**, and **MongoDB / Mongoose
 
 ---
 
-## 3. Comprehensive Feature Specifications
+## 3. Comprehensive Breakdown of All Member Portal Sections (`/userDash/*`)
 
-### 3.1 Design System & Theme Primitives (`/app/Components/Theme/`)
-The application is governed by a unified design system supporting dark/light mode, HSL design variables, glassmorphism (`.glass-panel`, `.metric-tile`, `.dashboard-shell`), and responsive mobile layouts:
-* **`Button`**: Supports variants (`primary`, `secondary`, `outline`, `ghost`, `danger`), sizes (`sm`, `md`, `lg`), loading spinner states, and Tailwind class merging.
-* **`Card`**: 24px/32px rounded glassmorphic panels with subtle borders and ambient shadows.
-* **`Input`**: Standardized input field supporting label, error message, and flexible `icon` prop (safely handling both React elements like `<FiMail />` and component references like `FiMail`).
-* **`Table`**: Full data table primitive with header/row/cell structure, hover highlights, status pills, and empty states.
-* **`Modal`**: Accessible centered overlay for consent forms, confirmations, and document reviews.
-* **`StatusPill`**: Color-coded status badges (`success`, `warning`, `danger`, `info`, `neutral`).
-* **`CycleProgress`**: Visual multi-segment progress bar representing current month vs. total duration and payment counts.
-* **`Money`**: Formatted monetary display supporting PKR formatting, suffixes, and custom color tones.
-* **`BlueTick`**: Verified identity checkmark badge for verified organizers and members.
-
----
-
-### 3.2 Member Portal (`/app/userDash/`)
-The Member Portal gives participants complete visibility into their financial committees:
-
-1. **My Ongoing / Current Committees Section**:
-   * Displays live active circuits (`Live Circuit · جاری کمیٹیاں`).
-   * Shows real-time month progress (`Month X of Y`), payment due status (`Paid & Verified`, `Proof Under Review`, or `Payment Due`), and monthly contribution breakdown.
-   * Provides quick action buttons: **"Pay PKR {Amount}"** (linking directly to payment upload) and **"Full Circuit Details"**.
-2. **Joined & Completed Committees Section**:
-   * Archives previous committees and non-ongoing pool memberships.
-3. **Pending Requests Section**:
+### 3.1 Member Dashboard Home (`/userDash`)
+The main landing hub when a member logs in:
+1. **Greeting & Member Identity Card**:
+   * Displays personalized bilingual greeting (*"Assalam-o-Alaikum, subh bakhair"*), member's first name, Urdu tagline, city/county location badge, and verification pill.
+   * Ambient glassmorphism styling (`.glass-panel`, `.dashboard-shell`) with glowing borders.
+2. **Member Profile Brief & Quick Links**:
+   * Shows initials avatar badge, full name, verified **Blue Tick** (if approved), email address, and 1-click links to **Profile** and **Inbox**.
+3. **Verification Call-To-Action Banner**:
+   * Appears if member status is `unverified` or `pending`. Explains identity requirements and provides a **"Verify Now"** CTA button.
+4. **Key Metrics Strip (`Stat` Primitives)**:
+   * Displays 4 metric tiles: *Ongoing Committees* (count), *Due This Month* (PKR sum + unpaid pool count), *Verified Status* (`Verified`/`Pending`/`Not Yet`), and *Open Committees Nearby* (count).
+5. **Quick Actions Grid (`ActionTile` Primitives)**:
+   * 4 interactive shortcut tiles with Urdu subtitles:
+     * *Explore Committees* (*کمیٹیاں دیکھیں*) -> `/userDash/explore`
+     * *Near Me* (*میرے قریب*) -> `/userDash/near-me`
+     * *Messages* (*پیغامات*) -> `/userDash/inbox`
+     * *How It Works* (*کیسے استعمال کریں*) -> `/guide/member`
+6. **My Ongoing / Current Committees (Featured Live Circuit Section)**:
+   * Dedicated section for active ongoing pools.
+   * Features a live badge (`Live Circuit · جاری کمیٹیاں`) with pulsing green indicator.
+   * Month progress pill (`Month X of Y`).
+   * Visual multi-segment `CycleProgress` bar representing completed months and verified payment counts.
+   * Monthly contribution breakdown formatted via the `Money` component.
+   * Color-coded payment due status pill (`Paid & Verified`, `Proof Under Review`, or `Payment Due`).
+   * Action buttons: **"Pay PKR {Amount}"** (opens receipt uploader) and **"Full Circuit Details"** (opens committee workspace).
+7. **Joined & Completed Committees Section**:
+   * Archives previous committees and non-ongoing memberships.
+8. **Pending Requests Section**:
    * Tracks join requests submitted by the member that are currently awaiting organizer review.
-4. **Discover & Explore Nearby**:
-   * Grid browsing panel (`/userDash/explore`) and map-based nearby filter (`/userDash/near-me`) allowing members to discover open pools by location and monthly budget.
-5. **KYC Verification Desk (`/userDash/profile`)**:
-   * Document upload portal for NIC Front, NIC Back, and Utility Bill verification. Shows status pill (`unverified` -> `pending` -> `verified`).
+9. **Discover Open Committees Nearby**:
+   * Displays a preview grid of newly opened committees with available slots.
+
+### 3.2 Active Committee Workspace (`/userDash/committee/[id]`)
+Deep-dive workspace for a specific active committee pool:
+1. **Committee Overview & Bank Info Card**:
+   * Shows pool name, total pool size (e.g. PKR 100,000), monthly contribution, total duration in months, organizer name, and official bank routing details (Bank Name, Account Title, IBAN) for transfer instructions.
+2. **Draw & Payout Schedule Panel**:
+   * Displays randomized draw results. Shows which member wins the payout pool in Month 1, Month 2, ..., Month N, highlighting the logged-in member's turn position.
+3. **Monthly Payment Calendar & Status Grid**:
+   * Matrix of all months in the cycle showing whether payments are `verified`, `pending proof`, or `unpaid`.
+4. **Monthly Payment Receipt Upload Form**:
+   * Select month, enter Bank Transaction ID / Reference Number, and upload screenshot proof of payment.
+5. **Real-Time Group Chat Box (`ChatBox.jsx`)**:
+   * Embedded chat widget where pool participants and the organizer communicate and coordinate.
+
+### 3.3 Open Committee Exploration Panel (`/userDash/explore`)
+1. **Search & Filter Header**:
+   * Filter open pools by keyword (city or pool name), monthly contribution range, or duration.
+2. **Committee Cards Directory**:
+   * Grid of open committees displaying monthly contribution, total pool value, remaining slots (`X / Y members`), organizer name with **Blue Tick**, and **"View Details & Join"** button.
+
+### 3.4 Location-Based Nearby Discovery (`/userDash/near-me`)
+1. **Distance & Location Radius Filter**:
+   * Filter pools based on geographic distance (5 KM, 10 KM, 25 KM) or city/district.
+2. **Nearby Map & List Interface**:
+   * Displays local committees and verified organizers on an interactive map/list.
+
+### 3.5 Join Request & Participant Consent Flow (`/userDash/join`)
+1. **Step Progress Bar (`StepProgress`)**:
+   * Step 1 (Document Review) -> Step 2 (Participant Agreement).
+2. **Security Document Upload Desk**:
+   * Upload pool-specific required documents (e.g. salary slip, guarantor CNIC) via `<UploadCapture />`.
+3. **Legal Participant Consent Modal (`Modal`)**:
+   * Formal agreement checklist: full duration commitment, payment by 5th of every month, and organizer verification consent.
+
+### 3.6 Profile & Verification Center (`/userDash/profile`)
+1. **Personal Profile Details Form**:
+   * Edit full name, email, phone number, city, district/county, and address.
+2. **KYC Document Upload Desk**:
+   * Upload scans for **CNIC Front**, **CNIC Back**, and **Utility Bill**.
+3. **Real-Time Verification Status Indicator**:
+   * Displays status (`Unverified`, `Pending Review`, or `Verified` with Blue Tick).
+
+### 3.7 Member Messages & Inbox (`/userDash/inbox`)
+1. **Notification Alerts Feed**:
+   * System notifications for payment approvals, draw broadcasts, and organizer pings.
+2. **Direct Messages Panel**:
+   * Private 1-on-1 messaging with committee organizers.
+
+### 3.8 Public Organizer Profile Viewer (`/userDash/organizer`)
+1. **Organizer Credentials Card**:
+   * Displays organizer name, Blue Tick verification, active committee count, and trust rating.
+2. **Organizer's Pools Directory**:
+   * List of current open/ongoing pools and past finished committees managed by this organizer.
 
 ---
 
-### 3.3 Organizer (Admin) Portal (`/app/admin/`)
-The Organizer Portal gives savings circle organizers complete operational control:
+## 4. Comprehensive Breakdown of All Organizer (Admin) Portal Sections (`/admin/*`)
 
-1. **5-Step Committee Creation Wizard (`/admin/create`)**:
-   * Step 1: Basic Information (Pool Name, Description, Category).
-   * Step 2: Financial Setup (Monthly Amount, Member Count, Total Pool Calculation).
-   * Step 3: Security & Verification Rules (Require Documents, Security Guarantees).
-   * Step 4: Bank Details & Transfer Instructions (Bank Name, Account Title, IBAN).
-   * Step 5: Solemn Oath & Final Confirmation.
-2. **Pool Management & Financial Reconciliation (`/admin/manage`)**:
-   * **Payment Verification**: Review uploaded member receipt screenshots and transaction IDs. Option to "Force Verify" cash payments.
-   * **Payout Recording**: Record payout transactions for the month's winning beneficiary with receipt proof.
-   * **Advance Month**: Automatically validates that all non-beneficiary payments are verified before advancing the pool to Month N+1.
-3. **Randomized Draw System (`/admin/announcement`)**:
-   * Triggers server-side draw randomization when a pool is filled to capacity.
-   * Assigns payout months (turns 1 to N) fairly and broadcasts results to members via notifications.
-4. **Audit Logging & System Ledger (`/admin/logs`)**:
-   * Tracks every critical action (`CREATE_COMMITTEE`, `VERIFY_PAYMENT`, `RECORD_PAYOUT`, `ADVANCE_MONTH`, `PING_MEMBER`) with timestamps and admin IDs.
-5. **Manage Committees Archive (`/admin/manage-committie`)**:
-   * Data table view of all created pools, with search filter, cycle status badges, member counts, and quick management links.
+### 4.1 Organizer Dashboard Home (`/admin`)
+1. **Organizer Header & Quick Action Hub**:
+   * Welcome header with organizer credentials, **"Create New Pool"**, **"Verify Member Documents"** CTAs, and system status.
+2. **Executive Overview Metric Cards (`Stat` Tiles)**:
+   * 4 metric tiles: *Active Committees*, *Total Monthly Collections* (PKR), *Total Network Participants*, and *Pending Join Requests*.
+3. **Live Operations Manager (`Committiee.jsx`)**:
+   * Interactive widget listing active pools, current month status, and quick management links.
+
+### 4.2 5-Step Committee Creation Wizard (`/admin/create`)
+1. **Step 1: Basic Information Setup**:
+   * Pool Name, Description, Category.
+2. **Step 2: Financial Structure & Cycle Rules**:
+   * Monthly Installment Amount, Total Members / Duration, Start Date, and auto-computed Total Pool Value.
+3. **Step 3: Security Controls & Document Rules**:
+   * Toggle additional security document requirements (guarantor CNIC, utility bill).
+4. **Step 4: Bank Details & Transfer Routing**:
+   * Bank Name, Account Title, IBAN, and payment transfer instructions.
+5. **Step 5: Organizer Oath & Final Confirmation**:
+   * Optional Organizer Commission Fee (%) and digital oath agreement.
+
+### 4.3 Active Operations & Financial Reconciliation Desk (`/admin/manage`)
+1. **Circuit Header & Month Controls**:
+   * Committee details, current month indicator (e.g. Month 3 of 10), **"Advance to Next Month"**, and **"Close Committee Pool"** buttons.
+2. **Member Payment Reconciliation Table**:
+   * List of members for current month, receipt screenshot preview, transaction reference IDs, **"Verify Payment"**, and **"Force Verify (Cash Payment)"** buttons.
+3. **Beneficiary Payout Recorder**:
+   * Shows current month's winning beneficiary, inputs bank payout transaction ID, and uploads payout receipt proof.
+4. **Advance Month Validation Engine**:
+   * Prevents advancing to Month N+1 until all non-beneficiary payments are verified.
+
+### 4.4 Committee Registry Archive (`/admin/manage-committie`)
+1. **Search & Filter Toolbar**:
+   * Filter committees by Pool Name or Database UID.
+2. **Committee Data Table (`Table` Primitive)**:
+   * Displays Pool Identity, Cycle Status (`Open`/`Ongoing`/`Finished`), Member Fill Count (`X / Y`), Monthly Installment, **"Detailed Manage"**, **"Edit Rules"**, and **"Decommission Pool"** CTAs.
+3. **Pagination Controls**:
+   * Previous/Next page navigation.
+
+### 4.5 Identity Verification Desk (`/admin/verify-identities`)
+1. **Pending Verification Queue**:
+   * List of members awaiting KYC document review.
+2. **Document Inspector & Modal**:
+   * Inspect high-resolution images of CNIC Front, CNIC Back, and Utility Bills side-by-side.
+3. **Decision Buttons**:
+   * **"Authorize & Grant Blue Tick"** or **"Reject Documents"** (with rejection reason).
+
+### 4.6 Draw System & Result Broadcast (`/admin/announcement`)
+1. **Pool Selection Dropdown**:
+   * Select filled committee pool ready for drawing.
+2. **Trigger Draw Algorithm**:
+   * Executes server-side cryptographic randomization algorithm to assign payout turns (1 to N) fairly.
+3. **Payout Schedule Broadcast**:
+   * Displays schedule table and sends automated email & push notifications to all members.
+
+### 4.7 Member Join Request Manager (`/admin/approvals`)
+1. **Pending Join Applications List**:
+   * Applications submitted by members wanting to join open committees.
+2. **Applicant Security Inspector**:
+   * Review member identity status, Blue Tick verification, and uploaded security documents.
+3. **Action Controls**:
+   * **"Approve & Add to Committee"** or **"Decline Request"**.
+
+### 4.8 Direct Member Assignment Tool (`/admin/assign-member`)
+1. **Member & Pool Selector**:
+   * Select registered network member and place them directly into an active committee.
+
+### 4.9 Admin-Side Member Onboarding (`/admin/addmember`)
+1. **Manual Member Registration Form**:
+   * Form to manually create member accounts (Name, Email, Phone, City, Password).
+2. **Direct Pool Placement Dropdown**:
+   * Places newly created member into a selected pool upon account creation.
+
+### 4.10 Network Member Directory (`/admin/all-members`)
+1. **Search & Status Filter**:
+   * Search network members by name, phone, or verification status.
+2. **Member Cards Grid**:
+   * Cards showing member avatar, contact details, Blue Tick status, and active pool memberships.
+
+### 4.11 System Audit Logger (`/admin/logs`)
+1. **Audit Log Statistics Header**:
+   * Total logged events count and real-time refresh controls.
+2. **Action Search Filter (`Input`)**:
+   * Filter logs by action type (`CREATE_COMMITTEE`, `VERIFY_PAYMENT`, `RECORD_PAYOUT`, `ADVANCE_MONTH`, `PING_MEMBER`).
+3. **Audit Ledger Table (`Table`)**:
+   * Data table showing Timestamp, Action, Performed By (Admin name & avatar), and JSON details.
+
+### 4.12 Pool Parameters Editor (`/admin/edit`)
+1. **Committee Configuration Form**:
+   * Edit pool name, description, bank details, and document rules for open committees.
+
+### 4.13 Subordinate Admin Manager (`/admin/add-admin`)
+1. **Co-Organizer Invitation Form**:
+   * Invite sub-admins or staff members to manage committee pools.
+
+### 4.14 Organizer Credentials & Profile (`/admin/profile`)
+1. **Admin Profile Details**:
+   * Manage organizer name, email, phone number, and organization name.
+2. **Default Bank Account Credentials**:
+   * Default bank name, account title, and IBAN applied to new committee pools.
+
+### 4.15 Organizer Inbox & Notifications (`/admin/inbox` & `/admin/notifications`)
+1. **Activity Notifications Feed**:
+   * System alerts when members submit join requests, upload payment receipts, or send messages.
+2. **1-on-1 Member Support Chat**:
+   * Direct messaging interface with pool members.
 
 ---
 
-### 3.4 Security & Middleware Architecture
-* **Edge Guard Rules (`middleware.js`)**: Protects `/api/admin` and `/api/member` routes while allowing essential login, signup, asset viewing, and route-level authorization handlers (`/api/committee`, `/api/member/pool`, `/api/member/approve`, etc.) to execute cleanly.
-* **Universal API Headers (`app/admin/apis.js`)**: All admin API helpers automatically attach `Authorization: Bearer <token>` (checking both `admin_token` and `token` in `localStorage`).
-* **Database Connection Guard**: Every API handler explicitly awaits `connectToDatabase()` before querying Mongoose models to prevent 500 connection buffer errors.
-* **Notification Schema Standards**: Strict schema enforcement (`recipient` ObjectId + `recipientModel` (`Admin` | `Member`)) across all announcement, payout, and notification endpoints.
-
----
-
-## 4. End-to-End Lifecycle Summary
+## 5. End-to-End Lifecycle Summary
 
 ```
 [ Visitor Landing Page ] ──► [ Member / Organizer Registration ] ──► [ Document Upload (KYC) ]
@@ -149,7 +283,7 @@ The Organizer Portal gives savings circle organizers complete operational contro
 
 ---
 
-## 5. Verification & Technical Quality Metrics
+## 6. Verification & Technical Quality Metrics
 * **TypeScript Validity**: `0 Errors` (`npx tsc --noEmit`)
 * **Next.js Production Build**: `✓ Compiled successfully` across all **77 static and dynamic routes**.
 * **Mobile Viewport Compatibility**: Tested across 390x844 mobile viewports with clean responsive layouts.
