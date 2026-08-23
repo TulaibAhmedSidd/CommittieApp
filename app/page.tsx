@@ -327,59 +327,44 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Right — committee snapshot card */}
-          <div className="relative">
-            <div className="absolute -inset-3 rounded-[2.5rem] bg-gradient-to-br from-primary-500/10 via-accent-500/10 to-transparent blur-xl" />
-            <Card className="relative">
-              <div className="space-y-5">
-                <div className="flex items-start justify-between">
+          {/* Right — First Impression Cinematic Looped Video */}
+          <div className="relative flex items-center justify-center">
+            <div className="absolute -inset-4 rounded-[3rem] bg-gradient-to-br from-primary-600/30 via-accent-500/20 to-transparent blur-2xl animate-pulse" />
+            <div className="relative w-full rounded-[2.5rem] p-3 bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-800 shadow-2xl overflow-hidden group">
+              <div className="relative rounded-[2rem] overflow-hidden aspect-[9/16] md:aspect-square bg-black flex items-center justify-center">
+                <video
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  poster="/images/youtube_banner_committie.jpg"
+                  className="w-full h-full object-cover"
+                >
+                  <source src="/video/Cinematic_K_promotional_comme.mp4" type="video/mp4" />
+                  Your browser does not support video playback.
+                </video>
+                <div className="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none">
+                  <span className="inline-flex items-center gap-2 rounded-full bg-slate-950/80 backdrop-blur-md px-3 py-1.5 text-[10px] font-black uppercase text-white tracking-widest border border-white/10">
+                    <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+                    Live App Demo
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-primary-600/90 backdrop-blur-md px-3 py-1.5 text-[10px] font-black uppercase text-white tracking-widest shadow-lg">
+                    <FiShield size={12} /> Verified
+                  </span>
+                </div>
+                <div className="absolute bottom-4 left-4 right-4 bg-slate-950/80 backdrop-blur-md p-4 rounded-2xl border border-white/10 flex items-center justify-between">
                   <div>
-                    <p className="eyebrow">Live committee</p>
-                    <h3 className="mt-1 text-xl font-black text-ink-900">Gulshan Mothers' Circle</h3>
-                    <p className="text-xs text-muted-500">Karachi · 12 members · Monthly</p>
+                    <p className="text-xs font-black text-white uppercase tracking-tight">CommittieApp Commercial</p>
+                    <p className="text-[10px] text-slate-400 font-urdu" dir="rtl">محفوظ، شفاف اور خودکار کمیٹی پلیٹ فارم</p>
                   </div>
-                  <StatusPill tone="success">Verified</StatusPill>
-                </div>
-
-                <div className="rounded-2xl border border-border-100 bg-surface-100/60 p-4">
-                  <p className="eyebrow mb-1">Monthly installment</p>
-                  <Money amount={10000} size="lg" suffix="per member" tone="primary" />
-                </div>
-
-                <CycleProgress
-                  current={4}
-                  total={12}
-                  paidCount={11}
-                  memberCount={12}
-                  status="ongoing"
-                />
-
-                <div className="space-y-2">
-                  <p className="eyebrow">This month's status</p>
-                  <ul className="divide-y divide-border-100">
-                    {SAMPLE_MEMBERS.map((m, i) => (
-                      <li key={i} className="flex items-center justify-between py-2.5 text-sm">
-                        <span className="inline-flex items-center gap-2 font-semibold text-ink-700">
-                          {m.name}
-                          {m.verified ? <BlueTick verified size={14} /> : null}
-                          <span className="text-xs font-medium text-muted-500">· {m.city}</span>
-                        </span>
-                        <StatusPill tone={m.paid ? "success" : "warning"}>
-                          {m.paid ? "Paid" : "Pending"}
-                        </StatusPill>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <div className="rounded-2xl border border-accent-500/30 bg-accent-500/5 p-4">
-                  <p className="eyebrow mb-1">Next payout</p>
-                  <p className="text-sm font-semibold text-ink-900">
-                    Aliya Khan · Month 4 · <Money amount={120000} size="sm" tone="accent" />
-                  </p>
+                  <Link href="/register">
+                    <Button variant="primary" size="sm" className="text-[10px] font-black uppercase px-3 py-1.5">
+                      Try Now
+                    </Button>
+                  </Link>
                 </div>
               </div>
-            </Card>
+            </div>
           </div>
         </div>
       </section>
