@@ -593,58 +593,79 @@ export default function Home() {
           ))}
         </div>
 
-        <div className="mt-16 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        <div className="mt-16 grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+          {/* Left Cards — Become Member & Lead Organizer */}
           <div className="space-y-6">
-            <div className="flex gap-6 p-6 rounded-3xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors group">
-              <div className="w-14 h-14 bg-primary-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+            <div className="p-6 md:p-8 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xl hover:shadow-2xl hover:border-primary-500/50 transition-all duration-300 flex flex-col sm:flex-row gap-6 items-start group">
+              <div className="w-14 h-14 shrink-0 bg-primary-600/10 text-primary-600 dark:bg-primary-500/20 dark:text-primary-400 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform shadow-md shadow-primary-500/10">
                 <FiUsers size={28} />
               </div>
-              <div>
-                <h4 className="text-xl font-black uppercase tracking-tight mb-1 text-white">Become a Member</h4>
-                <p className="text-sm text-slate-400">Join verified circles, save consistently, and get your payout when you need it most. No hidden fees, just pure community growth.</p>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xl font-black uppercase tracking-tight text-slate-900 dark:text-white">Become a Member</h4>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-primary-600 bg-primary-50 dark:bg-primary-950/50 px-2.5 py-1 rounded-full">Save & Win</span>
+                </div>
+                <p className="text-sm font-medium text-slate-600 dark:text-slate-400 leading-relaxed">
+                  Join verified circles, save consistently, and receive your full payout when you need it most. 100% proof-verified with zero hidden charges.
+                </p>
               </div>
             </div>
 
-            <div className="flex gap-6 p-6 rounded-3xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors group">
-              <div className="w-14 h-14 bg-indigo-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+            <div className="p-6 md:p-8 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xl hover:shadow-2xl hover:border-emerald-500/50 transition-all duration-300 flex flex-col sm:flex-row gap-6 items-start group">
+              <div className="w-14 h-14 shrink-0 bg-emerald-600/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform shadow-md shadow-emerald-500/10">
                 <FiTarget size={28} />
               </div>
-              <div>
-                <h4 className="text-xl font-black uppercase tracking-tight mb-1 text-white">Lead as an Organizer</h4>
-                <p className="text-sm text-slate-400">Launch your own committees, set custom rules, and earn through optional organizer fees. Build trust and connections for the future.</p>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xl font-black uppercase tracking-tight text-slate-900 dark:text-white">Lead as an Organizer</h4>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600 bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-1 rounded-full">Earn Fees</span>
+                </div>
+                <p className="text-sm font-medium text-slate-600 dark:text-slate-400 leading-relaxed">
+                  Launch your own committee pools, customize rules, verify members with CNIC checks, and earn through optional organizer commissions.
+                </p>
               </div>
             </div>
           </div>
 
+          {/* Right Card — High-Impact Network Statistics */}
           <div className="relative">
-            <div className="absolute -inset-4 bg-primary-500/20 blur-[100px] rounded-full" />
-            <Card className="bg-slate-800/50 border-white/10 p-10 relative z-10 space-y-8 backdrop-blur-xl">
-              <div className="flex justify-between items-center">
-                <p className="text-xs font-black uppercase tracking-[0.3em] text-primary-500">Network Statistics</p>
-                <FiActivity className="text-slate-500" />
+            <div className="absolute -inset-4 bg-gradient-to-r from-primary-600/20 to-emerald-500/20 blur-3xl rounded-[3rem] pointer-events-none" />
+            <div className="relative rounded-[2.5rem] p-8 md:p-10 bg-slate-900 dark:bg-slate-950 border border-slate-800 text-white shadow-2xl space-y-8 overflow-hidden group">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-primary-600/15 rounded-full blur-3xl pointer-events-none" />
+              
+              <div className="flex justify-between items-center border-b border-slate-800 pb-4">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <p className="text-xs font-black uppercase tracking-[0.25em] text-primary-400">Network Statistics</p>
+                </div>
+                <FiActivity className="text-slate-500" size={18} />
               </div>
-              <div className="grid grid-cols-2 gap-8 text-white">
+
+              <div className="grid grid-cols-2 gap-8">
                 <div className="space-y-1">
-                  <p className="text-3xl font-black tracking-tight">1.2K+</p>
+                  <p className="text-3xl md:text-4xl font-black tracking-tight text-white font-mono">1.2K+</p>
                   <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Active Members</p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-3xl font-black tracking-tight">85+</p>
+                  <p className="text-3xl md:text-4xl font-black tracking-tight text-white font-mono">85+</p>
                   <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Verified Organizers</p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-3xl font-black tracking-tight">RS 50M</p>
+                  <p className="text-3xl md:text-4xl font-black tracking-tight text-emerald-400 font-mono">RS 50M</p>
                   <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Total Pooled</p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-3xl font-black tracking-tight">100%</p>
+                  <p className="text-3xl md:text-4xl font-black tracking-tight text-emerald-400 font-mono">100%</p>
                   <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Payout Rate</p>
                 </div>
               </div>
-              <Link href="/register" className="block">
-                <Button className="w-full py-5 font-black uppercase tracking-widest text-xs">Start Your Journey Now</Button>
+
+              <Link href="/register" className="block pt-2">
+                <Button variant="primary" size="lg" className="w-full py-4 text-xs font-black uppercase tracking-[0.2em] shadow-xl shadow-primary-500/25">
+                  Start Your Journey Now <FiArrowRight className="ml-2" />
+                </Button>
               </Link>
-            </Card>
+            </div>
           </div>
         </div>
       </section>
