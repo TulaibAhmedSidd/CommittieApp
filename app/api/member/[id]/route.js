@@ -36,7 +36,7 @@ export async function PUT(req, { params }) {
     if (!member) return new Response("Member not found", { status: 404 });
 
     const requester = await Admin.findById(userId);
-    const isSuperAdmin = requester?.email?.toLowerCase() === "tulaib@gmail.com";
+    const isSuperAdmin = requester?.isSuperAdmin === true || requester?.email?.toLowerCase() === "tulaib@gmail.com" || requester?.email?.toLowerCase() === "tulluahsid@gmail.com";
 
     // Authorization check
     if (!isSuperAdmin && member.createdBy.toString() !== userId) {
@@ -86,7 +86,7 @@ export async function DELETE(req, { params }) {
     }
 
     const requester = await Admin.findById(userId);
-    const isSuperAdmin = requester?.email?.toLowerCase() === "tulaib@gmail.com";
+    const isSuperAdmin = requester?.isSuperAdmin === true || requester?.email?.toLowerCase() === "tulaib@gmail.com" || requester?.email?.toLowerCase() === "tulluahsid@gmail.com";
 
     // Check if the user has permission to delete the member
     if (!isSuperAdmin && member?.createdBy?.toString() !== userId) {

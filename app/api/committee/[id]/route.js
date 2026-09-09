@@ -1,9 +1,12 @@
 import connectToDatabase from "@/app/utils/db";
 import Committee from "@/app/api/models/Committee";
+import Member from "@/app/api/models/Member";
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(req, { params }) {
   await connectToDatabase();
-  const { id } = params; // Get member ID from URL
+  const { id } = await params; // Get member ID from URL
 
   try {
     const FoundComittie = await Committee.findById(id)

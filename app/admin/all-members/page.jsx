@@ -6,6 +6,7 @@ import { FiUser, FiSearch, FiUserPlus, FiCheckCircle, FiMoreVertical, FiShield, 
 import Card from "../../Components/Theme/Card";
 import Button from "../../Components/Theme/Button";
 import Input from "../../Components/Theme/Input";
+import Pagination from "../../Components/Theme/Pagination";
 import { toast } from "react-toastify";
 import BlueTick from "../../Components/Theme/BlueTick";
 import ChatBox from "../../Components/ChatBox";
@@ -117,7 +118,7 @@ export default function AllMembersPage() {
                 <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
                     <button
                         onClick={handleNearMe}
-                        className={`px-6 py-4 rounded-2xl flex items-center gap-2 text-[10px] font-black uppercase tracking-widest border transition-all ${nearMe ? 'bg-primary-600 border-primary-600 text-white shadow-lg' : 'bg-white text-slate-500 border-slate-100'}`}
+                        className={`px-6 py-4 rounded-2xl flex items-center gap-2 text-[10px] font-black uppercase tracking-widest border transition-all ${nearMe ? 'bg-primary-600 border-primary-600 text-white shadow-lg' : 'bg-slate-900 text-white border-slate-800 hover:bg-slate-800 shadow-sm'}`}
                     >
                         <FiNavigation /> {nearMe ? 'Nearby Active' : 'Nearby Members'}
                     </button>
@@ -154,13 +155,14 @@ export default function AllMembersPage() {
                             <div className="flex items-center gap-2">
                                 <button
                                     onClick={() => setActiveChat(member)}
-                                    className="p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-500 hover:bg-primary-600 hover:text-white transition-all shadow-sm"
+                                    className="p-3 bg-slate-900 hover:bg-primary-600 text-white border border-slate-800 rounded-xl transition-all shadow-sm"
+                                    title="Message Member"
                                 >
                                     <FiMessageSquare size={16} />
                                 </button>
                                 <button
                                     onClick={() => setSelectedMember(member)}
-                                    className="p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-primary-600 hover:bg-primary-600 hover:text-white transition-all shadow-sm"
+                                    className="p-3 bg-slate-900 hover:bg-primary-600 text-white border border-slate-800 rounded-xl transition-all shadow-sm"
                                     title="View Documents"
                                 >
                                     <FiShield size={16} />
@@ -191,7 +193,7 @@ export default function AllMembersPage() {
                                     onClick={() => associateMember(member._id)}
                                     loading={actionLoading === member._id}
                                     variant="secondary"
-                                    className="px-6 py-2.5 text-[10px] font-black uppercase tracking-[0.2em] bg-white text-slate-900 border border-slate-200 shadow-lg hover:bg-slate-50 hover:scale-105 transition-all"
+                                    className="px-6 py-2.5 text-[10px] font-black uppercase tracking-[0.2em] bg-slate-900 text-white border border-slate-800 shadow-lg hover:bg-slate-800 hover:scale-105 transition-all"
                                 >
                                     Connect <FiUserPlus className="ml-1" />
                                 </Button>
@@ -210,29 +212,14 @@ export default function AllMembersPage() {
 
             {/* Pagination Controls */}
             {pagination.pages > 1 && (
-                <div className="flex justify-center items-center gap-6 pt-12">
-                    <Button
-                        variant="secondary"
-                        onClick={() => setPage(p => Math.max(1, p - 1))}
-                        disabled={page === 1}
-                        className="px-8 py-3 text-[10px] font-black uppercase tracking-widest"
-                    >
-                        Previous
-                    </Button>
-                    <div className="flex items-center gap-3">
-                        <span className="text-[10px] font-black text-slate-400 uppercase">Page</span>
-                        <span className="w-10 h-10 rounded-xl bg-primary-600 text-white flex items-center justify-center font-black text-xs shadow-lg shadow-primary-500/20">{page}</span>
-                        <span className="text-[10px] font-black text-slate-400 uppercase">of {pagination.pages}</span>
-                    </div>
-                    <Button
-                        variant="secondary"
-                        onClick={() => setPage(p => Math.min(pagination.pages, p + 1))}
-                        disabled={page === pagination.pages}
-                        className="px-8 py-3 text-[10px] font-black uppercase tracking-widest"
-                    >
-                        Next
-                    </Button>
-                </div>
+                <Pagination
+                    currentPage={page}
+                    totalPages={pagination.pages}
+                    onPageChange={setPage}
+                    totalItems={pagination.total}
+                    pageSize={12}
+                    className="pt-12"
+                />
             )}
 
             {activeChat && (

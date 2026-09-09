@@ -67,6 +67,7 @@ function UserDashboardContent() {
   const [approved, setApproved] = useState<Committee[]>([]);
   const [pending, setPending] = useState<Committee[]>([]);
   const [explore, setExplore] = useState<Committee[]>([]);
+  const [completed, setCompleted] = useState<Committee[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -109,6 +110,7 @@ function UserDashboardContent() {
         const my = await myRes.json();
         setApproved(my.approvedCommittees || []);
         setPending(my.pendingCommittees || []);
+        setCompleted(my.completedCommittees || []);
       }
 
       if (openRes.ok) {
@@ -145,8 +147,8 @@ function UserDashboardContent() {
     let count = 0;
     let amount = 0;
     approved.forEach((c) => {
-      const myPay = (c.payments || []).find(
-        (p: any) => p.member?.toString?.() === member._id && p.month === c.currentMonth,
+      const myPay = (c.payments || []).slice().reverse().find(
+        (p: any) => (p.member?._id || p.member)?.toString() === member._id?.toString() && Number(p.month) === Number(c.currentMonth),
       );
       const status = myPay?.status || "unpaid";
       if (status === "unpaid" || status === "rejected") {
@@ -362,6 +364,60 @@ function UserDashboardContent() {
         )}
       </section>
 
+      {/* ─────── Completed / Past Committees ─────── */}
+      {completed.length > 0 && (
+        <section className="space-y-4">
+          <div className="flex items-end justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+            <div>
+              <p className="eyebrow text-emerald-600 font-black">History & Archived · مکمل شدہ کمیٹیاں</p>
+              <h2 className="text-2xl font-black tracking-tight text-ink-900 dark:text-white flex items-center gap-2">
+                <FiAward className="text-emerald-600" /> Completed & Previous Committees
+              </h2>
+            </div>
+            <span className="text-xs font-black uppercase text-slate-400">
+              {completed.length} Completed Circuit{completed.length === 1 ? "" : "s"}
+            </span>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            {completed.map((c) => (
+              <Card key={c._id} className="border-emerald-500/20 bg-emerald-500/[0.02] shadow-sm hover:shadow-md transition">
+                <div className="space-y-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <h3 className="text-lg font-black text-ink-900 dark:text-white uppercase tracking-tight">{c.name}</h3>
+                      <p className="text-xs text-muted-500">
+                        Organizer: <span className="font-bold text-slate-700 dark:text-slate-300">{c.adminDetails?.name || c.createdBy?.name || "—"}</span>
+                      </p>
+                    </div>
+                    <StatusPill tone="success">
+                      <FiCheckCircle size={12} className="mr-1" /> Completed Cycle
+                    </StatusPill>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="rounded-2xl border border-emerald-100 dark:border-emerald-900/30 bg-white/60 dark:bg-slate-900/60 p-3">
+                      <p className="eyebrow mb-0.5 text-slate-400">Total Pool Value</p>
+                      <Money amount={c.totalAmount || (c.monthlyAmount * c.monthDuration)} size="md" tone="accent" />
+                    </div>
+                    <div className="rounded-2xl border border-emerald-100 dark:border-emerald-900/30 bg-white/60 dark:bg-slate-900/60 p-3">
+                      <p className="eyebrow mb-0.5 text-slate-400">Cycle Duration</p>
+                      <p className="text-sm font-black text-ink-900 dark:text-white">{c.monthDuration} Months Finished</p>
+                    </div>
+                  </div>
+
+                  <Link href={`/userDash/committee/${c._id}`}>
+                    <Button variant="outline" size="sm" className="w-full">
+                      View Historical Ledger & Receipts <FiArrowRight className="ml-1" />
+                    </Button>
+                  </Link>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* ─────── My Joined / Open Committees ─────── */}
       {otherCommittees.length > 0 && (
         <section>
@@ -530,14 +586,18 @@ function OngoingCommitteeCard({
   committee: Committee;
   memberId?: string;
 }) {
-  const paidThisMonth = committee.payments?.find(
-    (p: any) =>
-      p.member?.toString?.() === memberId && p.month === committee.currentMonth,
-  );
+  const paidThisMonth = (committee.payments || [])
+    .slice()
+    .reverse()
+    .find(
+      (p: any) =>
+        (p.member?._id || p.member)?.toString() === memberId?.toString() &&
+        Number(p.month) === Number(committee.currentMonth),
+    );
   const paidStatus = paidThisMonth?.status || "unpaid";
 
   const paidCount = (committee.payments || []).filter(
-    (p: any) => p.month === committee.currentMonth && p.status === "verified",
+    (p: any) => Number(p.month) === Number(committee.currentMonth) && p.status === "verified",
   ).length;
 
   return (
@@ -622,14 +682,18 @@ function MemberCommitteeCard({
   committee: Committee;
   memberId?: string;
 }) {
-  const paidThisMonth = committee.payments?.find(
-    (p: any) =>
-      p.member?.toString?.() === memberId && p.month === committee.currentMonth,
-  );
+  const paidThisMonth = (committee.payments || [])
+    .slice()
+    .reverse()
+    .find(
+      (p: any) =>
+        (p.member?._id || p.member)?.toString() === memberId?.toString() &&
+        Number(p.month) === Number(committee.currentMonth),
+    );
   const paidStatus = paidThisMonth?.status || "unpaid";
 
   const paidCount = (committee.payments || []).filter(
-    (p: any) => p.month === committee.currentMonth && p.status === "verified",
+    (p: any) => Number(p.month) === Number(committee.currentMonth) && p.status === "verified",
   ).length;
 
   return (

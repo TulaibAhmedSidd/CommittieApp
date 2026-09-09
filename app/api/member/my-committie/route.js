@@ -142,6 +142,8 @@ import Member from "@/app/api/models/Member";
 import connectToDatabase from "@/app/utils/db";
 import Committee from "@/app/api/models/Committee";
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(req) {
   try {
     // Connect to database
@@ -157,32 +159,39 @@ export async function POST(req) {
       });
     }
 
-    // Find all committees where the user is either in members or pendingMembers
-    // const committees = await Committee.find({
-    //   $or: [{ "members.memberId": userId }, { pendingMembers: userId }],
-    // })
-    //   .populate("members.memberId pendingMembers")
-    //   .lean();
     const committees = await Committee.find()
-      .populate("members.member pendingMembers")
+      .populate("members pendingMembers createdBy")
       .lean();
 
-    // Separate approved and pending committees
+    // Separate approved, completed, and pending committees
     const approvedCommittees = committees.filter((committee) => {
-      return committee.members.some(
-        (member) => member._id.toString() === userId
+      return (committee.members || []).some(
+        (member) => (member?._id || member)?.toString() === userId.toString()
       );
     });
+
+    const ongoingCommittees = approvedCommittees.filter(
+      (c) => c.status === "ongoing"
+    );
+
+    const completedCommittees = approvedCommittees.filter(
+      (c) => c.status === "finished"
+    );
 
     const pendingCommittees = committees.filter((committee) => {
-      return committee.pendingMembers.some(
-        (member) => member?._id.toString() === userId
+      return (committee.pendingMembers || []).some(
+        (member) => (member?._id || member)?.toString() === userId.toString()
       );
     });
 
-    // Respond with both approved and pending committees
+    // Respond with committees structured for all dashboard views
     return new Response(
-      JSON.stringify({ approvedCommittees, pendingCommittees }),
+      JSON.stringify({
+        approvedCommittees,
+        ongoingCommittees,
+        completedCommittees,
+        pendingCommittees,
+      }),
       { status: 200 }
     );
   } catch (err) {

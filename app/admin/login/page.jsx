@@ -81,6 +81,7 @@ export default function AdminLogin() {
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 icon={<FiMail />}
+                                autoComplete="email"
                                 required
                             />
                         </div>
@@ -93,6 +94,7 @@ export default function AdminLogin() {
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 icon={<FiLock />}
+                                autoComplete="current-password"
                                 required
                             />
                         </div>

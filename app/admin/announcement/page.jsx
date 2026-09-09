@@ -126,7 +126,7 @@ export default function AnnouncementPage() {
                                 <p className="text-white/80 text-xs mb-6 font-medium">Pick a random winner for this committee and notify everyone.</p>
                                 <Button
                                     variant="secondary"
-                                    className="w-full bg-white text-primary-600 hover:bg-white/90 border-none font-black shadow-lg py-4 text-xs tracking-widest uppercase"
+                                    className="w-full bg-slate-950 text-white hover:bg-slate-900 border border-white/10 font-black shadow-xl py-4 text-xs tracking-widest uppercase"
                                     loading={loading}
                                     onClick={handleAnnounce}
                                 >

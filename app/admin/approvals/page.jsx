@@ -5,12 +5,16 @@ import { useRouter } from "next/navigation";
 import { FiUserCheck, FiUserX, FiTarget, FiBriefcase, FiUser, FiInfo } from "react-icons/fi";
 import Card from "../../Components/Theme/Card";
 import Button from "../../Components/Theme/Button";
+import Pagination from "../../Components/Theme/Pagination";
 import { toast } from "react-toastify";
 
 export default function ApprovalsPage() {
     const [approvals, setApprovals] = useState({ admins: [], members: [] });
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState(null);
+    const [adminPage, setAdminPage] = useState(1);
+    const [memberPage, setMemberPage] = useState(1);
+    const PAGE_SIZE = 5;
     const router = useRouter();
 
     useEffect(() => {
@@ -101,35 +105,46 @@ export default function ApprovalsPage() {
                                 <p className="text-slate-400 font-black uppercase tracking-widest text-xs">No pending organizers</p>
                             </div>
                         ) : (
-                            approvals.admins.map(admin => (
-                                <Card key={admin._id} className="p-8 border-none shadow-premium-hover bg-white dark:bg-slate-900 relative overflow-hidden group">
-                                    <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                                        <FiBriefcase size={120} />
-                                    </div>
-                                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative z-10">
-                                        <div className="space-y-2">
-                                            <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">{admin.name}</h3>
-                                            <p className="text-sm text-primary-600 font-bold font-mono">{admin.email}</p>
+                            <>
+                                {approvals.admins.slice((adminPage - 1) * PAGE_SIZE, adminPage * PAGE_SIZE).map(admin => (
+                                    <Card key={admin._id} className="p-8 border-none shadow-premium-hover bg-white dark:bg-slate-900 relative overflow-hidden group">
+                                        <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                                            <FiBriefcase size={120} />
                                         </div>
-                                        <div className="flex gap-3 w-full md:w-auto">
-                                            <Button
-                                                onClick={() => handleAction(admin._id, "Admin", "approve")}
-                                                loading={actionLoading === admin._id}
-                                                className="flex-1 md:flex-none py-3 px-6 bg-green-600 hover:bg-green-700 shadow-green-500/20"
-                                            >
-                                                <FiUserCheck className="mr-2" /> Approve
-                                            </Button>
-                                            <Button
-                                                variant="secondary"
-                                                onClick={() => handleAction(admin._id, "Admin", "reject")}
-                                                className="flex-1 md:flex-none py-3 px-6 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white border-red-500/20"
-                                            >
-                                                <FiUserX className="mr-2" /> Reject
-                                            </Button>
+                                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative z-10">
+                                            <div className="space-y-2">
+                                                <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">{admin.name}</h3>
+                                                <p className="text-sm text-primary-600 font-bold font-mono">{admin.email}</p>
+                                            </div>
+                                            <div className="flex gap-3 w-full md:w-auto">
+                                                <Button
+                                                    onClick={() => handleAction(admin._id, "Admin", "approve")}
+                                                    loading={actionLoading === admin._id}
+                                                    className="flex-1 md:flex-none py-3 px-6 bg-green-600 hover:bg-green-700 shadow-green-500/20"
+                                                >
+                                                    <FiUserCheck className="mr-2" /> Approve
+                                                </Button>
+                                                <Button
+                                                    variant="secondary"
+                                                    onClick={() => handleAction(admin._id, "Admin", "reject")}
+                                                    className="flex-1 md:flex-none py-3 px-6 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white border-red-500/20"
+                                                >
+                                                    <FiUserX className="mr-2" /> Reject
+                                                </Button>
+                                            </div>
                                         </div>
-                                    </div>
-                                </Card>
-                            ))
+                                    </Card>
+                                ))}
+                                {approvals.admins.length > PAGE_SIZE && (
+                                    <Pagination
+                                        currentPage={adminPage}
+                                        totalPages={Math.ceil(approvals.admins.length / PAGE_SIZE)}
+                                        onPageChange={setAdminPage}
+                                        totalItems={approvals.admins.length}
+                                        pageSize={PAGE_SIZE}
+                                    />
+                                )}
+                            </>
                         )}
                     </div>
                 </section>
@@ -150,35 +165,46 @@ export default function ApprovalsPage() {
                                 <p className="text-slate-400 font-black uppercase tracking-widest text-xs">No pending members</p>
                             </div>
                         ) : (
-                            approvals.members.map(member => (
-                                <Card key={member._id} className="p-8 border-none shadow-premium-hover bg-white dark:bg-slate-900 relative overflow-hidden group">
-                                    <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                                        <FiUser size={120} />
-                                    </div>
-                                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative z-10">
-                                        <div className="space-y-2">
-                                            <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">{member.name}</h3>
-                                            <p className="text-sm text-blue-600 font-bold font-mono">{member.email}</p>
+                            <>
+                                {approvals.members.slice((memberPage - 1) * PAGE_SIZE, memberPage * PAGE_SIZE).map(member => (
+                                    <Card key={member._id} className="p-8 border-none shadow-premium-hover bg-white dark:bg-slate-900 relative overflow-hidden group">
+                                        <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                                            <FiUser size={120} />
                                         </div>
-                                        <div className="flex gap-3 w-full md:w-auto">
-                                            <Button
-                                                onClick={() => handleAction(member._id, "Member", "approve")}
-                                                loading={actionLoading === member._id}
-                                                className="flex-1 md:flex-none py-3 px-6 bg-primary-600 hover:bg-primary-700 shadow-primary-500/20"
-                                            >
-                                                <FiUserCheck className="mr-2" /> Approve
-                                            </Button>
-                                            <Button
-                                                variant="secondary"
-                                                onClick={() => handleAction(member._id, "Member", "reject")}
-                                                className="flex-1 md:flex-none py-3 px-6 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white border-red-500/20"
-                                            >
-                                                <FiUserX className="mr-2" /> Reject
-                                            </Button>
+                                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative z-10">
+                                            <div className="space-y-2">
+                                                <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">{member.name}</h3>
+                                                <p className="text-sm text-blue-600 font-bold font-mono">{member.email}</p>
+                                            </div>
+                                            <div className="flex gap-3 w-full md:w-auto">
+                                                <Button
+                                                    onClick={() => handleAction(member._id, "Member", "approve")}
+                                                    loading={actionLoading === member._id}
+                                                    className="flex-1 md:flex-none py-3 px-6 bg-primary-600 hover:bg-primary-700 shadow-primary-500/20"
+                                                >
+                                                    <FiUserCheck className="mr-2" /> Approve
+                                                </Button>
+                                                <Button
+                                                    variant="secondary"
+                                                    onClick={() => handleAction(member._id, "Member", "reject")}
+                                                    className="flex-1 md:flex-none py-3 px-6 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white border-red-500/20"
+                                                >
+                                                    <FiUserX className="mr-2" /> Reject
+                                                </Button>
+                                            </div>
                                         </div>
-                                    </div>
-                                </Card>
-                            ))
+                                    </Card>
+                                ))}
+                                {approvals.members.length > PAGE_SIZE && (
+                                    <Pagination
+                                        currentPage={memberPage}
+                                        totalPages={Math.ceil(approvals.members.length / PAGE_SIZE)}
+                                        onPageChange={setMemberPage}
+                                        totalItems={approvals.members.length}
+                                        pageSize={PAGE_SIZE}
+                                    />
+                                )}
+                            </>
                         )}
                     </div>
                 </section>

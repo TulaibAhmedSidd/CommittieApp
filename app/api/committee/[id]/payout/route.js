@@ -2,8 +2,11 @@ import connectToDatabase from "@/app/utils/db";
 import Committee from "@/app/api/models/Committee";
 import Notification from "@/app/api/models/Notification";
 import Asset from "@/app/api/models/Asset";
+import Member from "@/app/api/models/Member";
 import { createLog } from "@/app/utils/logger";
 import { unauthorizedResponse, verifyAdmin } from "@/app/utils/auth";
+
+export const dynamic = 'force-dynamic';
 
 export async function POST(req, { params }) {
     try {

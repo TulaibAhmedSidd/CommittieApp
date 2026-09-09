@@ -5,6 +5,8 @@ import Asset from "@/app/api/models/Asset";
 import { createLog } from "@/app/utils/logger";
 import { unauthorizedResponse, verifyAdmin, verifyMember } from "@/app/utils/auth";
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(req, { params }) {
     try {
         const auth = verifyMember(req);
@@ -38,19 +40,38 @@ export async function POST(req, { params }) {
             screenshotUrl = `/api/assets/${asset._id}`;
         }
 
-        const paymentData = {
-            month: body.month,
-            member: body.memberId,
-            status: "pending",
-            submission: {
+        const targetMonth = Number(body.month);
+
+        // Deduplicate: check if payment for this month and member already exists
+        let existingPayment = committee.payments.find(p => 
+            p.month === targetMonth && 
+            (p.member?.toString() === body.memberId.toString() || p.member?._id?.toString() === body.memberId.toString())
+        );
+
+        if (existingPayment) {
+            existingPayment.status = "pending";
+            existingPayment.submission = {
                 screenshot: screenshotUrl,
-                description: body.description,
+                description: body.description || "",
                 transactionId: body.transactionId,
                 submittedAt: new Date()
-            }
-        };
+            };
+            existingPayment.updatedAt = new Date();
+        } else {
+            committee.payments.push({
+                month: targetMonth,
+                member: body.memberId,
+                status: "pending",
+                submission: {
+                    screenshot: screenshotUrl,
+                    description: body.description || "",
+                    transactionId: body.transactionId,
+                    submittedAt: new Date()
+                },
+                updatedAt: new Date()
+            });
+        }
 
-        committee.payments.push(paymentData);
         await committee.save();
 
         await createLog({
@@ -58,7 +79,7 @@ export async function POST(req, { params }) {
             performedBy: body.memberId,
             onModel: "Member",
             targetId: committee._id,
-            details: { month: body.month, assetId: screenshotUrl.includes('/api/assets/') ? screenshotUrl.split('/').pop() : null }
+            details: { month: targetMonth, assetId: screenshotUrl && screenshotUrl.includes('/api/assets/') ? screenshotUrl.split('/').pop() : null }
         });
 
         return new Response(JSON.stringify({ message: "Payment submitted", screenshot: screenshotUrl }), { status: 200 });
@@ -76,23 +97,30 @@ export async function PATCH(req, { params }) {
 
         await connectToDatabase();
         const { id } = await params;
-        const { paymentId, status, memberId } = await req.json();
+        const { paymentId, status, memberId, reason, month } = await req.json();
         const adminId = auth.user.userId;
 
         const committee = await Committee.findById(id);
         if (!committee) return new Response(JSON.stringify({ error: "Committee not found" }), { status: 404 });
 
-        let payment = paymentId && paymentId !== "FORCE_RECONCILE" ? committee.payments.id(paymentId) : null;
+        const normalizedMemberId = (memberId?._id || memberId)?.toString();
+
+        let payment = null;
+        if (paymentId && paymentId !== "FORCE_RECONCILE") {
+            payment = committee.payments.id(paymentId) || committee.payments.find(p => p._id?.toString() === paymentId?.toString());
+        }
 
         if (!payment) {
-            // Check if a payment for this month already exists even if paymentId wasn't provided
-            payment = committee.payments.find(p => p.month === committee.currentMonth && p.member.toString() === memberId);
+            const targetMonth = month ? Number(month) : committee.currentMonth;
+            payment = committee.payments.find(p => 
+                Number(p.month) === targetMonth && 
+                ((p.member?._id || p.member)?.toString() === normalizedMemberId)
+            );
 
-            if (!payment && status === "verified") {
-                // Force reconcile: Create a dummy payment object with manual verification
+            if (!payment && status === "verified" && normalizedMemberId) {
                 const forcePayment = {
-                    month: committee.currentMonth,
-                    member: memberId,
+                    month: targetMonth,
+                    member: normalizedMemberId,
                     status: "verified",
                     updatedAt: new Date(),
                     submission: {
@@ -103,31 +131,56 @@ export async function PATCH(req, { params }) {
                 committee.payments.push(forcePayment);
                 payment = committee.payments[committee.payments.length - 1];
             }
-        } else {
+        }
+
+        if (payment) {
             payment.status = status;
             payment.updatedAt = new Date();
+            if (reason && payment.submission) {
+                payment.submission.description = payment.submission.description 
+                    ? `${payment.submission.description} [Admin Note: ${reason}]`
+                    : `[Admin Note: ${reason}]`;
+            }
+
+            const memberStr = (payment.member?._id || payment.member)?.toString();
+            committee.payments.forEach(p => {
+                const pMemberStr = (p.member?._id || p.member)?.toString();
+                if (
+                    Number(p.month) === Number(payment.month) &&
+                    pMemberStr && memberStr && pMemberStr === memberStr
+                ) {
+                    p.status = status;
+                    p.updatedAt = new Date();
+                }
+            });
         }
 
         if (!payment) return new Response(JSON.stringify({ error: "Payment reconciliation failed" }), { status: 400 });
 
         await committee.save();
 
-        // Notify member
-        const notification = new Notification({
-            userId: payment.member,
-            recipient: payment.member,
-            recipientModel: 'Member',
-            message: `Your payment status for ${committee.name} (Month ${payment.month}) has been set to ${status}.`,
-            details: `Admin Action: ${status === 'verified' ? 'Force Verified / Approved' : status}`,
-        });
-        await notification.save();
+        const notificationMessage = status === 'rejected' && reason
+            ? `Your payment for ${committee.name} (Month ${payment.month}) was flagged/rejected. Reason: ${reason}`
+            : `Your payment status for ${committee.name} (Month ${payment.month}) has been set to ${status}.`;
+
+        const recipientId = (payment.member?._id || payment.member);
+        if (recipientId) {
+            const notification = new Notification({
+                userId: recipientId,
+                recipient: recipientId,
+                recipientModel: 'Member',
+                message: notificationMessage,
+                details: `Admin Action: ${status === 'verified' ? 'Approved / Verified' : status} ${reason ? '(' + reason + ')' : ''}`,
+            });
+            await notification.save();
+        }
 
         await createLog({
             action: "VERIFY_PAYMENT",
             performedBy: adminId,
             onModel: "Admin",
             targetId: payment.member,
-            details: { committeeId: id, status, month: payment.month, isForced: !paymentId || paymentId === "FORCE_RECONCILE" }
+            details: { committeeId: id, status, month: payment.month, reason: reason || null, isForced: !paymentId || paymentId === "FORCE_RECONCILE" }
         });
 
         return new Response(JSON.stringify({ message: "Status updated" }), { status: 200 });

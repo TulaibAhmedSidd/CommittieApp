@@ -18,6 +18,9 @@ import {
     FiTrendingUp,
     FiActivity,
     FiZap,
+    FiPlayCircle,
+    FiYoutube,
+    FiExternalLink,
 } from "react-icons/fi";
 
 import Card from "../../Components/Theme/Card";
@@ -28,6 +31,7 @@ import BilingualLabel from "../../Components/Theme/BilingualLabel";
 import StepProgress from "../../Components/Theme/StepProgress";
 
 const SECTIONS = [
+    { id: "video-guide", label: "Video Walkthrough", urdu: "ویڈیو گائیڈ" },
     { id: "register", label: "Register & approval", urdu: "رجسٹریشن" },
     { id: "verify", label: "Identity verification", urdu: "تصدیق" },
     { id: "create", label: "Create a committee", urdu: "کمیٹی بنائیں" },
@@ -104,6 +108,52 @@ export default function OrganizerGuide() {
                 </aside>
 
                 <article className="space-y-16">
+                    {/* ───────── 0 — Video Walkthrough ───────── */}
+                    <section id="video-guide" className="scroll-mt-24 space-y-6">
+                        <div className="space-y-2">
+                            <span className="eyebrow flex items-center gap-2">
+                                <FiPlayCircle className="text-red-500" /> Video Walkthrough · مکمل ویڈیو گائیڈ
+                            </span>
+                            <h2 className="text-3xl font-black tracking-tight text-ink-900 md:text-4xl">
+                                Watch the Complete Organizer Video Guide
+                                <span className="block text-primary-700">مکمل آرگنائزر ویڈیو گائیڈ دیکھیں (پاکستانی اردو وائس اوور)</span>
+                            </h2>
+                            <p className="text-sm font-medium text-muted-600">
+                                CommittieApp ka step-by-step video guide — committee create karna, rules tay karna, members verify karna, monthly payments audit aur transparent lucky draws ka poora tareeqa.
+                            </p>
+                        </div>
+
+                        <div className="relative rounded-[2rem] p-3 md:p-4 bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-800 shadow-2xl overflow-hidden group">
+                            <div className="relative rounded-[1.5rem] overflow-hidden aspect-video bg-black shadow-inner">
+                                <iframe
+                                    src="https://www.youtube.com/embed/qrMJWpclUzU?rel=0"
+                                    title="CommittieApp Complete Organizer Walkthrough Video"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                    allowFullScreen
+                                    className="w-full h-full border-0"
+                                />
+                            </div>
+                            <div className="mt-4 p-3 md:p-4 bg-slate-900/90 rounded-xl border border-white/5 flex flex-col sm:flex-row items-center justify-between gap-3 text-white">
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <span className="px-2.5 py-1 bg-red-600 text-white rounded-full text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
+                                        <FiYoutube size={13} /> YouTube HD
+                                    </span>
+                                    <span className="text-xs text-slate-300 font-bold">
+                                        🎙️ Pakistani Urdu Voiceover (اردو آواز) • 22 Chapters
+                                    </span>
+                                </div>
+                                <a
+                                    href="https://youtu.be/qrMJWpclUzU"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-black uppercase tracking-wider transition-all"
+                                >
+                                    Watch on YouTube <FiExternalLink size={13} />
+                                </a>
+                            </div>
+                        </div>
+                    </section>
+
                     {/* ───────── 1 — Register ───────── */}
                     <Section
                         id="register"

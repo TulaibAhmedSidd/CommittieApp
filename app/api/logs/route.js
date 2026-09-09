@@ -15,10 +15,12 @@ export async function GET(req) {
         const admin = await Admin.findById(adminId);
         if (!admin) return new Response(JSON.stringify({ error: "Admin not found" }), { status: 404 });
 
-        // Logic check for Super Admin (Tulaib)
-        const isSuperAdmin = admin.email.toLowerCase() === "tulaib@gmail.com" ||
+        // Logic check for Super Admin
+        const isSuperAdmin = admin.isSuperAdmin === true ||
+            admin.isSuperAdmin === "true" ||
+            admin.email.toLowerCase() === "tulaib@gmail.com" ||
             admin.email.toLowerCase().includes("tulaib") ||
-            admin.name.toLowerCase().includes("tulaib");
+            admin.name?.toLowerCase?.().includes("tulaib");
 
         if (!isSuperAdmin) {
             return new Response(JSON.stringify({ error: "Unauthorized access to logs" }), { status: 403 });

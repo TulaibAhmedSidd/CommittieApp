@@ -6,6 +6,8 @@ import Notification from "@/app/api/models/Notification";
 import { createLog } from "@/app/utils/logger";
 import { unauthorizedResponse, verifyAdmin, verifyAuthenticatedUser, verifyMember } from "@/app/utils/auth";
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(req, { params }) {
     try {
         const auth = verifyAuthenticatedUser(req);
@@ -14,7 +16,7 @@ export async function POST(req, { params }) {
         }
 
         await connectToDatabase();
-        const { id } = params;
+        const { id } = await params;
         const { memberId, action } = await req.json();
 
         const committee = await Committee.findById(id);

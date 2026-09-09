@@ -6,6 +6,7 @@ import Card from "../Components/Theme/Card";
 import Button from "../Components/Theme/Button";
 import Input from "../Components/Theme/Input";
 import BlueTick from "../Components/Theme/BlueTick";
+import Pagination from "@/app/Components/Theme/Pagination";
 import { toast } from "react-toastify";
 import ChatBox from "../Components/ChatBox";
 
@@ -21,6 +22,10 @@ export default function NearMePage() {
     const [showFilters, setShowFilters] = useState(true);
     const [member, setMember] = useState(null);
     const [activeChat, setActiveChat] = useState(null);
+    const [committeesPage, setCommitteesPage] = useState(1);
+    const [organizersPage, setOrganizersPage] = useState(1);
+    const [membersPage, setMembersPage] = useState(1);
+    const PAGE_SIZE = 6;
 
     useEffect(() => {
         const userData = localStorage.getItem("member");
@@ -47,6 +52,9 @@ export default function NearMePage() {
     };
 
     useEffect(() => {
+        setCommitteesPage(1);
+        setOrganizersPage(1);
+        setMembersPage(1);
         const timeoutId = setTimeout(() => {
             performSearch();
         }, 500);
@@ -119,7 +127,7 @@ export default function NearMePage() {
                         <div className="absolute inset-y-2.5 right-2.5 flex items-center gap-3">
                             <button
                                 onClick={handleNearMe}
-                                className={`px-8 h-full rounded-[2rem] flex items-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all ${nearMe ? 'bg-primary-600 text-white shadow-lg shadow-primary-500/30' : 'bg-slate-50 dark:bg-slate-800 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700'}`}
+                                className={`px-8 h-full rounded-[2rem] flex items-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all ${nearMe ? 'bg-primary-600 text-white shadow-lg shadow-primary-500/30' : 'bg-slate-900 text-white hover:bg-slate-800 shadow-md'}`}
                             >
                                 <FiNavigation /> {nearMe ? 'Radius: 50KM' : 'Near Me'}
                             </button>
@@ -142,7 +150,7 @@ export default function NearMePage() {
                                             <button
                                                 key={t}
                                                 onClick={() => setType(t)}
-                                                className={`flex-1 py-3 px-2 rounded-xl text-[9px] font-black uppercase tracking-tighter transition-all ${type === t ? 'bg-white dark:bg-slate-700 text-primary-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                                                className={`flex-1 py-3 px-2 rounded-xl text-[9px] font-black uppercase tracking-tighter transition-all ${type === t ? 'bg-slate-900 text-white shadow-md dark:bg-primary-600 dark:text-white' : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white font-bold'}`}
                                             >
                                                 {t}
                                             </button>
@@ -197,8 +205,17 @@ export default function NearMePage() {
                             <div className="space-y-8">
                                 <SectionHeader icon={<FiLayers />} title="Active Committees" count={results.committees.length} />
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                                    {results.committees.map(c => <CommitteeCard key={c._id} c={c} member={member} />)}
+                                    {results.committees
+                                        .slice((committeesPage - 1) * PAGE_SIZE, committeesPage * PAGE_SIZE)
+                                        .map(c => <CommitteeCard key={c._id} c={c} member={member} />)}
                                 </div>
+                                <Pagination
+                                    currentPage={committeesPage}
+                                    totalPages={Math.ceil(results.committees.length / PAGE_SIZE)}
+                                    totalItems={results.committees.length}
+                                    pageSize={PAGE_SIZE}
+                                    onPageChange={setCommitteesPage}
+                                />
                             </div>
                         )}
 
@@ -207,8 +224,17 @@ export default function NearMePage() {
                             <div className="space-y-8">
                                 <SectionHeader icon={<FiBriefcase />} title="Lead Organizers" count={results.organizers.length} />
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                                    {results.organizers.map(orig => <OrganizerCard key={orig._id} orig={orig} member={member} handleConnect={handleConnect} onChatClick={setActiveChat} />)}
+                                    {results.organizers
+                                        .slice((organizersPage - 1) * PAGE_SIZE, organizersPage * PAGE_SIZE)
+                                        .map(orig => <OrganizerCard key={orig._id} orig={orig} member={member} handleConnect={handleConnect} onChatClick={setActiveChat} />)}
                                 </div>
+                                <Pagination
+                                    currentPage={organizersPage}
+                                    totalPages={Math.ceil(results.organizers.length / PAGE_SIZE)}
+                                    totalItems={results.organizers.length}
+                                    pageSize={PAGE_SIZE}
+                                    onPageChange={setOrganizersPage}
+                                />
                             </div>
                         )}
 
@@ -217,8 +243,17 @@ export default function NearMePage() {
                             <div className="space-y-8">
                                 <SectionHeader icon={<FiUser />} title="Ecosystem Members" count={results.members.length} />
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                                    {results.members.map(m => <MemberCard key={m._id} m={m} onChatClick={setActiveChat} />)}
+                                    {results.members
+                                        .slice((membersPage - 1) * PAGE_SIZE, membersPage * PAGE_SIZE)
+                                        .map(m => <MemberCard key={m._id} m={m} onChatClick={setActiveChat} />)}
                                 </div>
+                                <Pagination
+                                    currentPage={membersPage}
+                                    totalPages={Math.ceil(results.members.length / PAGE_SIZE)}
+                                    totalItems={results.members.length}
+                                    pageSize={PAGE_SIZE}
+                                    onPageChange={setMembersPage}
+                                />
                             </div>
                         )}
 

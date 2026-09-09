@@ -314,6 +314,7 @@ function RegisterContent() {
                                         value={form.name}
                                         onChange={update("name")}
                                         placeholder={isOrganizer ? "Karachi Mothers' Circle" : "Aliya Khan"}
+                                        autoComplete="name"
                                         required
                                     />
                                 </FieldGroup>
@@ -330,6 +331,7 @@ function RegisterContent() {
                                         value={form.email}
                                         onChange={update("email")}
                                         placeholder="name@example.com"
+                                        autoComplete="email"
                                         required
                                     />
                                     <Field
@@ -340,6 +342,7 @@ function RegisterContent() {
                                         value={form.phone}
                                         onChange={update("phone")}
                                         placeholder="0300-1234567"
+                                        autoComplete="tel"
                                         required
                                     />
                                 </FieldGroup>
@@ -401,6 +404,7 @@ function RegisterContent() {
                                     value={form.password}
                                     onChange={update("password")}
                                     placeholder="At least 6 characters"
+                                    autoComplete="new-password"
                                     required
                                 />
                             </Section>

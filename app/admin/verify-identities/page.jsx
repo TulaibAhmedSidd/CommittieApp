@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { FiShield, FiUser, FiCheck, FiX, FiExternalLink, FiImage, FiMapPin } from "react-icons/fi";
 import Card from "../../Components/Theme/Card";
 import Button from "../../Components/Theme/Button";
+import Pagination from "../../Components/Theme/Pagination";
 import { toast } from "react-toastify";
 import MemberDocumentReview from "../../Components/Admin/MemberDocumentReview";
 
@@ -12,6 +13,8 @@ export default function IdentityVerificationPage() {
     const [requests, setRequests] = useState({ admins: [], members: [] });
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState(null);
+    const [page, setPage] = useState(1);
+    const PAGE_SIZE = 6;
     const router = useRouter();
 
     useEffect(() => {
@@ -89,24 +92,46 @@ export default function IdentityVerificationPage() {
                     </div>
 
                     <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-                        {[...requests.admins.map(a => ({ ...a, role: 'Admin' })), ...requests.members.map(m => ({ ...m, role: 'Member' }))].map((user) => (
-                            <Card key={user._id} className="p-8 border-none bg-white dark:bg-slate-900 shadow-premium">
-                                <MemberDocumentReview
-                                    member={user}
-                                    onAction={handleAction}
-                                    actionLoading={actionLoading}
-                                />
-                            </Card>
-                        ))}
+                        {(() => {
+                            const allRequests = [...requests.admins.map(a => ({ ...a, role: 'Admin' })), ...requests.members.map(m => ({ ...m, role: 'Member' }))];
+                            const totalPages = Math.ceil(allRequests.length / PAGE_SIZE) || 1;
+                            const pagedRequests = allRequests.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-                        {requests.admins.length === 0 && requests.members.length === 0 && (
-                            <div className="col-span-full py-20 text-center space-y-4">
-                                <div className="flex justify-center text-slate-200">
-                                    <FiShield size={64} />
-                                </div>
-                                <p className="text-slate-400 font-black uppercase tracking-widest text-xs italic">All identities are synchronized. No pending verifications.</p>
-                            </div>
-                        )}
+                            return (
+                                <>
+                                    {pagedRequests.map((user) => (
+                                        <Card key={user._id} className="p-8 border-none bg-white dark:bg-slate-900 shadow-premium">
+                                            <MemberDocumentReview
+                                                member={user}
+                                                onAction={handleAction}
+                                                actionLoading={actionLoading}
+                                            />
+                                        </Card>
+                                    ))}
+
+                                    {allRequests.length === 0 && (
+                                        <div className="col-span-full py-20 text-center space-y-4">
+                                            <div className="flex justify-center text-slate-200">
+                                                <FiShield size={64} />
+                                            </div>
+                                            <p className="text-slate-400 font-black uppercase tracking-widest text-xs italic">All identities are synchronized. No pending verifications.</p>
+                                        </div>
+                                    )}
+
+                                    {allRequests.length > PAGE_SIZE && (
+                                        <div className="col-span-full">
+                                            <Pagination
+                                                currentPage={page}
+                                                totalPages={totalPages}
+                                                onPageChange={setPage}
+                                                totalItems={allRequests.length}
+                                                pageSize={PAGE_SIZE}
+                                            />
+                                        </div>
+                                    )}
+                                </>
+                            );
+                        })()}
                     </div>
                 </section>
             </div>

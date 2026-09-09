@@ -3,6 +3,8 @@ import Committee from "@/app/api/models/Committee";
 import Admin from "@/app/api/models/Admin";
 import Review from "@/app/api/models/Review";
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req, { params }) {
     await connectToDatabase();
     const { id } = await params;
@@ -11,11 +13,15 @@ export async function GET(req, { params }) {
         const committee = await Committee.findById(id)
             .populate({
                 path: "members",
-                select: "name email verificationStatus location city phone"
+                select: "name email verificationStatus location city phone payoutDetails nicNumber"
             })
             .populate({
                 path: "result.member",
                 select: "name email"
+            })
+            .populate({
+                path: "payments.member",
+                select: "name email verificationStatus"
             });
 
         if (!committee) {

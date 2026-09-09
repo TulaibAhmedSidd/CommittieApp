@@ -25,6 +25,9 @@ import {
   FiSearch,
   FiBell,
   FiDollarSign,
+  FiPlayCircle,
+  FiYoutube,
+  FiExternalLink,
 } from "react-icons/fi";
 
 import Image from "next/image";
@@ -414,33 +417,67 @@ export default function Home() {
       {/* ───────────── Video & Brand Showcase ───────────── */}
       <section className="mx-auto max-w-6xl px-4 py-16 md:px-8 md:py-24">
         <div className="mb-10 text-center max-w-3xl mx-auto space-y-3">
-          <p className="eyebrow">Video Preview · کمیٹی ایپ ویڈیو دیکھیں</p>
+          <p className="eyebrow flex items-center justify-center gap-2">
+            <FiPlayCircle className="text-red-500" /> Video Walkthrough · مکمل ویڈیو گائیڈ
+          </p>
           <h2 className="text-3xl font-black tracking-tighter text-ink-900 md:text-5xl">
-            See CommittieApp In Action
+            CommittieApp Step-by-Step Guide
             <span className="block text-primary-700">Digital, Transparent & Verified Savings.</span>
           </h2>
           <p className="text-base font-medium text-muted-600">
-            Watch how CommittieApp digitizes Pakistan's traditional committee savings circles with instant identity checks, automated draws, and proof-based receipt verification.
+            Watch our comprehensive video walkthrough with authentic Pakistani Urdu voiceover — covering registration, CNIC identity verification, committee creation, monthly proof-based payments, and automated lucky draws.
           </p>
         </div>
 
-        <div className="relative rounded-[2.5rem] p-3 bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-800 shadow-2xl overflow-hidden group">
+        {/* Video Player Card */}
+        <div className="relative rounded-[2.5rem] p-3 md:p-4 bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-800 shadow-2xl overflow-hidden group">
           <div className="absolute inset-0 bg-primary-600/10 blur-3xl pointer-events-none" />
-          <div className="relative rounded-[2rem] overflow-hidden aspect-video bg-black flex items-center justify-center">
-            <video
-              autoPlay
-              loop
-              muted
-              playsInline
-              poster="/images/youtube_banner_committie.jpg"
-              className="w-full h-full object-cover"
-            >
-              <source src="/video/Cinematic_K_promotional_comme.mp4" type="video/mp4" />
-              Your browser does not support video playback.
-            </video>
-            <div className="absolute top-4 right-4 flex items-center gap-2 bg-slate-950/80 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
-              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-              <span className="text-[10px] font-black uppercase text-white tracking-widest">CommittieApp Commercial</span>
+          
+          {/* 16:9 YouTube Embed */}
+          <div className="relative rounded-[2rem] overflow-hidden aspect-video bg-black shadow-inner">
+            <iframe
+              src="https://www.youtube.com/embed/qrMJWpclUzU?rel=0"
+              title="CommittieApp Complete Walkthrough & Guide Video"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+              className="w-full h-full border-0"
+            />
+          </div>
+
+          {/* Action & Info Bar under Video */}
+          <div className="mt-4 p-4 md:p-6 bg-slate-900/90 backdrop-blur-md rounded-2xl border border-white/5 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="space-y-1 text-center md:text-left">
+              <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
+                <span className="px-3 py-1 bg-red-600 text-white rounded-full text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5">
+                  <FiYoutube size={14} /> YouTube 1080p
+                </span>
+                <span className="px-3 py-1 bg-primary-600/20 text-primary-400 border border-primary-500/30 rounded-full text-[10px] font-black uppercase tracking-wider">
+                  🎙️ Pakistani Urdu Voiceover
+                </span>
+                <span className="px-3 py-1 bg-slate-800 text-slate-300 rounded-full text-[10px] font-black uppercase tracking-wider">
+                  22 Chapters
+                </span>
+              </div>
+              <p className="text-xs text-slate-400 font-medium pt-1">
+                Full 3:49 walkthrough from account registration to monthly payouts and forensic audit logs.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <a
+                href="https://youtu.be/qrMJWpclUzU"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-black uppercase tracking-wider shadow-lg shadow-red-600/20 transition-all hover:scale-105"
+              >
+                <FiYoutube size={16} /> Watch on YouTube <FiExternalLink size={14} />
+              </a>
+              <Link
+                href="/guide/member"
+                className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-black uppercase tracking-wider transition-all"
+              >
+                Member Guide →
+              </Link>
             </div>
           </div>
         </div>

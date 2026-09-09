@@ -8,11 +8,11 @@ const variants = {
     accent:
         "bg-accent-500 text-ink-900 shadow-gold hover:-translate-y-0.5 hover:bg-accent-600",
     secondary:
-        "border border-border-100 bg-surface-50 text-ink-700 shadow-sm hover:-translate-y-0.5 hover:border-border-200 hover:bg-surface-100 dark:border-border-200 dark:bg-surface-100 dark:text-ink-700 dark:hover:bg-surface-200",
+        "bg-slate-900 text-white shadow-md hover:-translate-y-0.5 hover:bg-slate-800 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-700",
     outline:
-        "border border-primary-500/30 bg-primary-500/5 text-primary-700 hover:-translate-y-0.5 hover:bg-primary-500/10 dark:text-primary-300",
+        "border-2 border-slate-900 bg-transparent text-slate-900 hover:-translate-y-0.5 hover:bg-slate-900 hover:text-white dark:border-slate-400 dark:text-slate-100 dark:hover:bg-slate-800",
     ghost:
-        "bg-transparent text-ink-600 hover:bg-surface-200 hover:text-ink-900 dark:text-ink-500 dark:hover:bg-surface-200 dark:hover:text-white",
+        "bg-transparent text-slate-900 hover:bg-slate-200/80 hover:text-black dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-white",
     danger:
         "bg-danger-600 text-white shadow-[0_18px_40px_-18px_rgb(var(--danger-500)/0.6)] hover:-translate-y-0.5 hover:bg-danger-700",
 };

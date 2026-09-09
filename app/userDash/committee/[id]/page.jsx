@@ -32,6 +32,7 @@ export default function CommitteeDetailPage() {
     const [user, setUser] = useState(null);
     const [activeChat, setActiveChat] = useState(null);
     const [isPayModalOpen, setIsPayModalOpen] = useState(false);
+    const [viewingReceipt, setViewingReceipt] = useState(null);
     const [submitting, setSubmitting] = useState(false);
     const [paymentData, setPaymentData] = useState({
         screenshot: "",
@@ -49,7 +50,7 @@ export default function CommitteeDetailPage() {
 
     const fetchDetails = async () => {
         try {
-            const res = await fetch(`/api/committee/${committeeId}/details`);
+            const res = await fetch(`/api/committee/${committeeId}/details`, { cache: "no-store" });
             if (!res.ok) throw new Error("Failed to fetch dimensions");
             const result = await res.json();
             setData(result);
@@ -93,10 +94,14 @@ export default function CommitteeDetailPage() {
     if (!data) return <div className="p-12 text-center text-slate-500 uppercase font-black">Circuit Offline</div>;
 
     const { committee, organizer } = data;
-    const myPayment = committee.payments?.find(p => p.month === committee.currentMonth && (p.member?._id === user?._id || p.member === user?._id));
-    const turnRecord = committee.result?.find(r => r.position === committee.currentMonth);
-    const isMyTurn = (turnRecord?.member?._id === user?._id || turnRecord?.member === user?._id);
-    const imInComittie = committee?.members?.some(member => member?._id == user?._id);
+    const myPayment = (committee.payments || [])
+        .slice()
+        .reverse()
+        .find(p => Number(p.month) === Number(committee.currentMonth) && 
+            ((p.member?._id || p.member)?.toString() === (user?._id || user)?.toString()));
+    const turnRecord = (committee.result || []).find(r => Number(r.position) === Number(committee.currentMonth));
+    const isMyTurn = ((turnRecord?.member?._id || turnRecord?.member)?.toString() === (user?._id || user)?.toString());
+    const imInComittie = (committee?.members || []).some(member => (member?._id || member)?.toString() === (user?._id || user)?.toString());
 
     return (
         <div className="p-8 md:p-12 space-y-12 animate-in fade-in slide-in-from-bottom-6 duration-1000">
@@ -166,7 +171,7 @@ export default function CommitteeDetailPage() {
                         </div>
                         <Table headers={["Member Identity", "Status", "Timestamp"]}>
                             {committee.members.map((m) => {
-                                const p = committee.payments?.find(pm => pm.month === committee.currentMonth && (pm.member?._id === m._id || pm.member === m._id));
+                                const p = (committee.payments || []).slice().reverse().find(pm => Number(pm.month) === Number(committee.currentMonth) && ((pm.member?._id || pm.member)?.toString() === (m._id || m)?.toString()));
                                 return (
                                     <TableRow key={m._id}>
                                         <TableCell className="font-black uppercase text-slate-900 dark:text-white">
@@ -197,6 +202,120 @@ export default function CommitteeDetailPage() {
                         </Table>
                     </Card>
 
+                    {/* Monthly Payment History & Installment Ledger */}
+                    <Card className="p-8 border-none shadow-premium bg-white dark:bg-slate-900 space-y-6">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
+                            <div>
+                                <div className="flex items-center gap-2 mb-1">
+                                    <span className="px-2 py-0.5 bg-primary-600/10 text-primary-600 rounded-md text-[9px] font-black uppercase tracking-wider">
+                                        Personal Ledger · ذاتی ریکارڈ
+                                    </span>
+                                </div>
+                                <h3 className="text-xl font-black uppercase tracking-tight text-slate-900 dark:text-white">
+                                    Your Installment History & Receipts
+                                </h3>
+                                <p className="text-xs text-slate-400 font-medium">
+                                    Track every monthly installment, verification status, and transaction references for this committee.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="overflow-x-auto">
+                            <Table headers={["Cycle Month", "Amount Due", "Status", "Reference / Date", "Evidence"]}>
+                                {Array.from({ length: committee.monthDuration || 1 }, (_, i) => i + 1).map((mNum) => {
+                                    const mPayment = (committee.payments || [])
+                                        .slice()
+                                        .reverse()
+                                        .find(p => Number(p.month) === mNum && 
+                                            ((p.member?._id || p.member)?.toString() === (user?._id || user)?.toString()));
+                                    const isCurrent = mNum === Number(committee.currentMonth);
+                                    const isPast = mNum < Number(committee.currentMonth);
+                                    const isFuture = mNum > Number(committee.currentMonth);
+
+                                    return (
+                                        <TableRow key={mNum} className={isCurrent ? "bg-primary-500/[0.03]" : ""}>
+                                            <TableCell className="font-black text-slate-900 dark:text-white">
+                                                <div className="flex items-center gap-2">
+                                                    <span className={`w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-black ${
+                                                        isCurrent ? "bg-primary-600 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
+                                                    }`}>
+                                                        {mNum}
+                                                    </span>
+                                                    <span>Month {mNum}</span>
+                                                    {isCurrent && (
+                                                        <span className="text-[8px] font-black uppercase text-primary-600 bg-primary-50 px-1.5 py-0.5 rounded">Active</span>
+                                                    )}
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="font-mono font-bold text-slate-700 dark:text-slate-300">
+                                                PKR {formatMoney(committee.monthlyAmount)}
+                                            </TableCell>
+                                            <TableCell>
+                                                <span className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider inline-flex items-center gap-1 ${
+                                                    mPayment?.status === "verified"
+                                                        ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400"
+                                                        : mPayment?.status === "pending"
+                                                        ? "bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400"
+                                                        : mPayment?.status === "rejected"
+                                                        ? "bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-400"
+                                                        : isPast
+                                                        ? "bg-rose-100 text-rose-700 dark:bg-rose-500/10 dark:text-rose-400"
+                                                        : isCurrent
+                                                        ? "bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400"
+                                                        : "bg-slate-100 text-slate-400 dark:bg-slate-800"
+                                                }`}>
+                                                    {mPayment?.status === "verified"
+                                                        ? "Paid & Verified"
+                                                        : mPayment?.status === "pending"
+                                                        ? "Proof Under Review"
+                                                        : mPayment?.status === "rejected"
+                                                        ? "Flagged / Rejected"
+                                                        : isPast
+                                                        ? "Overdue / Unpaid"
+                                                        : isCurrent
+                                                        ? "Due Now"
+                                                        : "Upcoming"}
+                                                </span>
+                                            </TableCell>
+                                            <TableCell className="text-xs text-slate-500 font-medium">
+                                                {mPayment?.submission?.transactionId ? (
+                                                    <div>
+                                                        <span className="font-mono font-bold text-slate-700 dark:text-slate-300 uppercase">{mPayment.submission.transactionId}</span>
+                                                        <p className="text-[10px] text-slate-400">{moment(mPayment.submission.submittedAt || mPayment.updatedAt).format("MMM DD, YYYY")}</p>
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-slate-400 italic">No reference</span>
+                                                )}
+                                            </TableCell>
+                                            <TableCell>
+                                                {mPayment?.submission?.screenshot ? (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() => setViewingReceipt(mPayment)}
+                                                        className="text-[10px] font-black uppercase text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-950 p-2"
+                                                    >
+                                                        View Slip
+                                                    </Button>
+                                                ) : isCurrent && imInComittie && mPayment?.status !== "verified" && mPayment?.status !== "pending" ? (
+                                                    <Button
+                                                        size="sm"
+                                                        onClick={() => setIsPayModalOpen(true)}
+                                                        className="text-[9px] font-black uppercase tracking-wider py-1 px-3 bg-primary-600 text-white"
+                                                    >
+                                                        Pay Now
+                                                    </Button>
+                                                ) : (
+                                                    <span className="text-[10px] text-slate-300 dark:text-slate-700">—</span>
+                                                )}
+                                            </TableCell>
+                                        </TableRow>
+                                    );
+                                })}
+                            </Table>
+                        </div>
+                    </Card>
+
                     {/* Organizer Trust Card */}
                     <Card className="p-8 md:p-12 border-none bg-slate-100 dark:bg-slate-800/50 rounded-[2.5rem] space-y-8">
                         <div className="flex flex-col md:flex-row justify-between items-start gap-8">
@@ -217,7 +336,7 @@ export default function CommitteeDetailPage() {
                             </div>
                             <div className="flex gap-4">
                                 <Button
-                                    className="px-6 py-4 bg-white dark:bg-slate-900 text-slate-600 dark:text-white border-none shadow-xl hover:bg-primary-600 hover:text-white text-[10px] font-black uppercase tracking-widest"
+                                    className="px-6 py-4 bg-slate-900 text-white border-none shadow-xl hover:bg-primary-600 hover:text-white text-[10px] font-black uppercase tracking-widest"
                                     onClick={() => setActiveChat(organizer)}
                                 >
                                     <FiMessageSquare className="mr-2" /> Message Organizer
@@ -386,6 +505,53 @@ export default function CommitteeDetailPage() {
                                 Finalize & Sync <FiArrowRight className="ml-2" />
                             </Button>
                         </div>
+                    </div>
+                </div>
+            </Modal>
+
+            {/* View Slip Modal */}
+            <Modal
+                isOpen={!!viewingReceipt}
+                onClose={() => setViewingReceipt(null)}
+                title={`Payment Receipt — Month ${viewingReceipt?.month}`}
+                size="md"
+            >
+                <div className="space-y-6">
+                    {viewingReceipt?.submission?.screenshot ? (
+                        <div className="rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-950 flex items-center justify-center p-2">
+                            <img
+                                src={viewingReceipt.submission.screenshot}
+                                alt="Payment Evidence"
+                                className="max-h-[380px] w-auto object-contain rounded-lg"
+                            />
+                        </div>
+                    ) : (
+                        <div className="h-32 flex items-center justify-center bg-slate-100 dark:bg-slate-800 rounded-xl text-slate-400 text-xs font-bold uppercase">
+                            No image recorded
+                        </div>
+                    )}
+
+                    <div className="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-100 dark:border-slate-800 space-y-2">
+                        <div className="flex justify-between items-center">
+                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Transaction ID</span>
+                            <span className="font-mono text-xs font-black text-slate-900 dark:text-white uppercase">{viewingReceipt?.submission?.transactionId || "N/A"}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Submitted Date</span>
+                            <span className="text-xs text-slate-600 dark:text-slate-400">{moment(viewingReceipt?.submission?.submittedAt || viewingReceipt?.updatedAt).format("LLL")}</span>
+                        </div>
+                        {viewingReceipt?.submission?.description && (
+                            <div className="pt-2 border-t border-slate-200 dark:border-slate-700">
+                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider mb-0.5">Member Note</p>
+                                <p className="text-xs italic text-slate-700 dark:text-slate-300">"{viewingReceipt.submission.description}"</p>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="flex justify-end">
+                        <Button variant="secondary" onClick={() => setViewingReceipt(null)} className="w-full text-xs font-black uppercase tracking-wider">
+                            Close
+                        </Button>
                     </div>
                 </div>
             </Modal>

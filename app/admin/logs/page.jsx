@@ -13,6 +13,7 @@ import Card from "../../Components/Theme/Card";
 import Button from "../../Components/Theme/Button";
 import Input from "../../Components/Theme/Input";
 import Table, { TableRow, TableCell } from "../../Components/Theme/Table";
+import Pagination from "../../Components/Theme/Pagination";
 import { useLanguage } from "../../Components/LanguageContext";
 
 export default function LogsPage() {
@@ -22,6 +23,8 @@ export default function LogsPage() {
     const [loading, setLoading] = useState(true);
     const [admin, setAdmin] = useState(null);
     const [filter, setFilter] = useState("");
+    const [page, setPage] = useState(1);
+    const PAGE_SIZE = 10;
 
     useEffect(() => {
         const detail = localStorage.getItem("admin_detail");
@@ -33,9 +36,11 @@ export default function LogsPage() {
         const parsed = JSON.parse(detail);
         setAdmin(parsed);
 
-        const isSuperAdmin = parsed.email.toLowerCase() === "tulaib@gmail.com" ||
-            parsed.email.toLowerCase().includes("tulaib") ||
-            parsed.name.toLowerCase().includes("tulaib");
+        const isSuperAdmin = parsed.isSuperAdmin === true ||
+            parsed.isSuperAdmin === "true" ||
+            parsed.email?.toLowerCase() === "tulaib@gmail.com" ||
+            parsed.email?.toLowerCase().includes("tulaib") ||
+            parsed.name?.toLowerCase?.().includes("tulaib");
 
         if (!isSuperAdmin) {
             toast.error("Unauthorized access to logs");
@@ -60,10 +65,17 @@ export default function LogsPage() {
         }
     };
 
+    useEffect(() => {
+        setPage(1);
+    }, [filter]);
+
     const filteredLogs = logs.filter(l =>
         l.action.toLowerCase().includes(filter.toLowerCase()) ||
         l.performedBy?.name?.toLowerCase().includes(filter.toLowerCase())
     );
+
+    const totalPages = Math.ceil(filteredLogs.length / PAGE_SIZE) || 1;
+    const paginatedLogs = filteredLogs.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
     if (loading) return (
         <div className="flex flex-col items-center justify-center min-h-[500px] gap-6 animate-pulse">
@@ -91,7 +103,7 @@ export default function LogsPage() {
                             onChange={(e) => setFilter(e.target.value)}
                         />
                     </div>
-                    <Button onClick={() => fetchLogs(admin._id)} className="h-12 px-5 bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-white hover:bg-slate-200 transition-all">
+                    <Button onClick={() => fetchLogs(admin._id)} className="h-12 px-5 bg-slate-900 text-white hover:bg-primary-600 transition-all shadow-md">
                         <FiRefreshCcw />
                     </Button>
                 </div>
@@ -106,10 +118,10 @@ export default function LogsPage() {
                         <p className="text-xs text-primary-500 font-black uppercase tracking-widest italic">Live Operations</p>
                     </div>
                 </Card>
-                <Card className="md:col-span-2 p-0 overflow-hidden border-none shadow-premium bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl">
+                <Card className="md:col-span-2 p-0 overflow-hidden border-none shadow-premium bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl flex flex-col justify-between">
                     <div className="overflow-x-auto">
                         <Table headers={["Timestamp", "Action", "Performed By", "Details"]}>
-                            {filteredLogs.map((log) => (
+                            {paginatedLogs.map((log) => (
                                 <TableRow key={log._id} className="hover:bg-primary-50/30 transition-colors">
                                     <TableCell className="font-mono text-[10px] text-slate-400">
                                         {moment(log.timestamp).format("YYYY-MM-DD HH:mm:ss")}
@@ -144,6 +156,16 @@ export default function LogsPage() {
                             <FiDatabase size={48} className="mx-auto text-slate-100" />
                             <p className="text-slate-400 font-black uppercase tracking-widest text-xs italic">No activity matching your filter</p>
                         </div>
+                    )}
+                    {filteredLogs.length > 0 && (
+                        <Pagination
+                            currentPage={page}
+                            totalPages={totalPages}
+                            onPageChange={setPage}
+                            totalItems={filteredLogs.length}
+                            pageSize={PAGE_SIZE}
+                            className="px-6 py-4"
+                        />
                     )}
                 </Card>
             </div>
