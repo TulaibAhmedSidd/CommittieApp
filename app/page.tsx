@@ -941,16 +941,15 @@ export default function Home() {
         <div className="mx-auto max-w-6xl px-4 py-10 md:px-8">
           <div className="desi-divider mb-8" />
           <div className="flex flex-col items-center justify-between gap-6 md:flex-row">
-            <Link href="/" className="flex items-center gap-2.5">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary-600 text-white">
-                <span className="text-xs font-black">BC</span>
-              </div>
-              <span className="text-base font-black tracking-tighter text-ink-900">
-                Committie<span className="text-primary-600">App</span>
-              </span>
-            </Link>
+            <Logo size="sm" />
 
             <div className="flex flex-wrap items-center gap-6 text-xs font-black uppercase tracking-[0.18em] text-muted-500">
+              <Link href="/guide/member" className="hover:text-primary-600">
+                Member Guide
+              </Link>
+              <Link href="/guide/organizer" className="hover:text-primary-600">
+                Organizer Guide
+              </Link>
               <Link href="/privacy" className="hover:text-primary-600">
                 Privacy
               </Link>
@@ -959,9 +958,6 @@ export default function Home() {
               </Link>
               <Link href="/contact" className="hover:text-primary-600">
                 Contact
-              </Link>
-              <Link href="/theme-guide" className="hover:text-primary-600">
-                Design system
               </Link>
             </div>
 
