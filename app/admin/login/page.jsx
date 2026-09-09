@@ -9,6 +9,7 @@ import { FiLock, FiMail, FiArrowRight, FiShield } from "react-icons/fi";
 import Button from "../../Components/Theme/Button";
 import Input from "../../Components/Theme/Input";
 import Card from "../../Components/Theme/Card";
+import Logo from "../../Components/Theme/Logo";
 import { useLanguage } from "../../Components/LanguageContext";
 
 export default function AdminLogin() {
@@ -65,14 +66,9 @@ export default function AdminLogin() {
             <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-indigo-500/10 rounded-full blur-[120px] animate-pulse delay-700" />
 
             <div className="w-full max-w-md relative z-10 animate-in fade-in zoom-in duration-700">
-                <div className="text-center mb-10 space-y-2">
-                    <div className="inline-flex items-center justify-center w-16 h-16 bg-white dark:bg-slate-900 rounded-2xl shadow-premium border border-primary-100 dark:border-primary-900/30 mb-4 animate-bounce-slow">
-                        <FiShield size={32} className="text-primary-600" />
-                    </div>
-                    <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">
-                        Committie<span className="text-primary-600">App</span>
-                    </h1>
-                    <p className="text-slate-500 dark:text-slate-400 font-black uppercase tracking-widest text-[10px] pt-1">{t("adminAccessTerminal")}</p>
+                <div className="flex flex-col items-center justify-center mb-8">
+                    <Logo size="xl" className="justify-center" />
+                    <span className="text-slate-500 dark:text-slate-400 font-black uppercase tracking-widest text-[10px] mt-2">{t("adminAccessTerminal")} · منتظم پورٹل</span>
                 </div>
 
                 <Card className="p-8 backdrop-blur-xl bg-white/70 dark:bg-slate-900/70 border-white/50 dark:border-slate-800/50 shadow-2xl">

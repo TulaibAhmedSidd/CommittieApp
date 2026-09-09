@@ -12,48 +12,22 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const [theme, setThemeState] = useState("midnight");
-    const [isLoading, setIsLoading] = useState(true);
+    const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {
-        fetchTheme();
+        // Clean off any stale theme-* classes (e.g. theme-royal) from document and body
+        if (typeof document !== "undefined") {
+            const targets = [document.documentElement, document.body];
+            targets.forEach(el => {
+                if (!el) return;
+                const themeClasses = Array.from(el.classList).filter(c => c.startsWith("theme-"));
+                themeClasses.forEach(c => el.classList.remove(c));
+            });
+        }
     }, []);
 
-    const fetchTheme = async () => {
-        try {
-            const res = await fetch("/api/settings");
-            const data = await res.json();
-            if (data.activeTheme) {
-                setThemeState(data.activeTheme);
-                applyTheme(data.activeTheme);
-            }
-        } catch (err) {
-            console.error("Failed to fetch theme:", err);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const applyTheme = (themeName: string) => {
-        const html = document.documentElement;
-        const body = document.body;
-
-        // Remove existing theme classes from both
-        [html, body].forEach(el => {
-            const themeClasses = Array.from(el.classList).filter(c => c.startsWith('theme-'));
-            themeClasses.forEach(c => el.classList.remove(c));
-
-            if (themeName !== 'midnight') {
-                el.classList.add(`theme-${themeName}`);
-            }
-        });
-    };
-
-    const setTheme = async (newTheme: string) => {
+    const setTheme = (newTheme: string) => {
         setThemeState(newTheme);
-        applyTheme(newTheme);
-
-        // Admin will typically call this from the ThemeManager, 
-        // but we keep it here for consistency.
     };
 
     return (

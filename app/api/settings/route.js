@@ -5,8 +5,12 @@ export async function GET(req) {
     try {
         await connectToDatabase();
         let settings = await Settings.findOne({});
-        if (!settings) {
-            settings = await Settings.create({ activeTheme: 'midnight' });
+        if (!settings || settings.activeTheme !== "midnight") {
+            settings = await Settings.findOneAndUpdate(
+                {},
+                { activeTheme: "midnight" },
+                { new: true, upsert: true }
+            );
         }
         return new Response(JSON.stringify(settings), { status: 200 });
     } catch (err) {
@@ -19,9 +23,10 @@ export async function PATCH(req) {
         await connectToDatabase();
         const { activeTheme, adminId } = await req.json();
 
+        const safeTheme = activeTheme === "royal" ? "midnight" : activeTheme;
         const settings = await Settings.findOneAndUpdate(
             {},
-            { activeTheme, lastUpdatedBy: adminId },
+            { activeTheme: safeTheme, lastUpdatedBy: adminId },
             { new: true, upsert: true }
         );
 

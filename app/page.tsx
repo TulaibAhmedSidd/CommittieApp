@@ -164,6 +164,10 @@ const FAQS = [
     a: "Organizer can't advance the cycle until 100% of non-beneficiary members pay. Reminders go out automatically. Disputes are logged in the audit trail.",
   },
   {
+    q: "What if a member collects their payout early and runs away or stops paying?",
+    a: "Every member on CommittieApp is verified with their original CNIC and live selfie—anonymous accounts are impossible. If a member defaults after receiving their payout: (1) Their CNIC, phone, and accounts are permanently blacklisted across the entire platform; (2) The organizer receives a certified digital audit ledger, signed agreement, and transaction receipts as legal evidence; (3) Organizers have full legal grounds to pursue criminal action under Pakistan Penal Code (PPC) Section 420 (Cheating) and Section 406 (Criminal Breach of Trust / امانت میں خیانت) or file an FIA Cybercrime complaint.",
+  },
+  {
     q: "Does it work for committees that already started offline?",
     a: "Yes. An organizer can create the committee at its current month and import the past payment history before going live on the app.",
   },

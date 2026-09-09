@@ -78,14 +78,30 @@ export default function ThemeGuidePage() {
     const [activeTheme, setActiveTheme] = useState("default");
     const [isDark, setIsDark] = useState(false);
     const [modalOpen, setModalOpen] = useState(false);
+    const [authorized, setAuthorized] = useState(false);
 
     useEffect(() => {
-        setActiveThemeClass(activeTheme);
-    }, [activeTheme]);
+        const adminToken = localStorage.getItem("admin_token");
+        if (!adminToken) {
+            window.location.href = "/admin/login";
+        } else {
+            setAuthorized(true);
+        }
+    }, []);
 
     useEffect(() => {
-        document.documentElement.classList.toggle("dark", isDark);
-    }, [isDark]);
+        if (authorized) {
+            setActiveThemeClass(activeTheme);
+        }
+    }, [activeTheme, authorized]);
+
+    useEffect(() => {
+        if (authorized) {
+            document.documentElement.classList.toggle("dark", isDark);
+        }
+    }, [isDark, authorized]);
+
+    if (!authorized) return null;
 
     const persistTheme = async () => {
         const meta = THEMES.find((t) => t.id === activeTheme);

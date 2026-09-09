@@ -23,6 +23,7 @@ import Button from "../Components/Theme/Button";
 import Card from "../Components/Theme/Card";
 import BilingualLabel from "../Components/Theme/BilingualLabel";
 import StatusPill from "../Components/Theme/StatusPill";
+import Logo from "../Components/Theme/Logo";
 
 const PAKISTANI_CITIES = [
     "Karachi", "Lahore", "Islamabad", "Rawalpindi", "Faisalabad", "Multan",
@@ -37,7 +38,7 @@ function RegisterContent() {
     const referralCode = searchParams.get("ref");
     const urlRole = searchParams.get("role");
     const [role, setRole] = useState(urlRole === "organizer" ? "organizer" : "member");
-    const [formData, setFormData] = useState({
+    const [form, setForm] = useState({
         name: "",
         email: "",
         password: "",
@@ -183,14 +184,7 @@ function RegisterContent() {
             {/* top brand bar */}
             <header className="border-b border-border-100 bg-surface-50/85 backdrop-blur-xl">
                 <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 md:px-8">
-                    <Link href="/" className="flex items-center gap-2.5">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-primary-600 text-white text-sm font-black">
-                            BC
-                        </div>
-                        <span className="text-base font-black tracking-tighter text-ink-900">
-                            Committie<span className="text-primary-600">App</span>
-                        </span>
-                    </Link>
+                    <Logo size="md" />
                     <Link
                         href={isOrganizer ? "/admin/login" : "/login"}
                         className="text-xs font-black uppercase tracking-[0.18em] text-muted-500 hover:text-primary-600"
