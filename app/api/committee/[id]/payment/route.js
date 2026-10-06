@@ -39,6 +39,7 @@ export async function POST(req, { params }) {
     const image = await resolveImage(body.screenshot, auth.user._id, "Member", `receipt-${c._id}-m${month}`);
     if (image.error) return fail(400, image.error);
 
+    let res;
     const submission = {
       screenshot: image.url,
       transactionId: str(body.transactionId, 60),
@@ -47,16 +48,18 @@ export async function POST(req, { params }) {
     };
 
     if (existing) {
-      await Committee.updateOne(
-        { _id: c._id, "payments._id": existing._id },
+      res = await Committee.updateOne(
+        { _id: c._id, payments: { $elemMatch: { _id: existing._id, status: existing.status } } },
         { $set: { "payments.$.status": "pending", "payments.$.submission": submission, "payments.$.method": "online", "payments.$.rejectReason": "", "payments.$.updatedAt": new Date() } }
       );
     } else {
-      await Committee.updateOne(
-        { _id: c._id },
+      res = await Committee.updateOne(
+        { _id: c._id, payments: { $not: { $elemMatch: { month, member: auth.user._id } } } },
         { $push: { payments: { month, member: auth.user._id, status: "pending", method: "online", submission, updatedAt: new Date() } } }
       );
     }
+
+    if (!res.modifiedCount) return fail(409, "This payment was just changed. Please refresh the page.");
 
     await notify({
       recipient: c.createdBy,
@@ -100,11 +103,12 @@ async function reviewPayment(c, admin, action, memberId, reason, month) {
   const existing = paymentFor(c, month, memberId);
   const now = new Date();
   let message;
+  let res;
 
   if (action === "approve") {
     if (!existing || existing.status !== "pending") return fail(400, "There is no receipt waiting to be checked.");
-    await Committee.updateOne(
-      { _id: c._id, "payments._id": existing._id },
+    res = await Committee.updateOne(
+      { _id: c._id, payments: { $elemMatch: { _id: existing._id, status: "pending" } } },
       { $set: { "payments.$.status": "verified", "payments.$.reviewedBy": admin._id, "payments.$.reviewedAt": now, "payments.$.updatedAt": now } }
     );
     message = `Your payment for ${c.name} (month ${month}) is approved.`;
@@ -112,26 +116,28 @@ async function reviewPayment(c, admin, action, memberId, reason, month) {
     const why = str(reason, 200);
     if (!why) return fail(400, "Please write why you are rejecting it.");
     if (!existing || existing.status !== "pending") return fail(400, "There is no receipt waiting to be checked.");
-    await Committee.updateOne(
-      { _id: c._id, "payments._id": existing._id },
+    res = await Committee.updateOne(
+      { _id: c._id, payments: { $elemMatch: { _id: existing._id, status: "pending" } } },
       { $set: { "payments.$.status": "rejected", "payments.$.rejectReason": why, "payments.$.reviewedBy": admin._id, "payments.$.reviewedAt": now, "payments.$.updatedAt": now } }
     );
     message = `Your receipt for ${c.name} (month ${month}) was not accepted: ${why}. Please send it again.`;
   } else {
     if (existing?.status === "verified") return fail(400, "Already paid.");
     if (existing) {
-      await Committee.updateOne(
-        { _id: c._id, "payments._id": existing._id },
+      res = await Committee.updateOne(
+        { _id: c._id, payments: { $elemMatch: { _id: existing._id, status: existing.status } } },
         { $set: { "payments.$.status": "verified", "payments.$.method": "cash", "payments.$.reviewedBy": admin._id, "payments.$.reviewedAt": now, "payments.$.updatedAt": now } }
       );
     } else {
-      await Committee.updateOne(
-        { _id: c._id },
+      res = await Committee.updateOne(
+        { _id: c._id, payments: { $not: { $elemMatch: { month, member: memberId } } } },
         { $push: { payments: { month, member: memberId, status: "verified", method: "cash", reviewedBy: admin._id, reviewedAt: now, updatedAt: now } } }
       );
     }
     message = `Your cash payment for ${c.name} (month ${month}) is marked as paid.`;
   }
+
+  if (!res?.modifiedCount) return fail(409, "This payment was just changed. Please refresh the page.");
 
   const member = await Member.findById(memberId).select("name email");
   if (member) {

@@ -14,8 +14,14 @@ import { fail, isObjectId } from "./http";
 
 const TOKEN_TTL = "14d";
 
-if (process.env.JWT_SECRET && process.env.JWT_SECRET.length < 32) {
-  console.warn("[security] JWT_SECRET is shorter than 32 characters. Rotate it (see .env.example).");
+function secret() {
+  const s = process.env.JWT_SECRET || "";
+  if (s.length < 32) {
+    // Fail closed: a short secret can be guessed and tokens forged.
+    if (process.env.NODE_ENV === "production") throw new Error("JWT_SECRET must be at least 32 characters. See .env.example.");
+    console.warn("[security] JWT_SECRET is shorter than 32 characters. Rotate it (see .env.example).");
+  }
+  return s;
 }
 
 export function signToken(account, role) {
@@ -26,7 +32,7 @@ export function signToken(account, role) {
       isAdmin: role === "admin",
       tv: account.tokenVersion || 0,
     },
-    process.env.JWT_SECRET,
+    secret(),
     { expiresIn: TOKEN_TTL }
   );
 }
@@ -40,9 +46,12 @@ function decode(req) {
   const token = getBearerToken(req);
   if (!token) return { error: fail(401, "Please log in.") };
   try {
-    const payload = jwt.verify(token, process.env.JWT_SECRET);
-    const role = payload.role || (payload.isAdmin ? "admin" : "member");
-    if (!isObjectId(payload.userId)) return { error: fail(401, "Please log in again.") };
+    const payload = jwt.verify(token, secret(), { algorithms: ["HS256"] });
+    const role = payload.role;
+    // Only tokens made by signToken (they always carry role + tv). Old-format tokens are refused.
+    if (!isObjectId(payload.userId) || !["admin", "member"].includes(role) || typeof payload.tv !== "number") {
+      return { error: fail(401, "Please log in again.") };
+    }
     return { payload, role };
   } catch {
     return { error: fail(401, "Please log in again.") };
@@ -97,7 +106,13 @@ export async function requireCommitteeOwner(req, committeeId) {
   return { ...auth, committee };
 }
 
-/** True if this organizer may manage this member (linked to them, or super admin). */
+/** True if this organizer may make password links for this member: only members they created (or super admin). */
+export function adminCanResetMember(admin, member) {
+  if (!admin || !member) return false;
+  return !!admin.isSuperAdmin || String(member.createdBy || "") === String(admin._id);
+}
+
+/** True if this organizer may manage this member (linked to them with consent, created by them, or super admin). */
 export function adminCanManageMember(admin, member) {
   if (!admin || !member) return false;
   if (admin.isSuperAdmin) return true;

@@ -4,6 +4,7 @@ import { ok, fail, readJson, serverError } from "@/app/utils/http";
 import { parseIdentifier } from "@/app/utils/phone";
 import { findAccounts, publicAccount } from "@/app/utils/accounts";
 import { signToken } from "@/app/utils/auth";
+import { limit, clientIp } from "@/app/utils/rateLimit";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +22,9 @@ export async function POST(req) {
     }
 
     await connectToDatabase();
+    const idKey = id.email || id.phone;
+    const limited = await limit([[`login:ip:${clientIp(req)}`, 30, 600], [`login:id:${idKey}`, 15, 600]]);
+    if (limited) return limited;
     const { admins, members } = await findAccounts(id);
     const candidates = [
       ...admins.map((doc) => ({ doc, role: "admin" })),
@@ -41,12 +45,11 @@ export async function POST(req) {
       if (good) {
         matches.push(c);
       } else {
-        c.doc.loginFails = (c.doc.loginFails || 0) + 1;
-        if (c.doc.loginFails >= MAX_FAILS) {
-          c.doc.lockUntil = new Date(now + LOCK_MS);
-          c.doc.loginFails = 0;
+        // Atomic counter: two wrong tries at once both count.
+        const after = await c.doc.constructor.findOneAndUpdate({ _id: c.doc._id }, { $inc: { loginFails: 1 } }, { new: true }).select("+loginFails");
+        if ((after?.loginFails || 0) >= MAX_FAILS) {
+          await c.doc.constructor.updateOne({ _id: c.doc._id }, { loginFails: 0, lockUntil: new Date(now + LOCK_MS) });
         }
-        await c.doc.constructor.updateOne({ _id: c.doc._id }, { loginFails: c.doc.loginFails, lockUntil: c.doc.lockUntil });
       }
     }
 

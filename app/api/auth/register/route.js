@@ -7,6 +7,7 @@ import { normalizePkPhone, normalizeEmail } from "@/app/utils/phone";
 import { isTaken, publicAccount } from "@/app/utils/accounts";
 import { signToken } from "@/app/utils/auth";
 import { notify } from "@/app/utils/notify";
+import { limit, clientIp } from "@/app/utils/rateLimit";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +29,8 @@ export async function POST(req) {
     if (password.length < 6) return fail(400, "Password must be at least 6 characters.");
 
     await connectToDatabase();
+    const limited = await limit([[`register:ip:${clientIp(req)}`, 10, 3600]]);
+    if (limited) return limited;
     const Model = role === "organizer" ? Admin : Member;
     const taken = await isTaken(Model, { phone, email });
     if (taken === "phone") return fail(409, "This phone number already has an account. Please log in.");
@@ -54,8 +57,7 @@ export async function POST(req) {
       status: "approved",
       referredBy: referrer?._id,
       organizers: referrer ? [referrer._id] : [],
-      createdBy: referrer?._id,
-      createdByAdminName: referrer?.name,
+      // Not createdBy: a self-signup owns their account (the organizer cannot make password links for them).
     });
 
     if (referrer) {

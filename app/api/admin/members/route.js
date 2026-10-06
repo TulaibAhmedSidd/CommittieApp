@@ -12,6 +12,7 @@ import { createLog } from "@/app/utils/logger";
 import { sendMail } from "@/app/utils/mailer";
 import { emails } from "@/app/utils/emailTemplates";
 import { addMemberToCommittee } from "@/app/utils/committeeOps";
+import { notify } from "@/app/utils/notify";
 import { stage } from "@/app/utils/bcRules";
 
 export const dynamic = "force-dynamic";
@@ -26,7 +27,7 @@ export async function GET(req) {
     const me = auth.user._id;
 
     const [members, myBcs] = await Promise.all([
-      Member.find(linkedTo(me)).select("name phone email city status verificationStatus createdAt").sort({ name: 1 }).limit(1000).lean(),
+      Member.find(linkedTo(me)).select("name phone email city status verificationStatus createdAt createdBy").sort({ name: 1 }).limit(1000).lean(),
       Committee.find({ createdBy: me }).select("name status members pendingMembers").lean(),
     ]);
 
@@ -44,6 +45,7 @@ export async function GET(req) {
         city: m.city || "",
         status: m.status,
         verificationStatus: m.verificationStatus,
+        addedByMe: auth.user.isSuperAdmin || String(m.createdBy || "") === String(me),
         bcs: bcsByMember[String(m._id)] || [],
       })),
     });
@@ -82,12 +84,34 @@ export async function POST(req) {
     let alreadyHadAccount = false;
 
     if (member) {
-      alreadyHadAccount = member.status !== "invited";
-      await Member.updateOne({ _id: member._id }, { $addToSet: { organizers: admin._id } });
+      const me = String(admin._id);
+      const createdByMe = String(member.createdBy || "") === me;
+      const linked = (member.organizers || []).some((o) => String(o) === me);
+
       if (member.status === "invited") {
+        // Only the organizer who invited them may send a new invite.
+        if (!createdByMe && !admin.isSuperAdmin) {
+          return fail(409, "This person was already invited by another organizer. Ask them to open that invite first.");
+        }
         invite = makePasswordLinkMessage(member, admin.name);
         await Member.updateOne({ _id: member._id }, linkUpdate(member));
+      } else if (!linked && !createdByMe) {
+        // Existing account that is not linked to me: ask for their consent, never link silently.
+        await Member.updateOne({ _id: member._id }, { $addToSet: { pendingOrganizers: admin._id } });
+        await notify({
+          recipient: member,
+          model: "Member",
+          sender: admin._id,
+          senderModel: "Admin",
+          type: "connect_request",
+          message: `${admin.name} (organizer) wants to add you to their members${committee ? ` for ${committee.name}` : ""}.`,
+          details: { adminId: me },
+          link: "/userDash/notifications",
+        });
+        await createLog({ action: "REQUEST_MEMBER_LINK", performedBy: admin._id, onModel: "Admin", targetId: member._id });
+        return ok({ requestSent: true }, 202);
       }
+      alreadyHadAccount = member.status !== "invited";
     } else {
       if (email && (await Member.exists({ email }))) return fail(409, "Another member already uses this email. Leave email empty or use a different one.");
       member = new Member({
@@ -107,13 +131,15 @@ export async function POST(req) {
       }
     }
 
-    if (committee) await addMemberToCommittee(committee, member, admin._id);
+    let addedToBc = false;
+    if (committee) addedToBc = await addMemberToCommittee(committee, member, admin._id);
 
     await createLog({ action: "ADD_MEMBER", performedBy: admin._id, onModel: "Admin", targetId: member._id, details: { committeeId: committee ? String(committee._id) : null, existing: !!existing[0] } });
     return ok(
       {
         member: { _id: String(member._id), name: member.name, phone: member.phone ? String(member.phone) : "", status: member.status },
         alreadyHadAccount,
+        addedToBc,
         invite,
       },
       201

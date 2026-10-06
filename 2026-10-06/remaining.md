@@ -1,6 +1,8 @@
 # 2026-10-06 — Remaining
 
 ## Deploy steps (owner)
+> IMPORTANT: production now **refuses to work** with the old 6-character JWT_SECRET (on purpose). Set the new JWT_SECRET in Vercel **before** merging to main, or nobody can log in.
+> Run the migration right after deploy: until then the old email index allows only ONE organizer without an email.
 - [ ] **Rotate every secret.** The old `.env` is in git history, which also means GitHub.
   - [ ] MongoDB Atlas: change the database user password and update `MONGO_URI`.
   - [ ] Gmail: revoke the old app password, make a new one, and update `SMTP_PASSWORD`.

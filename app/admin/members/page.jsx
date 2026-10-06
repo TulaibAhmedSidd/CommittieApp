@@ -95,6 +95,11 @@ function AddSheet({ open, onClose, onAdded }) {
     setSaving(true);
     try {
       const data = await adminApi.post("/api/admin/members", form);
+      if (data.requestSent) {
+        toast.info("This person already has an account. We sent them a request. They will show here after they accept.", { autoClose: 6000 });
+        close();
+        return;
+      }
       onAdded();
       setResult(data);
     } catch (err) {
@@ -264,9 +269,11 @@ function PersonSheet({ member, onClose, onChanged }) {
             <Button full icon={FiPlusCircle} onClick={openPicker}>
               Add to a BC
             </Button>
-            <Button full variant="secondary" icon={FiKey} onClick={makeLink} loading={busy === "link"}>
-              {m.status === "invited" ? "New invite link" : "New password link"}
-            </Button>
+            {m.addedByMe && (
+              <Button full variant="secondary" icon={FiKey} onClick={makeLink} loading={busy === "link"}>
+                {m.status === "invited" ? "New invite link" : "New password link"}
+              </Button>
+            )}
             <Button full variant="danger" icon={FiTrash2} onClick={removeFromList}>
               Remove from my list
             </Button>

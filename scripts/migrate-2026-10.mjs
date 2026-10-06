@@ -27,7 +27,15 @@ function normalizePkPhone(input) {
   return /^3\d{9}$/.test(n) ? `+92${n}` : null;
 }
 
-const backup = [];
+let backupFile = null;
+const backup = { push(entry) {
+  if (!backupFile) {
+    const dir = path.join(process.cwd(), "scripts", "backups");
+    fs.mkdirSync(dir, { recursive: true });
+    backupFile = path.join(dir, `migrate-2026-10-${Date.now()}.jsonl`);
+  }
+  fs.appendFileSync(backupFile, JSON.stringify(entry) + "\n");
+} };
 const log = (...a) => console.log(...a);
 
 async function phones(db) {
@@ -102,6 +110,16 @@ async function committees(db) {
   }
 }
 
+async function audit(db) {
+  const supers = await db.collection("admins").find({ isSuperAdmin: true }, { projection: { _id: 1, name: 1, status: 1 } }).toArray();
+  log(`[audit] super admins (${supers.length}) — confirm every one is really you:`);
+  for (const a of supers) log(`         ${a._id}  ${a.name || "(no name)"}  status=${a.status}`);
+  const approvedNoCreator = await db.collection("admins").countDocuments({ status: "approved", isSuperAdmin: { $ne: true } });
+  log(`[audit] approved organizers: ${approvedNoCreator} (check the list in the Organizers screen after deploy)`);
+  const orphanAssets = await db.collection("assets").countDocuments({ $or: [{ uploadedBy: { $exists: false } }, { onModel: { $exists: false } }] });
+  log(`[audit] old photos without uploader: ${orphanAssets} (still visible to the BC organizer through the new fallback)`);
+}
+
 async function indexes(db, dupes) {
   const plan = [
     ["members", { email: 1 }, {}],
@@ -110,6 +128,8 @@ async function indexes(db, dupes) {
     ["committees", { members: 1 }, {}],
     ["committees", { pendingMembers: 1 }, {}],
     ["notifications", { recipient: 1, createdAt: -1 }, {}],
+    ["ratelimits", { expiresAt: 1 }, { expireAfterSeconds: 0 }],
+    ["ratelimits", { key: 1 }, {}],
     ["members", { "passwordLink.hash": 1 }, { sparse: true }],
     ["admins", { "passwordLink.hash": 1 }, { sparse: true }],
   ];
@@ -140,16 +160,11 @@ async function main() {
     if (ONLY.includes("phones")) await phones(db);
     if (ONLY.includes("emails")) await emails(db);
     const dupes = await duplicates(db);
+    await audit(db);
     if (ONLY.includes("committees")) await committees(db);
     if (ONLY.includes("indexes")) await indexes(db, dupes);
   } finally {
-    if (APPLY && backup.length) {
-      const dir = path.join(process.cwd(), "scripts", "backups");
-      fs.mkdirSync(dir, { recursive: true });
-      const file = path.join(dir, `migrate-2026-10-${Date.now()}.json`);
-      fs.writeFileSync(file, JSON.stringify(backup, null, 2));
-      log(`Backup of old values: ${file}`);
-    }
+    if (backupFile) log(`Backup of old values (written before each change): ${backupFile}`);
     await client.close();
   }
   log(APPLY ? "Done." : "Dry run only. Add --apply to write.");

@@ -11,7 +11,7 @@ export async function GET(req) {
     const auth = await requireMember(req);
     if (auth.error) return auth.error;
     const me = auth.user._id;
-    const organizers = auth.user.organizers || [];
+    const organizers = [...(auth.user.organizers || []), ...(auth.user.following || [])];
 
     const common = (q) =>
       Committee.find(q)

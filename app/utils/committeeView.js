@@ -71,7 +71,8 @@ export function ownerView(c) {
     ...basics(c),
     bankDetails: c.bankDetails || {},
     members: (c.members || []).filter((m) => m && m._id).map(memberRow),
-    pendingMembers: (c.pendingMembers || []).filter((m) => m && m._id).map(memberRow),
+    // People who only asked to join: no phone, email or bank details until approved.
+    pendingMembers: (c.pendingMembers || []).filter((m) => m && m._id).map((m) => ({ _id: String(m._id), name: m.name, city: m.city || "", verificationStatus: m.verificationStatus })),
     result: resultList(c),
     payments: (c.payments || []).map((p) => ({
       _id: String(p._id),

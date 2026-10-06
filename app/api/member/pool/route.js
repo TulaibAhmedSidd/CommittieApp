@@ -38,14 +38,14 @@ export async function POST(req) {
     if (!isObjectId(body.adminId)) return fail(400, "Invalid organizer.");
     const admin = await Admin.findOne({ _id: body.adminId, status: "approved" }).select("name");
     if (!admin) return fail(404, "Organizer not found.");
-    await Member.updateOne({ _id: auth.user._id }, { $addToSet: { organizers: admin._id }, $pull: { pendingOrganizers: admin._id } });
+    await Member.updateOne({ _id: auth.user._id }, { $addToSet: { following: admin._id } });
     await notify({
       recipient: admin._id,
       model: "Admin",
       sender: auth.user._id,
       senderModel: "Member",
       type: "info",
-      message: `${auth.user.name} added you as their organizer.`,
+      message: `${auth.user.name} is now following your BCs.`,
       link: "/admin/members",
     });
     return ok({ following: true });

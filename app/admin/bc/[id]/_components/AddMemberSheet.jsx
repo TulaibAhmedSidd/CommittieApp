@@ -35,6 +35,11 @@ export default function AddMemberSheet({ open, onClose, c, onAdded }) {
     setSaving(true);
     try {
       const data = await adminApi.post("/api/admin/members", { ...form, committeeId: c._id });
+      if (data.requestSent) {
+        toast.info("This person already has an account. We sent them a request. Add them to the BC after they accept.", { autoClose: 6000 });
+        onClose();
+        return;
+      }
       onAdded();
       if (data.invite) setInvite({ ...data.invite, name: data.member.name, phone: data.member.phone });
       else {

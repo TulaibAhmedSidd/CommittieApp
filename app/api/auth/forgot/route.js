@@ -5,6 +5,7 @@ import { findAccounts } from "@/app/utils/accounts";
 import { createPasswordLink, linkUpdate } from "@/app/utils/tokens";
 import { sendMail, appUrl } from "@/app/utils/mailer";
 import { emails } from "@/app/utils/emailTemplates";
+import { limit, clientIp } from "@/app/utils/rateLimit";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +18,8 @@ export async function POST(req) {
     if (!id) return fail(400, "Enter your email or phone number.");
 
     await connectToDatabase();
+    const limited = await limit([[`forgot:ip:${clientIp(req)}`, 10, 3600], [`forgot:id:${id.email || id.phone}`, 3, 3600]]);
+    if (limited) return limited;
     const { admins, members } = await findAccounts(id, { withSecrets: false });
     const accounts = [...admins, ...members];
     const withEmail = accounts.filter((a) => a.email);

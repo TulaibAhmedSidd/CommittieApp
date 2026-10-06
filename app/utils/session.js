@@ -57,6 +57,10 @@ export function clearSession(scope) {
   if (!s) return;
   s.removeItem(KEYS[scope].token);
   s.removeItem(KEYS[scope].detail);
+  // Remove any cached data from the offline app (shared family phones).
+  try {
+    if (typeof caches !== "undefined") caches.keys().then((keys) => keys.forEach((k) => caches.delete(k)));
+  } catch {}
 }
 
 export function homeFor(scope) {

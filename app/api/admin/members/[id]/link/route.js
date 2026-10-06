@@ -1,5 +1,5 @@
 import Member from "@/app/api/models/Member";
-import { requireAdmin, adminCanManageMember } from "@/app/utils/auth";
+import { requireAdmin, adminCanResetMember } from "@/app/utils/auth";
 import { ok, fail, serverError, isObjectId } from "@/app/utils/http";
 import { makePasswordLinkMessage } from "@/app/utils/invites";
 import { linkUpdate } from "@/app/utils/tokens";
@@ -15,7 +15,10 @@ export async function POST(req, { params }) {
     if (auth.error) return auth.error;
     if (!isObjectId(params.id)) return fail(400, "Invalid member.");
     const member = await Member.findById(params.id).select("name phone status organizers createdBy referredBy");
-    if (!member || !adminCanManageMember(auth.user, member)) return fail(404, "Member not found in your list.");
+    if (!member) return fail(404, "Member not found in your list.");
+    if (!adminCanResetMember(auth.user, member)) {
+      return fail(403, "Only the organizer who added this member can make a password link. They can use Forgot password instead.");
+    }
 
     const invite = makePasswordLinkMessage(member, auth.user.name);
     await Member.updateOne({ _id: member._id }, linkUpdate(member));

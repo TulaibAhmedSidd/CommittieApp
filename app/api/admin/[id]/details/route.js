@@ -59,7 +59,7 @@ export async function GET(req, { params }) {
         runningCount: byStage.running,
         finishedCount: byStage.finished,
         upcoming: byStage.upcoming,
-        following: viewer ? has(viewer.organizers) : false,
+        following: viewer ? has(viewer.organizers) || has(viewer.following) : false,
       },
     });
   } catch (err) {

@@ -30,7 +30,7 @@ export async function POST(req, { params }) {
     const added = [];
     for (const m of members) {
       if (!adminCanManageMember(auth.user, m)) continue;
-      await addMemberToCommittee(c, m, auth.user._id);
+      if (!(await addMemberToCommittee(c, m, auth.user._id))) break;
       added.push(m.name);
       if (m.status !== "invited") {
         await notify({
@@ -45,7 +45,7 @@ export async function POST(req, { params }) {
         });
       }
     }
-    if (!added.length) return fail(400, "These people are not in your members list.");
+    if (!added.length) return fail(400, "Could not add them. The BC may be full, or they are not in your members list.");
     await createLog({ action: "ASSIGN_MEMBER", performedBy: auth.user._id, onModel: "Admin", targetId: c._id, details: { count: added.length } });
     return ok({ added: added.length });
   } catch (err) {

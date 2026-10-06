@@ -85,3 +85,28 @@ Branch: `revamp-2026-10` (not committed yet, waiting for the owner to review).
   - Organizer home, Create BC, Add member (WhatsApp invite).
   - Running view: check receipt, mark cash, give payout, next month.
   - Member home To do, member BC page, Pay sheet, profile, alerts, members, invite.
+
+## 7. Code review fixes (same day, after an independent review)
+- **Critical — account takeover closed.**
+  - Adding a member by a phone that already has an account now only sends them a request. They must accept before anything is linked; nothing is linked silently.
+  - Password links can only be made by the organizer who created the member, or by the super admin. Self-signups (including signups through a referral link) own their account.
+- **Follow is separate.** "Follow organizer" uses a new `following[]` field and gives the organizer no rights over the member.
+- **Open redirect fixed.** One shared `app/utils/safeNext.js` (with unit tests) is used by login and register.
+- **Money writes are double-tap safe.** Payment submit/approve/reject/cash, member add (capacity checked in the same query) and BC start (exact member set) are all conditional now.
+- **Offline app caches no API data** (NetworkOnly for `/api/*`, `Cache-Control: no-store`). Caches are cleared on logout.
+- **JWT fails closed.** In production a secret under 32 characters refuses every token, and old-format tokens are refused.
+- **Old photos stay visible.** Old uploads with no uploader can still be seen by the BC organizer, found by where the photo is used.
+- **Rate limits** on login, signup, forgot password, set password and uploads (a Mongo TTL collection). The login fail counter is atomic.
+- **BC start** sends notifications in one insert and emails 5 at a time (no timeout).
+- **Smaller fixes:**
+  - People who only asked to join no longer expose their phone or IBAN.
+  - SecureImage only loads app images.
+  - Organizer CNIC image ownership is checked.
+  - Set-password is single-use even under a race.
+- **Migration:**
+  - Backup is written before each change (JSON lines).
+  - New audit: lists the super admins. There is 1, and it is the owner.
+  - Counts old photos with no uploader (0).
+  - Adds the rate-limit TTL index.
+- **Cleanup script** also removes test people from real BCs and members.
+- **Verified:** 47 unit tests pass; lint 0 errors; build OK. E2E against the **production build** passed 63/63, including the new takeover tests. A weak JWT secret refuses all tokens. Test data cleaned.

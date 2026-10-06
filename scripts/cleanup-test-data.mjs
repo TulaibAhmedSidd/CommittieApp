@@ -44,6 +44,17 @@ async function main() {
       console.log(`members with a link to a test BC: ${n}`);
       if (APPLY && n) await db.collection("members").updateMany({}, { $pull: { committees: { committee: { $in: bcIds } } } });
     }
+    // Remove test people from real BCs and real members lists.
+    if (memberIds.length) {
+      const n = await db.collection("committees").countDocuments({ $or: [{ members: { $in: memberIds } }, { pendingMembers: { $in: memberIds } }] });
+      console.log(`real BCs with a test member: ${n}`);
+      if (APPLY && n) await db.collection("committees").updateMany({}, { $pull: { members: { $in: memberIds }, pendingMembers: { $in: memberIds } } });
+    }
+    if (adminIds.length) {
+      const n = await db.collection("members").countDocuments({ $or: [{ organizers: { $in: adminIds } }, { pendingOrganizers: { $in: adminIds } }, { following: { $in: adminIds } }] });
+      console.log(`real members linked to a test organizer: ${n}`);
+      if (APPLY && n) await db.collection("members").updateMany({}, { $pull: { organizers: { $in: adminIds }, pendingOrganizers: { $in: adminIds }, following: { $in: adminIds } } });
+    }
     console.log(APPLY ? "Deleted." : "Dry run. Add --apply to delete.");
   } finally {
     await client.close();

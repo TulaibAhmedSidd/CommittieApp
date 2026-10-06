@@ -8,14 +8,8 @@ import PublicLayout from "../ui/PublicLayout";
 import { Button, Card, Field, Bi } from "../ui";
 import { W } from "../utils/words";
 import { publicApi } from "../utils/api";
-import { saveSession, getSession, homeFor } from "../utils/session";
-
-function safeNext(next, scope) {
-  if (!next || !next.startsWith("/") || next.startsWith("//")) return homeFor(scope);
-  if (scope === "admin" && next.startsWith("/userDash")) return homeFor(scope);
-  if (scope === "member" && next.startsWith("/admin")) return homeFor(scope);
-  return next;
-}
+import { saveSession, getSession } from "../utils/session";
+import { safeNext } from "../utils/safeNext";
 
 function LoginForm() {
   const router = useRouter();

@@ -35,7 +35,7 @@ export async function POST(req, { params }) {
       if (action === "approve") {
         if (stage(committee) !== "upcoming") return fail(400, "This BC has already started.");
         if ((committee.members?.length || 0) >= committee.maxMembers) return fail(400, "This BC is already full.");
-        await addMemberToCommittee(committee, member, auth.user._id);
+        if (!(await addMemberToCommittee(committee, member, auth.user._id))) return fail(409, "This BC is already full or has started.");
         await notify({
           recipient: member,
           model: "Member",

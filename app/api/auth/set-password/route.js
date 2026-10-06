@@ -3,6 +3,7 @@ import connectToDatabase from "@/app/utils/db";
 import { ok, fail, readJson, serverError } from "@/app/utils/http";
 import { signToken } from "@/app/utils/auth";
 import { publicAccount, findByLinkToken } from "@/app/utils/accounts";
+import { limit, clientIp } from "@/app/utils/rateLimit";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +14,8 @@ export async function POST(req) {
     if (typeof password !== "string" || password.length < 6) return fail(400, "Password must be at least 6 characters.");
 
     await connectToDatabase();
+    const limited = await limit([[`setpw:ip:${clientIp(req)}`, 20, 600]]);
+    if (limited) return limited;
     const found = await findByLinkToken(token);
     if (!found) return fail(400, "This link has expired or was already used. Ask for a new one.");
 
@@ -25,7 +28,8 @@ export async function POST(req) {
       lockUntil: null,
     };
     if (role === "member" && doc.status === "invited") update.status = "approved";
-    await doc.constructor.updateOne({ _id: doc._id }, update);
+    const res = await doc.constructor.updateOne({ _id: doc._id, "passwordLink.hash": doc.passwordLink.hash }, update);
+    if (!res.modifiedCount) return fail(400, "This link was already used. Ask for a new one.");
 
     const fresh = await doc.constructor.findById(doc._id);
     if (role === "admin" && fresh.status !== "approved") {

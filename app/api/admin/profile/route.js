@@ -5,7 +5,7 @@ import { ok, fail, readJson, serverError } from "@/app/utils/http";
 import { normalizePkPhone, normalizeEmail } from "@/app/utils/phone";
 import { isTaken, publicAccount } from "@/app/utils/accounts";
 import { ADMIN_SELF } from "@/app/utils/fields";
-import { saveImage, assetIdFromUrl } from "@/app/utils/assets";
+import { resolveImage } from "@/app/utils/assets";
 import { signToken } from "@/app/utils/auth";
 
 export const dynamic = "force-dynamic";
@@ -51,13 +51,9 @@ export async function PATCH(req) {
     }
 
     if (body.nicImage) {
-      if (String(body.nicImage).startsWith("data:")) {
-        const img = await saveImage(body.nicImage, me._id, "Admin", "organizer-cnic");
-        if (img.error) return fail(400, img.error);
-        update.nicImage = img.url;
-      } else if (assetIdFromUrl(body.nicImage)) {
-        update.nicImage = body.nicImage;
-      }
+      const img = await resolveImage(body.nicImage, me._id, "Admin", "organizer-cnic");
+      if (img.error) return fail(400, img.error);
+      update.nicImage = img.url;
       if (me.verificationStatus !== "verified") update.verificationStatus = "pending";
     }
 

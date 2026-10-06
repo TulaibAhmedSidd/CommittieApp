@@ -37,6 +37,8 @@ const MemberSchema = new mongoose.Schema(
     referredBy: { type: mongoose.Schema.Types.ObjectId, ref: "Admin" },
     organizers: [{ type: mongoose.Schema.Types.ObjectId, ref: "Admin" }],
     pendingOrganizers: [{ type: mongoose.Schema.Types.ObjectId, ref: "Admin" }],
+    // Organizers this member follows to see their new BCs. Gives the organizer NO rights over the member.
+    following: [{ type: mongoose.Schema.Types.ObjectId, ref: "Admin" }],
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "Admin", required: false },
     createdByAdminName: { type: String, required: false },
     country: { type: String, default: "Pakistan" },

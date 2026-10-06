@@ -17,6 +17,10 @@ export default function SecureImage({ src, scope, alt = "", className = "" }) {
       setUrl(src);
       return;
     }
+    if (!src.startsWith("/api/assets/")) {
+      setFailed(true);
+      return;
+    }
     let objectUrl;
     let cancelled = false;
     setFailed(false);

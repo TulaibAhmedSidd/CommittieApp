@@ -13,6 +13,17 @@ async function canView(auth, asset) {
   const owner = String(asset.uploadedBy || "");
   if (owner === me) return true;
   if (auth.isAdmin && auth.user.isSuperAdmin) return true;
+  const url = `/api/assets/${asset._id}`;
+
+  // Files uploaded by the old app may have no uploadedBy / onModel: allow by where the file is used.
+  if (auth.isAdmin) {
+    const inMyBc = await Committee.exists({ createdBy: me, $or: [{ "payments.submission.screenshot": url }, { "payouts.screenshot": url }] });
+    if (inMyBc) return true;
+    const docOwner = await Member.findOne({ $or: [{ nicFront: url }, { nicBack: url }, { electricityBill: url }, { "documents.url": url }] }).select("organizers createdBy referredBy");
+    if (docOwner && adminCanManageMember(auth.user, docOwner)) return true;
+  } else if (await Committee.exists({ members: me, "payouts.screenshot": url, "payouts.member": me })) {
+    return true;
+  }
 
   if (auth.isAdmin && asset.onModel === "Member") {
     const member = await Member.findById(owner).select("organizers createdBy referredBy");
@@ -23,7 +34,6 @@ async function canView(auth, asset) {
 
   if (!auth.isAdmin && asset.onModel === "Admin") {
     // Payout proof from my organizer for a BC I am in.
-    const url = `/api/assets/${asset._id}`;
     return !!(await Committee.exists({ createdBy: owner, members: me, "payouts.screenshot": url }));
   }
   return false;
@@ -49,7 +59,7 @@ export async function GET(req, { params }) {
         "Content-Disposition": type === "application/octet-stream" ? "attachment" : "inline",
         "X-Content-Type-Options": "nosniff",
         "Content-Security-Policy": "default-src 'none'; sandbox",
-        "Cache-Control": "private, max-age=3600",
+        "Cache-Control": "no-store",
       },
     });
   } catch (err) {

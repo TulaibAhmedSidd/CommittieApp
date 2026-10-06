@@ -4,7 +4,7 @@ import Member from "@/app/api/models/Member";
 import { requireCommitteeOwner } from "@/app/utils/auth";
 import { ok, fail, readJson, serverError } from "@/app/utils/http";
 import { createLog } from "@/app/utils/logger";
-import { notify } from "@/app/utils/notify";
+import { notifyMany } from "@/app/utils/notify";
 import { emails } from "@/app/utils/emailTemplates";
 import { canStart, shuffle, monthLabel, potAmount } from "@/app/utils/bcRules";
 import { formatPKR } from "@/app/utils/format";
@@ -35,7 +35,7 @@ export async function POST(req, { params }) {
     const result = ordered.map((member, i) => ({ member, position: i + 1 }));
 
     const updated = await Committee.findOneAndUpdate(
-      { _id: c._id, status: { $in: ["open", "full"] }, "result.0": { $exists: false } },
+      { _id: c._id, status: { $in: ["open", "full"] }, "result.0": { $exists: false }, members: { $size: memberIds.length, $all: memberIds } },
       {
         result,
         status: "ongoing",
@@ -46,26 +46,29 @@ export async function POST(req, { params }) {
       },
       { new: true }
     );
-    if (!updated) return fail(409, "This BC has already started.");
+    if (!updated) return fail(409, "This BC changed (started, or members changed). Refresh and try again.");
 
     const pot = potAmount(updated, 1);
     const members = await Member.find({ _id: { $in: ordered } }).select("name email");
     const byId = Object.fromEntries(members.map((m) => [String(m._id), m]));
-    for (const r of result) {
-      const m = byId[r.member];
-      if (!m) continue;
-      const turn = `Month ${r.position} (${monthLabel(updated, r.position)})`;
-      await notify({
-        recipient: m,
-        model: "Member",
-        sender: auth.user._id,
-        senderModel: "Admin",
-        type: "bc_started",
-        message: `${c.name} has started. Your turn: ${turn}.`,
-        link: `/userDash/bc/${c._id}`,
-        email: emails.bcStarted({ name: m.name, bcName: c.name, bcId: c._id, turnLabel: turn, amountText: `Rs ${formatPKR(pot)}` }),
-      });
-    }
+    await notifyMany(
+      result
+        .map((r) => ({ r, m: byId[r.member] }))
+        .filter(({ m }) => m)
+        .map(({ r, m }) => {
+          const turn = `Month ${r.position} (${monthLabel(updated, r.position)})`;
+          return {
+            recipient: m,
+            model: "Member",
+            sender: auth.user._id,
+            senderModel: "Admin",
+            type: "bc_started",
+            message: `${c.name} has started. Your turn: ${turn}.`,
+            link: `/userDash/bc/${c._id}`,
+            email: emails.bcStarted({ name: m.name, bcName: c.name, bcId: c._id, turnLabel: turn, amountText: `Rs ${formatPKR(pot)}` }),
+          };
+        })
+    );
 
     await createLog({ action: "START_COMMITTEE", performedBy: auth.user._id, onModel: "Admin", targetId: c._id, details: { mode: mode === "manual" ? "manual" : "random" } });
     return ok({ started: true });

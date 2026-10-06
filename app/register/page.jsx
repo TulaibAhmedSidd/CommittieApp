@@ -9,6 +9,7 @@ import { Button, Card, Field, Bi, Tabs } from "../ui";
 import { W } from "../utils/words";
 import { publicApi } from "../utils/api";
 import { saveSession } from "../utils/session";
+import { safeNext } from "../utils/safeNext";
 
 function RegisterForm() {
   const router = useRouter();
@@ -34,7 +35,7 @@ function RegisterForm() {
         return;
       }
       saveSession("member", data.token, data.account);
-      router.replace(next && next.startsWith("/") && !next.startsWith("/admin") ? next : "/userDash");
+      router.replace(safeNext(next, "member"));
     } catch (err) {
       setError(err.message);
     } finally {

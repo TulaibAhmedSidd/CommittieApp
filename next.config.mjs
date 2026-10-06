@@ -1,10 +1,16 @@
 import withPWAInit from 'next-pwa';
+import defaultCache from 'next-pwa/cache.js';
 
 const withPWA = withPWAInit({
     dest: 'public',
     register: true,
     skipWaiting: true,
     disable: process.env.NODE_ENV === 'development',
+    // Never cache API answers (private data, money status). Pages and static files keep the default caching.
+    runtimeCaching: [
+        { urlPattern: ({ url }) => url.pathname.startsWith('/api/'), handler: 'NetworkOnly', method: 'GET' },
+        ...defaultCache,
+    ],
 });
 
 const isDev = process.env.NODE_ENV === 'development';
@@ -56,6 +62,10 @@ const nextConfig = {
     },
     async headers() {
         return [
+            {
+                source: '/api/:path*',
+                headers: [{ key: 'Cache-Control', value: 'no-store' }],
+            },
             {
                 source: '/(.*)',
                 headers: [

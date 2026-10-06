@@ -47,7 +47,7 @@ async function main() {
   check("NoSQL injection in set-password rejected", (await call("POST", "/api/auth/set-password", { body: { token: { $ne: "x" }, password: "hacked1" } })).status === 400);
 
   console.log("\n# Organizer signup + approval");
-  let r = await call("POST", "/api/auth/register", { body: { role: "organizer", name: `ZZTEST Org ${tag}`, phone: orgPhone, password: "test1234", createdBy: "000000000000000000000000" } });
+  let r = await call("POST", "/api/auth/register", { body: { role: "organizer", name: `ZZTEST Org ${tag}`, phone: orgPhone, email: `zztest+org${tag}@example.com`, password: "test1234", createdBy: "000000000000000000000000" } });
   check("organizer signup is pending (createdBy ignored)", r.status === 201 && r.data?.pending, JSON.stringify(r.data));
   r = await call("POST", "/api/auth/login", { body: { identifier: orgPhone, password: "test1234" } });
   check("pending organizer cannot log in", r.status === 403);
@@ -94,6 +94,30 @@ async function main() {
   const bilalId = r.data.account._id;
   r = await call("POST", "/api/auth/login", { body: { identifier: emailB.toUpperCase(), password: "bilal123" } });
   check("B logs in with email (any case)", r.status === 200);
+  console.log("\n# Takeover attempt by another organizer (must fail)");
+  const org2Phone = `0300004${tag}`.slice(0, 11);
+  await call("POST", "/api/auth/register", { body: { role: "organizer", name: `ZZTEST Org2 ${tag}`, phone: org2Phone, email: `zztest+org2${tag}@example.com`, password: "test1234" } });
+  {
+    const c2 = new MongoClient(process.env.MONGO_URI);
+    await c2.connect();
+    const o2 = await c2.db().collection("admins").findOne({ name: `ZZTEST Org2 ${tag}` });
+    await c2.close();
+    await approveTestOrganizer(String(o2._id));
+  }
+  const org2 = (await call("POST", "/api/auth/login", { body: { identifier: org2Phone, password: "test1234" } })).data.token;
+  r = await call("POST", "/api/admin/members", { token: org2, body: { name: "Anything", phone: `0300002${tag}`.slice(0, 11) } });
+  check("adding someone else's existing member only sends a request", r.status === 202 && r.data.requestSent && !r.data.member, JSON.stringify(r.data));
+  r = await call("GET", "/api/admin/members", { token: org2 });
+  check("that member is NOT in the other organizer's list", r.status === 200 && !r.data.members.some((m) => m._id === bilalId));
+  r = await call("POST", `/api/admin/members/${bilalId}/link`, { token: org2, body: {} });
+  check("other organizer cannot make a password link", r.status === 404 || r.status === 403, r.status);
+  r = await call("GET", `/api/admin/members/${bilalId}`, { token: org2 });
+  check("other organizer cannot read member details", r.status === 404);
+  r = await call("POST", `/api/admin/members/${bilalId}/link`, { token: org, body: {} });
+  check("referral organizer (did not create B) cannot make a password link", r.status === 403, r.status);
+  r = await call("POST", "/api/member/pool", { token: bilal, body: { adminId: String(orgDoc._id) } });
+  check("member can follow an organizer", r.status === 200);
+
   r = await call("POST", `/api/committee/${bcId}/request`, { token: bilal, body: {} });
   check("B asks to join", r.status === 201, JSON.stringify(r.data));
   r = await call("POST", `/api/committee/${bcId}/request`, { token: bilal, body: { action: "approve", memberId: bilalId } });
