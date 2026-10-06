@@ -1,31 +1,19 @@
-import connectToDatabase from "@/app/utils/db";
-import Asset from "@/app/api/models/Asset";
+import { requireUser } from "@/app/utils/auth";
+import { ok, fail, readJson, serverError } from "@/app/utils/http";
+import { saveImage } from "@/app/utils/assets";
 
+export const dynamic = "force-dynamic";
+
+// POST { data: "data:image/jpeg;base64,...", name? } -> { url, assetId }
 export async function POST(req) {
-    await connectToDatabase();
-    try {
-        const { name, data, contentType, uploadedBy, onModel } = await req.json();
-
-        if (!data) {
-            return new Response(JSON.stringify({ error: "No image data provided" }), { status: 400 });
-        }
-
-        const newAsset = new Asset({
-            name: name || "screenshot",
-            data,
-            contentType,
-            uploadedBy,
-            onModel
-        });
-
-        await newAsset.save();
-
-        return new Response(JSON.stringify({
-            message: "Asset uploaded successfully",
-            assetId: newAsset._id,
-            url: `/api/assets/${newAsset._id}`
-        }), { status: 201 });
-    } catch (err) {
-        return new Response(JSON.stringify({ error: err.message }), { status: 500 });
-    }
+  try {
+    const auth = await requireUser(req);
+    if (auth.error) return auth.error;
+    const { data, name } = await readJson(req);
+    const res = await saveImage(data, auth.user._id, auth.model, typeof name === "string" ? name : "photo");
+    if (res.error) return fail(400, res.error);
+    return ok(res, 201);
+  } catch (err) {
+    return serverError(err, "assets POST");
+  }
 }

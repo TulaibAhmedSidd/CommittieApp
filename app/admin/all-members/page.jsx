@@ -1,266 +1,162 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { FiUser, FiSearch, FiUserPlus, FiCheckCircle, FiMoreVertical, FiShield, FiMessageSquare, FiNavigation, FiMapPin, FiX } from "react-icons/fi";
-import Card from "../../Components/Theme/Card";
-import Button from "../../Components/Theme/Button";
-import Input from "../../Components/Theme/Input";
-import Pagination from "../../Components/Theme/Pagination";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
-import BlueTick from "../../Components/Theme/BlueTick";
-import ChatBox from "../../Components/ChatBox";
-import MemberDocumentReview from "../../Components/Admin/MemberDocumentReview";
+import { FiMapPin, FiSearch, FiUsers } from "react-icons/fi";
+import { Bi, Button, Card, EmptyState, ErrorBox, Field, ListRow, Loading, Page, StatusBadge } from "../../ui";
+import { W } from "../../utils/words";
+import { adminApi } from "../../utils/api";
 
-export default function AllMembersPage() {
-    const [members, setMembers] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [search, setSearch] = useState("");
-    const [actionLoading, setActionLoading] = useState(null);
-    const [currentAdmin, setCurrentAdmin] = useState(null);
-    const [nearMe, setNearMe] = useState(false);
-    const [coords, setCoords] = useState(null);
-    const [city, setCity] = useState("");
-    const [activeChat, setActiveChat] = useState(null);
-    const [selectedMember, setSelectedMember] = useState(null);
-    const [page, setPage] = useState(1);
-    const [pagination, setPagination] = useState({ total: 0, pages: 1 });
-    const router = useRouter();
+function useDebounced(value, ms = 400) {
+  const [v, setV] = useState(value);
+  useEffect(() => {
+    const t = setTimeout(() => setV(value), ms);
+    return () => clearTimeout(t);
+  }, [value, ms]);
+  return v;
+}
 
-    useEffect(() => {
-        const adminDetail = localStorage.getItem("admin_detail");
-        if (!adminDetail) {
-            router.push("/admin/login");
-            return;
-        }
-        setCurrentAdmin(JSON.parse(adminDetail));
-        fetchMembers();
-    }, [router]);
+export default function FindMembersPage() {
+  const [q, setQ] = useState("");
+  const [city, setCity] = useState("");
+  const [geo, setGeo] = useState(null);
+  const [locating, setLocating] = useState(false);
+  const [items, setItems] = useState(null);
+  const [page, setPage] = useState(1);
+  const [pages, setPages] = useState(1);
+  const [error, setError] = useState("");
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [sending, setSending] = useState(null);
+  const reqId = useRef(0);
 
-    const fetchMembers = async () => {
-        setLoading(true);
-        try {
-            let url = `/api/discovery?type=member&q=${search}&city=${city}&page=${page}&limit=12`;
-            if (nearMe && coords) {
-                url += `&lat=${coords.lat}&lng=${coords.lng}&radius=50`;
-            }
-            const res = await fetch(url);
-            const data = await res.json();
-            setMembers(data.members || []);
-            setPagination(data.pagination?.members || { total: 0, pages: 1, page: 1 });
-        } catch (err) {
-            toast.error("Failed to fetch member pool");
-        } finally {
-            setLoading(false);
-        }
-    };
+  const dq = useDebounced(q.trim());
+  const dCity = useDebounced(city.trim());
 
-    useEffect(() => {
-        setPage(1);
-    }, [search, nearMe, city]);
+  const load = useCallback(
+    async (nextPage = 1) => {
+      const id = ++reqId.current;
+      const params = new URLSearchParams({ type: "member", q: dq, city: dCity, page: String(nextPage) });
+      if (geo) {
+        params.set("lat", String(geo.lat));
+        params.set("lng", String(geo.lng));
+        params.set("radius", "50");
+      }
+      if (nextPage === 1) setError("");
+      else setLoadingMore(true);
+      try {
+        const d = await adminApi.get(`/api/discovery?${params}`);
+        if (id !== reqId.current) return;
+        setItems((prev) => (nextPage === 1 ? d.items || [] : [...(prev || []), ...(d.items || [])]));
+        setPage(d.page || nextPage);
+        setPages(d.pages || 1);
+      } catch (e) {
+        if (id !== reqId.current) return;
+        if (nextPage === 1) setError(e.message);
+        else toast.error(e.message);
+      } finally {
+        if (id === reqId.current) setLoadingMore(false);
+      }
+    },
+    [dq, dCity, geo]
+  );
 
-    useEffect(() => {
-        const timeout = setTimeout(fetchMembers, 500);
-        return () => clearTimeout(timeout);
-    }, [search, nearMe, city, page]);
+  useEffect(() => {
+    load(1);
+  }, [load]);
 
-    const handleNearMe = () => {
-        if (!nearMe) {
-            if (!navigator.geolocation) return toast.error("Geolocation not supported");
-            navigator.geolocation.getCurrentPosition((pos) => {
-                setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-                setNearMe(true);
-            }, (err) => {
-                toast.error("Location access denied");
-            });
-        } else {
-            setNearMe(false);
-            setCoords(null);
-        }
-    };
-
-    const associateMember = async (memberId) => {
-        setActionLoading(memberId);
-        try {
-            const res = await fetch("/api/member/pool", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ memberId, adminId: currentAdmin?._id })
-            });
-
-            if (res.ok) {
-                toast.success("Connection request sent!");
-                fetchMembers();
-            }
-        } catch (err) {
-            toast.error("Association failed");
-        } finally {
-            setActionLoading(null);
-        }
-    };
-
-    const filteredMembers = members.filter(m =>
-        m.name.toLowerCase().includes(search.toLowerCase()) ||
-        m.email.toLowerCase().includes(search.toLowerCase())
+  const toggleNearMe = () => {
+    if (geo) {
+      setGeo(null);
+      return;
+    }
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      toast.error("This phone can't share its location.");
+      return;
+    }
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLocating(false);
+        setGeo({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+      },
+      () => {
+        setLocating(false);
+        toast.error("Could not get your location. Please allow location and try again.");
+      },
+      { enableHighAccuracy: false, timeout: 15000, maximumAge: 300000 }
     );
+  };
 
-    if (loading) return <div className="p-12 text-center animate-pulse">Syncing Member Pool...</div>;
+  const addToList = async (m) => {
+    setSending(m._id);
+    try {
+      await adminApi.post("/api/member/pool", { memberId: m._id });
+      setItems((list) => list.map((x) => (x._id === m._id ? { ...x, requested: true } : x)));
+      toast.success("Request sent. They need to accept.");
+    } catch (e) {
+      toast.error(e.message);
+    } finally {
+      setSending(null);
+    }
+  };
 
+  const right = (m) => {
+    if (m.linked) return <StatusBadge label="In your list" tone="green" />;
+    if (m.requested) return <StatusBadge label="Request sent" tone="amber" />;
     return (
-        <div className="p-8 md:p-12 space-y-12 animate-in fade-in duration-700">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                <div className="space-y-2">
-                    <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter uppercase italic">
-                        Member <span className="text-primary-600">Pool</span>
-                    </h1>
-                    <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">Browse and search all members in the system</p>
-                </div>
-                <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
-                    <button
-                        onClick={handleNearMe}
-                        className={`px-6 py-4 rounded-2xl flex items-center gap-2 text-[10px] font-black uppercase tracking-widest border transition-all ${nearMe ? 'bg-primary-600 border-primary-600 text-white shadow-lg' : 'bg-slate-900 text-white border-slate-800 hover:bg-slate-800 shadow-sm'}`}
-                    >
-                        <FiNavigation /> {nearMe ? 'Nearby Active' : 'Nearby Members'}
-                    </button>
-                    <div className="w-full md:w-80">
-                        <Input
-                            icon={<FiSearch />}
-                            placeholder="Search Identity..."
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                        />
-                    </div>
-                </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {members.length > 0 ? members.map((member) => (
-                    <Card key={member._id} className="p-6 space-y-4 hover:shadow-premium transition-all border-slate-100 dark:border-slate-800">
-                        {/* Member Card Content */}
-                        <div className="flex items-start justify-between">
-                            <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-2xl bg-primary-600/10 text-primary-600 flex items-center justify-center font-black text-xl">
-                                    {member.name.charAt(0)}
-                                </div>
-                                <div>
-                                    <h4 className="font-black text-slate-900 dark:text-white uppercase tracking-tight flex items-center gap-1">
-                                        {member.name}
-                                        <BlueTick verified={member.verificationStatus === "verified"} size={12} />
-                                    </h4>
-                                    <p className="text-xs text-slate-500 font-mono italic flex items-center gap-2">
-                                        <FiMapPin size={10} /> {member.city || 'Location Hidden'}
-                                    </p>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <button
-                                    onClick={() => setActiveChat(member)}
-                                    className="p-3 bg-slate-900 hover:bg-primary-600 text-white border border-slate-800 rounded-xl transition-all shadow-sm"
-                                    title="Message Member"
-                                >
-                                    <FiMessageSquare size={16} />
-                                </button>
-                                <button
-                                    onClick={() => setSelectedMember(member)}
-                                    className="p-3 bg-slate-900 hover:bg-primary-600 text-white border border-slate-800 rounded-xl transition-all shadow-sm"
-                                    title="View Documents"
-                                >
-                                    <FiShield size={16} />
-                                </button>
-                            </div>
-                        </div>
-
-                        <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center">
-                            <div className="flex -space-x-2 overflow-hidden">
-                                {member.organizers?.map((org, i) => (
-                                    <div key={i} title={org?.name || 'Organizer'} className="inline-block h-6 w-6 rounded-full ring-2 ring-white dark:ring-slate-900 bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-[8px] font-black uppercase">
-                                        {(org?.name || '?').charAt(0)}
-                                    </div>
-                                ))}
-                                {(!member.organizers || member.organizers.length === 0) && <p className="text-[10px] text-slate-400 uppercase font-black tracking-widest">Unassigned</p>}
-                            </div>
-
-                            {member.organizers?.some(org => (org._id || org) === currentAdmin?._id) ? (
-                                <div className="flex items-center gap-2 px-4 py-2 bg-green-500/10 text-green-600 rounded-xl font-black uppercase text-[10px] tracking-widest">
-                                    Associated <FiCheckCircle />
-                                </div>
-                            ) : (member.pendingOrganizers?.some(org => (org._id || org) === currentAdmin?._id)) ? (
-                                <button disabled className="px-4 py-2 bg-orange-500 text-white rounded-xl font-black uppercase text-[10px] tracking-widest cursor-not-allowed shadow-lg shadow-orange-500/20">
-                                    Requested
-                                </button>
-                            ) : (
-                                <Button
-                                    onClick={() => associateMember(member._id)}
-                                    loading={actionLoading === member._id}
-                                    variant="secondary"
-                                    className="px-6 py-2.5 text-[10px] font-black uppercase tracking-[0.2em] bg-slate-900 text-white border border-slate-800 shadow-lg hover:bg-slate-800 hover:scale-105 transition-all"
-                                >
-                                    Connect <FiUserPlus className="ml-1" />
-                                </Button>
-                            )}
-                        </div>
-                    </Card>
-                )) : (
-                    <div className="col-span-full py-20 text-center space-y-4">
-                        <div className="flex justify-center text-slate-300">
-                            <FiSearch size={64} />
-                        </div>
-                        <p className="font-black uppercase text-[10px] tracking-widest text-slate-400 italic">Static Pool. No Identities Matched.</p>
-                    </div>
-                )}
-            </div>
-
-            {/* Pagination Controls */}
-            {pagination.pages > 1 && (
-                <Pagination
-                    currentPage={page}
-                    totalPages={pagination.pages}
-                    onPageChange={setPage}
-                    totalItems={pagination.total}
-                    pageSize={12}
-                    className="pt-12"
-                />
-            )}
-
-            {activeChat && (
-                <ChatBox
-                    currentUserId={currentAdmin?._id}
-                    currentUserModel="Admin"
-                    otherUserId={activeChat._id}
-                    otherUserName={activeChat.name}
-                    otherUserModel="Member"
-                    onClose={() => setActiveChat(null)}
-                />
-            )}
-
-            {/* Member Details Modal */}
-            {selectedMember && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-300">
-                    <Card className="max-w-4xl w-full p-10 space-y-8 bg-white dark:bg-slate-900 shadow-2xl relative overflow-hidden max-h-[90vh] overflow-y-auto">
-                        <div className="absolute top-0 right-0 p-12 opacity-5 pointer-events-none">
-                            <FiShield size={160} />
-                        </div>
-
-                        <div className="flex justify-between items-start relative z-10">
-                            <div>
-                                <h2 className="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tighter italic">Review Credentials</h2>
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Inspecting identity documents and verification status</p>
-                            </div>
-                            <button onClick={() => setSelectedMember(null)} className="p-3 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-all group">
-                                <FiX size={28} className="text-slate-400 group-hover:rotate-90 transition-transform" />
-                            </button>
-                        </div>
-
-                        <div className="relative z-10">
-                            <MemberDocumentReview member={selectedMember} />
-                        </div>
-
-                        <div className="pt-6 border-t border-slate-100 dark:border-slate-800 flex justify-end relative z-10">
-                            <Button onClick={() => setSelectedMember(null)} className="px-12 py-4 text-[10px] font-black uppercase tracking-widest bg-slate-900 shadow-xl">Close Review</Button>
-                        </div>
-                    </Card>
-                </div>
-            )}
-        </div>
+      <Button size="sm" loading={sending === m._id} onClick={() => addToList(m)}>
+        Add to my list
+      </Button>
     );
+  };
+
+  const subtitle = (m) => {
+    const parts = [m.city || "No city"];
+    if (typeof m.distanceKm === "number") parts.push(`${m.distanceKm} km`);
+    if (m.verificationStatus === "verified") parts.push("Verified");
+    return parts.join(" · ");
+  };
+
+  let list;
+  if (error) list = <ErrorBox message={error} onRetry={() => load(1)} />;
+  else if (!items) list = <Loading rows={3} />;
+  else if (!items.length)
+    list = <EmptyState icon={FiUsers} title="No one found" urdu="کوئی نہیں ملا" text="Try another name or city." />;
+  else
+    list = (
+      <>
+        <Card padding="p-0" className="divide-y divide-line overflow-hidden">
+          {items.map((m) => (
+            <ListRow key={m._id} avatar={m.name} title={m.name} subtitle={subtitle(m)} right={right(m)} />
+          ))}
+        </Card>
+        {page < pages && (
+          <Button variant="secondary" full loading={loadingMore} onClick={() => load(page + 1)}>
+            Load more
+          </Button>
+        )}
+      </>
+    );
+
+  return (
+    <Page title="Find members" urdu="ممبرز تلاش کریں" subtitle="People must accept before they join your list.">
+      <div className="space-y-3">
+        <Field
+          label="Name"
+          urdu="نام"
+          prefix={<FiSearch />}
+          type="search"
+          placeholder="Search by name"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+        />
+        <Field label="City" urdu="شہر" placeholder="e.g. Lahore" value={city} onChange={(e) => setCity(e.target.value)} />
+        <Button variant={geo ? "primary" : "secondary"} full icon={FiMapPin} loading={locating} onClick={toggleNearMe} aria-pressed={!!geo}>
+          <Bi {...W.nearMe} />
+          {geo && <span className="text-sm font-normal">(on)</span>}
+        </Button>
+      </div>
+      <div className="space-y-3">{list}</div>
+    </Page>
+  );
 }

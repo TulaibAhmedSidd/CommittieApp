@@ -1,321 +1,173 @@
 import connectToDatabase from "@/app/utils/db";
 import Committee from "@/app/api/models/Committee";
-import Admin from "@/app/api/models/Admin";
 import Member from "@/app/api/models/Member";
+import { requireAdmin, requireCommitteeOwner } from "@/app/utils/auth";
+import { ok, fail, readJson, serverError, isObjectId } from "@/app/utils/http";
 import { createLog } from "@/app/utils/logger";
-import { unauthorizedResponse, verifyAdmin } from "@/app/utils/auth";
+import { cardSummary } from "@/app/utils/committeeView";
+import { stage } from "@/app/utils/bcRules";
 
-// Handle GET requests (fetch all committees)
+export const dynamic = "force-dynamic";
+
+const DOC_OPTIONS = ["NIC Front", "NIC Back", "Electricity Bill", "Gas Bill", "Water Bill", "Work ID"];
+
+function parseStart(value) {
+  if (typeof value !== "string" || !value) return null;
+  const d = new Date(/^\d{4}-\d{2}$/.test(value) ? `${value}-01` : value);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+function addMonths(date, n) {
+  const d = new Date(date);
+  d.setMonth(d.getMonth() + n);
+  return d;
+}
+
+function cleanBank(b) {
+  if (!b || typeof b !== "object") return undefined;
+  const s = (v) => (typeof v === "string" ? v.trim().slice(0, 80) : "");
+  return { accountTitle: s(b.accountTitle), bankName: s(b.bankName), iban: s(b.iban).replace(/\s+/g, "").toUpperCase() };
+}
+
+function cleanOptional(body) {
+  const out = {};
+  if (typeof body.description === "string") out.description = body.description.trim().slice(0, 500);
+  if (body.bankDetails !== undefined) out.bankDetails = cleanBank(body.bankDetails);
+  if (body.organizerFee !== undefined) {
+    const fee = Math.max(0, Math.round(Number(body.organizerFee) || 0));
+    out.organizerFee = Math.min(fee, 1000000);
+  }
+  if (body.isFeeMandatory !== undefined) out.isFeeMandatory = !!body.isFeeMandatory;
+  if (body.requireDocuments !== undefined) out.requireDocuments = !!body.requireDocuments;
+  if (Array.isArray(body.mandatoryDocuments)) out.mandatoryDocuments = body.mandatoryDocuments.filter((d) => DOC_OPTIONS.includes(d));
+  return out;
+}
+
+// GET -> my BCs as cards. Super admin: ?all=1 for every BC.
 export async function GET(req) {
-  await connectToDatabase();
-  const { searchParams } = new URL(req.url);
-  const adminId = searchParams.get("adminId");
-  const q = searchParams.get("q") || "";
-  const page = parseInt(searchParams.get("page") || "1");
-  const limit = parseInt(searchParams.get("limit") || "10");
-  const skip = (page - 1) * limit;
-
   try {
-    let query = {};
-    if (adminId) {
-      const auth = verifyAdmin(req);
-      if (!auth.authorized) {
-        return unauthorizedResponse(auth);
-      }
+    const auth = await requireAdmin(req);
+    if (auth.error) return auth.error;
+    const { searchParams } = new URL(req.url);
+    const all = searchParams.get("all") === "1" && auth.user.isSuperAdmin;
 
-      const requester = await Admin.findById(auth.user.userId);
-      // If requester is NOT super admin, filter by createdBy
-      if (!requester?.isSuperAdmin) {
-        query.createdBy = auth.user.userId;
-      }
-    }
-    if (q) {
-      query.name = { $regex: q, $options: "i" };
-    }
-    const total = await Committee.countDocuments(query);
-    const committees = await Committee.find(query)
-      .populate({
-        path: "members",
-        model: "Member",
-      })
-      .populate({
-        path: "result.member",
-        model: "Member",
-      })
-      .populate({
-        path: "pendingMembers",
-        model: "Member",
-      })
-      .populate({
-        path: "createdBy",
-        model: "Admin",
-      })
-      .skip(skip)
-      .limit(limit);
+    const filter = all ? {} : { createdBy: auth.user._id };
+    const list = await Committee.find(filter)
+      .select("-payments.submission.screenshot -payouts.screenshot")
+      .populate({ path: "result.member", select: "name", model: "Member" })
+      .populate({ path: "createdBy", select: "name", model: "Admin" })
+      .sort({ startDate: -1, _id: -1 })
+      .limit(300)
+      .lean();
 
-    const committeesWithDetails = committees.map((committee) => ({
-      ...committee.toObject(),
-      createdBy: committee.createdBy?._id,
-      adminDetails: {
-        name: committee.createdBy?.name || "",
-        email: committee.createdBy?.email || "",
-      },
-    }));
-
-    return new Response(JSON.stringify({
-      committees: committeesWithDetails,
-      pagination: { total, page, pages: Math.ceil(total / limit) }
-    }), { status: 200 });
+    return ok({ committees: list.map((c) => cardSummary(c)) });
   } catch (err) {
-    return new Response(
-      JSON.stringify({ error: "Failed to fetch committees", details: err.message }),
-      { status: 500 }
-    );
+    return serverError(err, "committee GET");
   }
 }
 
-// Handle POST requests (create a new committee)
+// POST -> create a BC. New rules: months = members.
 export async function POST(req) {
   try {
-    const auth = verifyAdmin(req);
-    if (!auth.authorized) {
-      return unauthorizedResponse(auth);
-    }
+    const auth = await requireAdmin(req);
+    if (auth.error) return auth.error;
+    const body = await readJson(req);
+
+    const name = typeof body.name === "string" ? body.name.trim().slice(0, 60) : "";
+    const maxMembers = Math.round(Number(body.maxMembers));
+    const monthlyAmount = Math.round(Number(body.monthlyAmount));
+    const startDate = parseStart(body.startDate);
+
+    if (name.length < 2) return fail(400, "Please give the BC a name.");
+    if (!(maxMembers >= 2 && maxMembers <= 60)) return fail(400, "Members must be between 2 and 60.");
+    if (!(monthlyAmount >= 100 && monthlyAmount <= 10000000)) return fail(400, "Monthly amount must be at least Rs 100.");
+    if (!startDate) return fail(400, "Please choose the start month.");
 
     await connectToDatabase();
-    const body = await req.json();
-    const {
+    const committee = await Committee.create({
       name,
-      description,
       maxMembers,
       monthlyAmount,
-      monthDuration,
+      monthDuration: maxMembers,
+      totalAmount: monthlyAmount * maxMembers,
       startDate,
-      bankDetails,
-      organizerFee,
-      isFeeMandatory,
-      requireDocuments,
-      mandatoryDocuments,
-    } = body;
-
-    // Validate required fields
-    if (
-      !name ||
-      !description ||
-      !maxMembers ||
-      !monthlyAmount ||
-      !monthDuration ||
-      !startDate
-    ) {
-      return new Response(
-        JSON.stringify({ error: "All fields are required." }),
-        { status: 400 }
-      );
-    }
-
-    if (maxMembers <= 0 || monthlyAmount <= 0 || monthDuration <= 0) {
-      return new Response(
-        JSON.stringify({ error: "Values must be greater than zero." }),
-        { status: 400 }
-      );
-    }
-
-    // Calculate endDate and totalAmount
-    const calculatedEndDate = new Date(startDate);
-    calculatedEndDate.setMonth(calculatedEndDate.getMonth() + monthDuration);
-    const totalAmount = monthlyAmount * monthDuration;
-
-    // Create a new committee
-    const newCommittee = new Committee({
-      name,
-      description,
-      maxMembers,
-      monthlyAmount,
-      monthDuration,
-      startDate,
-      endDate: calculatedEndDate.toISOString().split("T")[0],
-      totalAmount,
-      createdBy: auth.user.userId,
-      bankDetails,
-      organizerFee: organizerFee || 0,
-      isFeeMandatory: isFeeMandatory || false,
-      requireDocuments: requireDocuments || false,
-      mandatoryDocuments: mandatoryDocuments || [],
+      endDate: addMonths(startDate, maxMembers - 1),
+      createdBy: auth.user._id,
+      status: "open",
+      currentMonth: 1,
+      rulesVersion: 2,
+      ...cleanOptional(body),
     });
 
-    await newCommittee.save();
-
-    await createLog({
-      action: "CREATE_COMMITTEE",
-      performedBy: auth.user.userId,
-      onModel: "Admin",
-      targetId: newCommittee._id,
-      details: { name: newCommittee.name },
-    });
-
-    return new Response(JSON.stringify(newCommittee), { status: 201 });
+    await createLog({ action: "CREATE_COMMITTEE", performedBy: auth.user._id, onModel: "Admin", targetId: committee._id, details: { name } });
+    return ok({ committee: { _id: String(committee._id), name: committee.name } }, 201);
   } catch (err) {
-    return new Response(
-      JSON.stringify({
-        error: "Failed to create committee",
-        details: err.message,
-      }),
-      { status: 400 }
-    );
+    return serverError(err, "committee POST");
   }
 }
 
-// Handle PATCH requests (update a committee)
+// PATCH { id, ...fields } -> edit. Amount, members and start month only before the BC starts.
 export async function PATCH(req) {
   try {
-    const auth = verifyAdmin(req);
-    if (!auth.authorized) {
-      return unauthorizedResponse(auth);
-    }
+    const body = await readJson(req);
+    const auth = await requireCommitteeOwner(req, body.id);
+    if (auth.error) return auth.error;
+    const c = auth.committee;
 
-    await connectToDatabase();
-    const body = await req.json();
-    const {
-      id,
-      name,
-      description,
-      maxMembers,
-      status,
-      monthlyAmount,
-      monthDuration,
-      startDate,
-      bankDetails,
-      requireDocuments,
-      mandatoryDocuments,
-    } = body;
+    const update = cleanOptional(body);
+    if (typeof body.name === "string" && body.name.trim().length >= 2) update.name = body.name.trim().slice(0, 60);
 
-    if (!id) {
-      return new Response(
-        JSON.stringify({ error: "Committee ID is required." }),
-        { status: 400 }
-      );
-    }
-
-    const committee = await Committee.findById(id);
-    const requester = await Admin.findById(auth.user.userId);
-
-    if (!committee || (committee.createdBy?.toString() !== auth.user.userId.toString() && !requester?.isSuperAdmin)) {
-      return new Response(
-        JSON.stringify({
-          error: "You are not authorized to update this committee.",
-        }),
-        { status: 403 }
-      );
-    }
-
-    const updatedFields = {
-      name,
-      description,
-      maxMembers,
-      status,
-      monthlyAmount,
-      monthDuration,
-      startDate,
-      bankDetails,
-      requireDocuments,
-      mandatoryDocuments,
-    };
-
-    if (startDate && monthDuration) {
-      const calculatedEndDate = new Date(startDate);
-      calculatedEndDate.setMonth(calculatedEndDate.getMonth() + monthDuration);
-      updatedFields.endDate = calculatedEndDate.toISOString().split("T")[0];
-    }
-
-    if (monthlyAmount && monthDuration) {
-      updatedFields.totalAmount = monthlyAmount * monthDuration;
-    }
-
-    const updatedCommittee = await Committee.findByIdAndUpdate(
-      id,
-      updatedFields,
-      { new: true }
-    );
-
-    if (!updatedCommittee) {
-      return new Response(JSON.stringify({ error: "Committee not found" }), {
-        status: 404,
+    const changingCore = body.maxMembers !== undefined || body.monthlyAmount !== undefined || body.startDate !== undefined;
+    if (changingCore) {
+      if (stage(c) !== "upcoming") return fail(400, "Amount, members and start month can't change after the BC has started.");
+      const maxMembers = body.maxMembers !== undefined ? Math.round(Number(body.maxMembers)) : c.maxMembers;
+      const monthlyAmount = body.monthlyAmount !== undefined ? Math.round(Number(body.monthlyAmount)) : c.monthlyAmount;
+      const startDate = body.startDate !== undefined ? parseStart(body.startDate) : c.startDate;
+      const taken = (c.members?.length || 0) + (c.pendingMembers?.length || 0);
+      if (!(maxMembers >= 2 && maxMembers <= 60)) return fail(400, "Members must be between 2 and 60.");
+      if (maxMembers < (c.members?.length || 0)) return fail(400, `This BC already has ${c.members.length} members.`);
+      if (maxMembers < taken) return fail(400, "Reject some join requests first.");
+      if (!(monthlyAmount >= 100)) return fail(400, "Monthly amount must be at least Rs 100.");
+      if (!startDate) return fail(400, "Please choose the start month.");
+      const months = (c.rulesVersion || 1) >= 2 ? maxMembers : c.monthDuration || maxMembers;
+      Object.assign(update, {
+        maxMembers,
+        monthlyAmount,
+        startDate,
+        monthDuration: months,
+        totalAmount: monthlyAmount * months,
+        endDate: addMonths(startDate, months - 1),
       });
     }
 
-    await createLog({
-      action: "UPDATE_COMMITTEE",
-      performedBy: auth.user.userId,
-      onModel: "Admin",
-      targetId: updatedCommittee._id,
-      details: { status: updatedCommittee.status },
-    });
-
-    return new Response(JSON.stringify(updatedCommittee), { status: 200 });
+    await Committee.updateOne({ _id: c._id }, update);
+    await createLog({ action: "UPDATE_COMMITTEE", performedBy: auth.user._id, onModel: "Admin", targetId: c._id, details: Object.keys(update) });
+    return ok({ updated: true });
   } catch (err) {
-    return new Response(
-      JSON.stringify({
-        error: "Failed to update committee",
-        details: err.message,
-      }),
-      { status: 400 }
-    );
+    return serverError(err, "committee PATCH");
   }
 }
 
-// Handle DELETE requests (delete a committee)
+// DELETE ?id= -> only a BC with no members and no payments.
 export async function DELETE(req) {
   try {
-    const auth = verifyAdmin(req);
-    if (!auth.authorized) {
-      return unauthorizedResponse(auth);
+    const { searchParams } = new URL(req.url);
+    const body = await readJson(req);
+    const id = searchParams.get("id") || body.id;
+    if (!isObjectId(String(id))) return fail(400, "Invalid BC id.");
+    const auth = await requireCommitteeOwner(req, id);
+    if (auth.error) return auth.error;
+    const c = auth.committee;
+
+    if ((c.members?.length || 0) > 0 || (c.payments?.length || 0) > 0) {
+      return fail(400, "This BC has members. Remove them first, or use End BC instead.");
     }
 
-    await connectToDatabase();
-    const body = await req.json();
-    const { id } = body;
-
-    if (!id) {
-      return new Response(
-        JSON.stringify({ error: "Committee ID is required." }),
-        { status: 400 }
-      );
-    }
-
-    const committee = await Committee.findById(id);
-    const requester = await Admin.findById(auth.user.userId);
-
-    if (!committee || (committee.createdBy?.toString() !== auth.user.userId.toString() && !requester?.isSuperAdmin)) {
-      return new Response(
-        JSON.stringify({ error: "You are not authorized to delete this committee." }),
-        { status: 403 }
-      );
-    }
-
-    const deletedCommittee = await Committee.findByIdAndDelete(id);
-
-    if (!deletedCommittee) {
-      return new Response(JSON.stringify({ error: "Committee not found" }), {
-        status: 404,
-      });
-    }
-
-    await createLog({
-      action: "DELETE_COMMITTEE",
-      performedBy: auth.user.userId,
-      onModel: "Admin",
-      targetId: id,
-      details: { name: committee.name },
-    });
-
-    return new Response(
-      JSON.stringify({ message: "Committee deleted successfully" }),
-      { status: 200 }
-    );
+    await Member.updateMany({ "committees.committee": c._id }, { $pull: { committees: { committee: c._id } } });
+    await Committee.deleteOne({ _id: c._id });
+    await createLog({ action: "DELETE_COMMITTEE", performedBy: auth.user._id, onModel: "Admin", targetId: c._id, details: { name: c.name } });
+    return ok({ deleted: true });
   } catch (err) {
-    return new Response(
-      JSON.stringify({ error: "Failed to delete committee", details: err.message }),
-      { status: 400 }
-    );
+    return serverError(err, "committee DELETE");
   }
 }

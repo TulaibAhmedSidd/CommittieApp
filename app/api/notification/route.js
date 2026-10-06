@@ -1,62 +1,39 @@
 import connectToDatabase from "@/app/utils/db";
 import Notification from "@/app/api/models/Notification";
+import { requireUser } from "@/app/utils/auth";
+import { ok, readJson, serverError, isObjectId } from "@/app/utils/http";
 
+export const dynamic = "force-dynamic";
+
+// GET -> my latest notifications + unread count
 export async function GET(req) {
-  await connectToDatabase();
-
   try {
-    const { searchParams } = new URL(req.url);
-    const userId = searchParams.get("userId");
-
-    if (!userId) {
-      return new Response(JSON.stringify({ error: "User ID is required." }), {
-        status: 400,
-      });
-    }
-
-    // Query by recipient instead of non-existent userId field
-    const notifications = await Notification.find({ recipient: userId }).sort({
-      createdAt: -1,
-    });
-
-    return new Response(JSON.stringify(notifications), { status: 200 });
+    const auth = await requireUser(req);
+    if (auth.error) return auth.error;
+    await connectToDatabase();
+    const mine = { recipient: auth.user._id, recipientModel: auth.model };
+    const [items, unread] = await Promise.all([
+      Notification.find(mine).sort({ createdAt: -1 }).limit(50).lean(),
+      Notification.countDocuments({ ...mine, isRead: false }),
+    ]);
+    return ok({ items, unread });
   } catch (err) {
-    return new Response(
-      JSON.stringify({ error: "Failed to fetch notifications.", details: err.message }),
-      { status: 500 }
-    );
+    return serverError(err, "notification GET");
   }
 }
 
-export async function POST(req) {
-  await connectToDatabase();
-
+// PATCH { ids?: [] } -> mark mine as read (all when ids is missing)
+export async function PATCH(req) {
   try {
-    const { userId, recipient, recipientModel, message, details } = await req.json();
-    const targetRecipient = recipient || userId;
-    const targetModel = recipientModel || 'Member';
-
-    if (!targetRecipient || !message) {
-      return new Response(
-        JSON.stringify({ error: "Recipient and message are required." }),
-        { status: 400 }
-      );
-    }
-
-    const newNotification = new Notification({
-      recipient: targetRecipient,
-      recipientModel: targetModel,
-      message,
-      details,
-    });
-
-    await newNotification.save();
-
-    return new Response(JSON.stringify(newNotification), { status: 201 });
+    const auth = await requireUser(req);
+    if (auth.error) return auth.error;
+    const { ids } = await readJson(req);
+    await connectToDatabase();
+    const filter = { recipient: auth.user._id, recipientModel: auth.model, isRead: false };
+    if (Array.isArray(ids)) filter._id = { $in: ids.filter(isObjectId) };
+    await Notification.updateMany(filter, { isRead: true });
+    return ok({ done: true });
   } catch (err) {
-    return new Response(
-      JSON.stringify({ error: "Failed to create notification.", details: err.message }),
-      { status: 500 }
-    );
+    return serverError(err, "notification PATCH");
   }
 }

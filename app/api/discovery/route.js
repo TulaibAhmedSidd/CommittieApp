@@ -1,110 +1,130 @@
-import connectToDatabase from "@/app/utils/db";
 import Committee from "@/app/api/models/Committee";
 import Admin from "@/app/api/models/Admin";
 import Member from "@/app/api/models/Member";
+import { requireUser } from "@/app/utils/auth";
+import { ok, serverError } from "@/app/utils/http";
+import { ADMIN_PUBLIC, MEMBER_PUBLIC } from "@/app/utils/fields";
 
+export const dynamic = "force-dynamic";
+
+const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+function distanceKm(a, b) {
+  if (!a || !b) return null;
+  const [lng1, lat1] = a;
+  const [lng2, lat2] = b;
+  if (!lat1 && !lng1) return null;
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
+  return Math.round(2 * R * Math.asin(Math.sqrt(h)));
+}
+
+// GET ?type=committee|organizer|member&q=&city=&lat=&lng=&radius=&page=
+// Logged-in users only. Returns safe fields: name, city, blue tick, rough distance. Never phone/email/exact location.
 export async function GET(req) {
-    try {
-        await connectToDatabase();
-        const { searchParams } = new URL(req.url);
-        const q = searchParams.get("q") || "";
-        const type = searchParams.get("type") || "all"; // committee, organizer, member
-        const city = searchParams.get("city") || "";
-        const county = searchParams.get("county") || "";
-        const lat = parseFloat(searchParams.get("lat"));
-        const lng = parseFloat(searchParams.get("lng"));
-        const radius = parseInt(searchParams.get("radius") || "50"); // in km
+  try {
+    const auth = await requireUser(req);
+    if (auth.error) return auth.error;
 
-        let results = {
-            committees: [],
-            organizers: [],
-            members: []
-        };
+    const sp = new URL(req.url).searchParams;
+    const type = sp.get("type") || "committee";
+    const q = (sp.get("q") || "").trim().slice(0, 50);
+    const city = (sp.get("city") || "").trim().slice(0, 50);
+    const lat = parseFloat(sp.get("lat"));
+    const lng = parseFloat(sp.get("lng"));
+    const radius = Math.min(Math.max(parseInt(sp.get("radius") || "50", 10) || 50, 1), 500);
+    const page = Math.max(1, parseInt(sp.get("page") || "1", 10) || 1);
+    const limit = 12;
+    const skip = (page - 1) * limit;
+    const hasGeo = Number.isFinite(lat) && Number.isFinite(lng);
+    const here = hasGeo ? [lng, lat] : null;
 
-        // Common query for text/city
-        const textQuery = q ? { $or: [{ name: { $regex: q, $options: "i" } }, { email: { $regex: q, $options: "i" } }] } : {};
-        const cityQuery = city ? { city: { $regex: city, $options: "i" } } : {};
-        const countyQuery = county ? { county: { $regex: county, $options: "i" } } : {};
+    const nameQ = q ? { name: { $regex: escapeRegex(q), $options: "i" } } : {};
+    const cityQ = city ? { city: { $regex: `^${escapeRegex(city)}$`, $options: "i" } } : {};
+    const geoQ = hasGeo ? { location: { $geoWithin: { $centerSphere: [[lng, lat], radius / 6378.1] } } } : {};
 
-        // Geospatial query helper
-        const getGeoQuery = () => {
-            if (!isNaN(lat) && !isNaN(lng)) {
-                return {
-                    location: {
-                        $near: {
-                            $geometry: { type: "Point", coordinates: [lng, lat] },
-                            $maxDistance: radius * 1000 // meters
-                        }
-                    }
-                };
-            }
-            return {};
-        };
-
-        const verificationStatus = searchParams.get("verificationStatus");
-        const minRating = parseFloat(searchParams.get("minRating") || "0");
-
-        const geoQuery = getGeoQuery();
-        const page = parseInt(searchParams.get("page") || "1");
-        const limit = parseInt(searchParams.get("limit") || "12");
-        const skip = (page - 1) * limit;
-
-        let pagination = {};
-
-        if (type === "all" || type === "committee") {
-            const commQuery = {
-                ... (q ? { name: { $regex: q, $options: "i" } } : {}),
-                status: "open"
-            };
-            const total = await Committee.countDocuments(commQuery);
-            results.committees = await Committee.find(commQuery)
-                .populate({
-                    path: "createdBy",
-                    select: "name location city verificationStatus",
-                    model: "Admin"
-                })
-                .skip(skip)
-                .limit(limit);
-            pagination.committees = { total, page, pages: Math.ceil(total / limit) };
-        }
-
-        if (type === "all" || type === "organizer") {
-            let adminQuery = {
-                ...textQuery,
-                ...cityQuery,
-                ...countyQuery,
-                ...geoQuery,
-                isAdmin: true,
-                isSuperAdmin: false
-            };
-            if (verificationStatus) adminQuery.verificationStatus = verificationStatus;
-
-            const total = await Admin.countDocuments(adminQuery);
-            results.organizers = await Admin.find(adminQuery)
-                .select("name email city country verificationStatus location")
-                .skip(skip)
-                .limit(limit);
-            pagination.organizers = { total, page, pages: Math.ceil(total / limit) };
-        }
-
-        if (type === "all" || type === "member") {
-            const memberQuery = {
-                ...textQuery,
-                ...cityQuery,
-                ...countyQuery,
-                ...geoQuery
-            };
-            const total = await Member.countDocuments(memberQuery);
-            results.members = await Member.find(memberQuery)
-                .select("name city country verificationStatus location pendingOrganizers organizers")
-                .populate("organizers", "name")
-                .skip(skip)
-                .limit(limit);
-            pagination.members = { total, page, pages: Math.ceil(total / limit) };
-        }
-
-        return new Response(JSON.stringify({ ...results, pagination }), { status: 200 });
-    } catch (err) {
-        return new Response(JSON.stringify({ error: err.message }), { status: 500 });
+    if (type === "organizer") {
+      const filter = { ...nameQ, ...cityQ, ...geoQ, status: "approved", isSuperAdmin: { $ne: true } };
+      const [items, total] = await Promise.all([
+        Admin.find(filter).select(ADMIN_PUBLIC + " location").skip(skip).limit(limit).lean(),
+        Admin.countDocuments(filter),
+      ]);
+      return ok({
+        items: items.map((a) => ({ _id: String(a._id), name: a.name, city: a.city || "", verificationStatus: a.verificationStatus, distanceKm: distanceKm(a.location?.coordinates, here) })),
+        page,
+        pages: Math.ceil(total / limit),
+      });
     }
+
+    if (type === "member") {
+      if (!auth.isAdmin) return ok({ items: [], page: 1, pages: 0 });
+      const filter = { ...nameQ, ...cityQ, ...geoQ, status: { $ne: "invited" } };
+      const [items, total] = await Promise.all([
+        Member.find(filter).select(MEMBER_PUBLIC + " location organizers pendingOrganizers").skip(skip).limit(limit).lean(),
+        Member.countDocuments(filter),
+      ]);
+      const me = String(auth.user._id);
+      return ok({
+        items: items.map((m) => ({
+          _id: String(m._id),
+          name: m.name,
+          city: m.city || "",
+          verificationStatus: m.verificationStatus,
+          distanceKm: distanceKm(m.location?.coordinates, here),
+          linked: auth.isAdmin ? (m.organizers || []).some((o) => String(o) === me) : undefined,
+          requested: auth.isAdmin ? (m.pendingOrganizers || []).some((o) => String(o) === me) : undefined,
+        })),
+        page,
+        pages: Math.ceil(total / limit),
+      });
+    }
+
+    // Committees open to join. City / distance come from the organizer.
+    let organizerIds = null;
+    if (city || hasGeo) {
+      const orgs = await Admin.find({ ...cityQ, ...geoQ, status: "approved" }).select("_id").lean();
+      organizerIds = orgs.map((o) => o._id);
+    }
+    const filter = {
+      ...nameQ,
+      status: { $in: ["open", "full"] },
+      "result.0": { $exists: false },
+      ...(organizerIds ? { createdBy: { $in: organizerIds } } : {}),
+    };
+    const [items, total] = await Promise.all([
+      Committee.find(filter)
+        .select("name monthlyAmount maxMembers members pendingMembers startDate createdBy requireDocuments mandatoryDocuments")
+        .populate({ path: "createdBy", select: ADMIN_PUBLIC + " location", model: "Admin" })
+        .sort({ startDate: 1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      Committee.countDocuments(filter),
+    ]);
+    const me = String(auth.user._id);
+    return ok({
+      items: items.map((c) => ({
+        _id: String(c._id),
+        name: c.name,
+        monthlyAmount: c.monthlyAmount,
+        maxMembers: c.maxMembers,
+        membersCount: c.members?.length || 0,
+        spotsLeft: Math.max(c.maxMembers - (c.members?.length || 0) - (c.pendingMembers?.length || 0), 0),
+        startDate: c.startDate,
+        requireDocuments: !!c.requireDocuments,
+        mandatoryDocuments: c.mandatoryDocuments || [],
+        isMember: (c.members || []).some((m) => String(m) === me),
+        isPending: (c.pendingMembers || []).some((m) => String(m) === me),
+        organizer: c.createdBy
+          ? { _id: String(c.createdBy._id), name: c.createdBy.name, city: c.createdBy.city || "", verificationStatus: c.createdBy.verificationStatus, distanceKm: distanceKm(c.createdBy.location?.coordinates, here) }
+          : null,
+      })),
+      page,
+      pages: Math.ceil(total / limit),
+    });
+  } catch (err) {
+    return serverError(err, "discovery");
+  }
 }

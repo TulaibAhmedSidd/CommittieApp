@@ -1,93 +1,63 @@
 import connectToDatabase from "@/app/utils/db";
 import Message from "@/app/api/models/Message";
-import Committee from "@/app/api/models/Committee";
-import { unauthorizedResponse, verifyAuthenticatedUser } from "@/app/utils/auth";
+import { requireUser } from "@/app/utils/auth";
+import { ok, fail, readJson, serverError, isObjectId } from "@/app/utils/http";
+import { canChat } from "@/app/utils/inbox";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
+const MODELS = ["Admin", "Member"];
+
+// POST { receiverId, receiverModel, committeeId?, content }
 export async function POST(req) {
-    try {
-        const auth = verifyAuthenticatedUser(req);
-        if (!auth.authorized) {
-            return unauthorizedResponse(auth);
-        }
+  try {
+    const auth = await requireUser(req);
+    if (auth.error) return auth.error;
+    const { receiverId, receiverModel, committeeId, content } = await readJson(req);
 
-        await connectToDatabase();
-        const { senderId, senderModel, receiverId, receiverModel, committeeId, content } = await req.json();
+    const text = typeof content === "string" ? content.trim().slice(0, 2000) : "";
+    if (!text) return fail(400, "Type a message first.");
+    if (!isObjectId(receiverId) || !MODELS.includes(receiverModel)) return fail(400, "Invalid receiver.");
+    if (committeeId && !isObjectId(committeeId)) return fail(400, "Invalid BC.");
 
-        // Basic validation
-        if (!content || !senderId || !receiverId) {
-            return new Response(JSON.stringify({ error: "Missing required fields" }), { status: 400 });
-        }
-
-        if (auth.user.userId !== senderId || (!!auth.user.isAdmin) !== (senderModel === "Admin")) {
-            return new Response(JSON.stringify({ error: "Unauthorized sender identity" }), { status: 403 });
-        }
-
-        // Eligibility check
-        // Check if member is actually in the committee if committeeId is provided
-        if (committeeId && senderModel === "Member") {
-            const committee = await Committee.findById(committeeId);
-            if (!committee) return new Response(JSON.stringify({ error: "Committee not found" }), { status: 404 });
-
-            // Allow members (active/finished positions)
-            const isMember = committee.members.some(m => m.toString() === senderId);
-            if (!isMember) return new Response(JSON.stringify({ error: "You must be a member of this committee to chat." }), { status: 403 });
-        }
-
-        const newMessage = new Message({
-            sender: senderId,
-            senderModel,
-            receiver: receiverId,
-            receiverModel,
-            committeeId: committeeId || null,
-            content
-        });
-
-        await newMessage.save();
-
-        return new Response(JSON.stringify(newMessage), { status: 201 });
-    } catch (err) {
-        return new Response(JSON.stringify({ error: err.message }), { status: 500 });
+    await connectToDatabase();
+    if (!(await canChat(auth.user, auth.model, receiverId, receiverModel))) {
+      return fail(403, "You can't message this person.");
     }
+
+    const message = await Message.create({
+      sender: auth.user._id,
+      senderModel: auth.model,
+      receiver: receiverId,
+      receiverModel,
+      committeeId: committeeId || null,
+      content: text,
+    });
+    return ok(message, 201);
+  } catch (err) {
+    return serverError(err, "messages POST");
+  }
 }
 
+// GET ?otherId=&committeeId= -> conversation (oldest first). Marks received messages as read.
 export async function GET(req) {
-    try {
-        const auth = verifyAuthenticatedUser(req);
-        if (!auth.authorized) {
-            return unauthorizedResponse(auth);
-        }
+  try {
+    const auth = await requireUser(req);
+    if (auth.error) return auth.error;
+    const { searchParams } = new URL(req.url);
+    const otherId = searchParams.get("otherId");
+    const committeeId = searchParams.get("committeeId");
+    if (!isObjectId(otherId)) return fail(400, "Missing person.");
 
-        await connectToDatabase();
-        const { searchParams } = new URL(req.url);
-        const committeeId = searchParams.get("committeeId");
-        const userId = searchParams.get("userId"); // Could be Member or Admin ID
-        const otherId = searchParams.get("otherId"); // The person chatting with
+    await connectToDatabase();
+    const me = auth.user._id;
+    const query = { $or: [{ sender: me, receiver: otherId }, { sender: otherId, receiver: me }] };
+    if (isObjectId(committeeId)) query.committeeId = committeeId;
 
-        if (!userId || !otherId) {
-            return new Response(JSON.stringify({ error: "Missing parameters" }), { status: 400 });
-        }
-
-        if (auth.user.userId !== userId) {
-            return new Response(JSON.stringify({ error: "Unauthorized conversation access" }), { status: 403 });
-        }
-
-        const query = {
-            $or: [
-                { sender: userId, receiver: otherId },
-                { sender: otherId, receiver: userId }
-            ]
-        };
-
-        if (committeeId) {
-            query.committeeId = committeeId;
-        }
-
-        const messages = await Message.find(query).sort({ timestamp: 1 });
-
-        return new Response(JSON.stringify(messages), { status: 200 });
-    } catch (err) {
-        return new Response(JSON.stringify({ error: err.message }), { status: 500 });
-    }
+    const messages = await Message.find(query).sort({ timestamp: 1 }).limit(500).lean();
+    await Message.updateMany({ ...query, receiver: me, isRead: false }, { isRead: true });
+    return ok(messages);
+  } catch (err) {
+    return serverError(err, "messages GET");
+  }
 }

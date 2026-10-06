@@ -46,6 +46,10 @@ const CommitteeSchema = new mongoose.Schema({
         transactionId: String,
         submittedAt: Date,
       },
+      method: { type: String, enum: ["online", "cash"], default: "online" },
+      reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Admin" },
+      reviewedAt: Date,
+      rejectReason: String,
       updatedAt: { type: Date, default: Date.now },
     },
   ],
@@ -57,6 +61,8 @@ const CommitteeSchema = new mongoose.Schema({
       transactionId: String,
       screenshot: String,
       paidAt: { type: Date, default: Date.now },
+      method: { type: String, enum: ["online", "cash"], default: "online" },
+      recordedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Admin" },
     },
   ],
   result: [
@@ -85,7 +91,14 @@ const CommitteeSchema = new mongoose.Schema({
     type: Date,
     required: false,
   },
-});
+  // 1 = old rules (any duration). 2 = new rules (months = members). Set to 2 on create.
+  rulesVersion: { type: Number, default: 1 },
+  payoutOrderMode: { type: String, enum: ["random", "manual"] },
+  startedAt: Date,
+  finishedAt: Date,
+  endedEarly: { type: Boolean, default: false },
+  statusMigratedFrom: String,
+}, { timestamps: true });
 
 export default mongoose.models.Committee ||
   mongoose.model("Committee", CommitteeSchema);

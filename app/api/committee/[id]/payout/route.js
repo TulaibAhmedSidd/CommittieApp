@@ -1,74 +1,77 @@
-import connectToDatabase from "@/app/utils/db";
 import Committee from "@/app/api/models/Committee";
-import Notification from "@/app/api/models/Notification";
-import Asset from "@/app/api/models/Asset";
 import Member from "@/app/api/models/Member";
+import { requireCommitteeOwner } from "@/app/utils/auth";
+import { ok, fail, readJson, serverError } from "@/app/utils/http";
 import { createLog } from "@/app/utils/logger";
-import { unauthorizedResponse, verifyAdmin } from "@/app/utils/auth";
+import { notify } from "@/app/utils/notify";
+import { emails } from "@/app/utils/emailTemplates";
+import { resolveImage } from "@/app/utils/assets";
+import { stage, beneficiaryFor, payoutFor, potAmount, idOf } from "@/app/utils/bcRules";
+import { formatPKR } from "@/app/utils/format";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
+// POST { method: "cash" | "online", amount?, transactionId?, screenshot? } -> record this month's payout.
 export async function POST(req, { params }) {
-    try {
-        const auth = verifyAdmin(req);
-        if (!auth.authorized) {
-            return unauthorizedResponse(auth);
-        }
+  try {
+    const auth = await requireCommitteeOwner(req, params.id);
+    if (auth.error) return auth.error;
+    const c = auth.committee;
+    const body = await readJson(req);
 
-        await connectToDatabase();
-        const { id } = await params;
-        const body = await req.json();
-        body.adminId = auth.user.userId;
+    if (stage(c) !== "running") return fail(400, "This BC is not running.");
+    const month = c.currentMonth || 1;
+    const receiver = beneficiaryFor(c, month);
+    if (!receiver) return fail(400, "No payout order yet. Start the BC first.");
+    if (payoutFor(c, month)) return fail(409, "Payout for this month is already recorded.");
 
-        const committee = await Committee.findById(id);
-        if (!committee) return new Response(JSON.stringify({ error: "Committee not found" }), { status: 404 });
+    const pot = potAmount(c, month);
+    const amount = body.amount !== undefined && body.amount !== "" ? Math.round(Number(body.amount)) : pot;
+    if (!(amount > 0)) return fail(400, "Enter the amount given.");
 
-        let screenshotUrl = body.screenshot;
-
-        // If screenshot is base64, save to Assets collection
-        if (body.screenshot && body.screenshot.startsWith("data:image")) {
-            const asset = new Asset({
-                name: `payout_proof_m${body.month}_${body.memberId}`,
-                data: body.screenshot,
-                contentType: body.screenshot.match(/data:([^;]+);/)[1],
-                uploadedBy: body.adminId,
-                onModel: "Admin"
-            });
-            await asset.save();
-            screenshotUrl = `/api/assets/${asset._id}`;
-        }
-
-        const payoutData = {
-            month: body.month,
-            member: body.memberId,
-            amount: body.amount,
-            transactionId: body.transactionId,
-            screenshot: screenshotUrl,
-            paidAt: new Date()
-        };
-
-        committee.payouts.push(payoutData);
-        await committee.save();
-
-        // Notify member (fixed recipient/recipientModel)
-        const notification = new Notification({
-            recipient: body.memberId,
-            recipientModel: 'Member',
-            message: `PAYOUT RECEIVED: ${committee.name} (Month ${body.month}). Info: ${body.transactionId}`,
-            details: `Admin has recorded a payout of ${body.amount}. Check your dashboard for proof.`,
-        });
-        await notification.save();
-
-        await createLog({
-            action: "RECORD_PAYOUT",
-            performedBy: body.adminId,
-            onModel: "Admin",
-            targetId: body.memberId,
-            details: { committeeId: id, month: body.month, amount: body.amount }
-        });
-
-        return new Response(JSON.stringify({ message: "Payout recorded", screenshot: screenshotUrl }), { status: 200 });
-    } catch (err) {
-        return new Response(JSON.stringify({ error: err.message }), { status: 500 });
+    const method = body.method === "online" ? "online" : "cash";
+    let screenshot = "";
+    if (body.screenshot) {
+      const img = await resolveImage(body.screenshot, auth.user._id, "Admin", `payout-${c._id}-m${month}`);
+      if (img.error) return fail(400, img.error);
+      screenshot = img.url;
     }
+
+    const res = await Committee.updateOne(
+      { _id: c._id, currentMonth: month, "payouts.month": { $ne: month } },
+      {
+        $push: {
+          payouts: {
+            month,
+            member: idOf(receiver.member),
+            amount,
+            method,
+            transactionId: typeof body.transactionId === "string" ? body.transactionId.trim().slice(0, 60) : "",
+            screenshot,
+            paidAt: new Date(),
+            recordedBy: auth.user._id,
+          },
+        },
+      }
+    );
+    if (!res.modifiedCount) return fail(409, "Payout for this month is already recorded.");
+
+    const member = await Member.findById(idOf(receiver.member)).select("name email");
+    if (member) {
+      await notify({
+        recipient: member,
+        model: "Member",
+        sender: auth.user._id,
+        senderModel: "Admin",
+        type: "payout",
+        message: `You got your payout of Rs ${formatPKR(amount)} from ${c.name}.`,
+        link: `/userDash/bc/${c._id}`,
+        email: emails.payoutRecorded({ name: member.name, bcName: c.name, bcId: c._id, amountText: `Rs ${formatPKR(amount)}` }),
+      });
+    }
+    await createLog({ action: "RECORD_PAYOUT", performedBy: auth.user._id, onModel: "Admin", targetId: c._id, details: { month, amount, method } });
+    return ok({ done: true });
+  } catch (err) {
+    return serverError(err, "payout POST");
+  }
 }

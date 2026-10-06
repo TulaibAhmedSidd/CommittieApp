@@ -1,62 +1,110 @@
-import jwt from 'jsonwebtoken';
+import jwt from "jsonwebtoken";
+import connectToDatabase from "./db";
+import Admin from "../api/models/Admin";
+import Member from "../api/models/Member";
+import Committee from "../api/models/Committee";
+import { fail, isObjectId } from "./http";
 
-const getBearerToken = (req) => {
-  const header = req.headers.get("Authorization") || req.headers.get("authorization");
+// Usage in a route:
+//   const auth = await requireAdmin(req);
+//   if (auth.error) return auth.error;
+//   auth.user   -> the Admin/Member document (from the database, not the token)
+//
+// Identity always comes from the verified token + database, never from the request body.
 
-  if (!header?.startsWith("Bearer ")) {
-    return null;
-  }
+const TOKEN_TTL = "14d";
 
-  return header.split(" ")[1];
-};
+if (process.env.JWT_SECRET && process.env.JWT_SECRET.length < 32) {
+  console.warn("[security] JWT_SECRET is shorter than 32 characters. Rotate it (see .env.example).");
+}
 
-const verifyToken = (req) => {
+export function signToken(account, role) {
+  return jwt.sign(
+    {
+      userId: String(account._id),
+      role,
+      isAdmin: role === "admin",
+      tv: account.tokenVersion || 0,
+    },
+    process.env.JWT_SECRET,
+    { expiresIn: TOKEN_TTL }
+  );
+}
+
+function getBearerToken(req) {
+  const header = req.headers.get("authorization") || "";
+  return header.startsWith("Bearer ") ? header.slice(7) : null;
+}
+
+function decode(req) {
   const token = getBearerToken(req);
-
-  if (!token) {
-    return { authorized: false, message: "No token, authorization denied", status: 401 };
-  }
-
+  if (!token) return { error: fail(401, "Please log in.") };
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    return { authorized: true, user: decoded };
-  } catch (err) {
-    return { authorized: false, message: "Invalid token", status: 401 };
+    const payload = jwt.verify(token, process.env.JWT_SECRET);
+    const role = payload.role || (payload.isAdmin ? "admin" : "member");
+    if (!isObjectId(payload.userId)) return { error: fail(401, "Please log in again.") };
+    return { payload, role };
+  } catch {
+    return { error: fail(401, "Please log in again.") };
   }
-};
+}
 
-export const verifyAdmin = (req) => {
-  const auth = verifyToken(req);
+/** Any logged-in user (organizer or member). */
+export async function requireUser(req) {
+  const d = decode(req);
+  if (d.error) return d;
+  await connectToDatabase();
+  const Model = d.role === "admin" ? Admin : Member;
+  const user = await Model.findById(d.payload.userId);
+  if (!user) return { error: fail(401, "Please log in again.") };
+  if ((user.tokenVersion || 0) !== (d.payload.tv || 0)) return { error: fail(401, "Please log in again.") };
+  if (d.role === "admin" && user.status !== "approved") return { error: fail(403, "Your organizer account is waiting for approval.") };
+  if (d.role === "member" && user.status === "invited") return { error: fail(403, "Open your invite link to set a password first.") };
+  return { user, role: d.role, model: d.role === "admin" ? "Admin" : "Member", isAdmin: d.role === "admin" };
+}
 
-  if (!auth.authorized) {
-    return auth;
-  }
-
-  if (!auth.user?.isAdmin) {
-    return { authorized: false, message: "Not authorized as an admin", status: 403 };
-  }
-
+export async function requireAdmin(req) {
+  const auth = await requireUser(req);
+  if (auth.error) return auth;
+  if (!auth.isAdmin) return { error: fail(403, "Only organizers can do this.") };
   return auth;
-};
+}
 
-export const verifyMember = (req) => {
-  const auth = verifyToken(req);
-
-  if (!auth.authorized) {
-    return auth;
-  }
-
-  if (!auth.user?.userId || auth.user?.isAdmin) {
-    return { authorized: false, message: "Not authorized as a member", status: 403 };
-  }
-
+export async function requireSuperAdmin(req) {
+  const auth = await requireAdmin(req);
+  if (auth.error) return auth;
+  if (!auth.user.isSuperAdmin) return { error: fail(403, "Only the super admin can do this.") };
   return auth;
-};
+}
 
-export const verifyAuthenticatedUser = (req) => verifyToken(req);
+export async function requireMember(req) {
+  const auth = await requireUser(req);
+  if (auth.error) return auth;
+  if (auth.isAdmin) return { error: fail(403, "Please log in with your member account.") };
+  return auth;
+}
 
-export const unauthorizedResponse = (authResult) =>
-  new Response(JSON.stringify({ message: authResult.message }), {
-    status: authResult.status || 401,
-    headers: { "Content-Type": "application/json" },
-  });
+/** Organizer who owns the BC (or super admin). Returns { user, committee }. */
+export async function requireCommitteeOwner(req, committeeId) {
+  const auth = await requireAdmin(req);
+  if (auth.error) return auth;
+  if (!isObjectId(String(committeeId))) return { error: fail(400, "Invalid BC id.") };
+  const committee = await Committee.findById(committeeId);
+  if (!committee) return { error: fail(404, "BC not found.") };
+  if (String(committee.createdBy) !== String(auth.user._id) && !auth.user.isSuperAdmin) {
+    return { error: fail(403, "This is not your BC.") };
+  }
+  return { ...auth, committee };
+}
+
+/** True if this organizer may manage this member (linked to them, or super admin). */
+export function adminCanManageMember(admin, member) {
+  if (!admin || !member) return false;
+  if (admin.isSuperAdmin) return true;
+  const id = String(admin._id);
+  return (
+    (member.organizers || []).some((o) => String(o) === id) ||
+    String(member.createdBy || "") === id ||
+    String(member.referredBy || "") === id
+  );
+}

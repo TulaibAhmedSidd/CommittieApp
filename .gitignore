@@ -39,3 +39,6 @@ next-env.d.ts
 
 # agent configs
 .agents/
+
+# migration backups
+scripts/backups/

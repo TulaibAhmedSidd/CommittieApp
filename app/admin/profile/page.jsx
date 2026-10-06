@@ -1,328 +1,216 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { FiUser, FiMail, FiLock, FiShield, FiSave, FiArrowLeft, FiCamera, FiMapPin, FiNavigation, FiCrosshair, FiCheckCircle } from "react-icons/fi";
-import Card from "../../Components/Theme/Card";
-import Button from "../../Components/Theme/Button";
-import Input from "../../Components/Theme/Input";
-import BlueTick from "../../Components/Theme/BlueTick";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import Link from "next/link";
+import { FiLock, FiPhone } from "react-icons/fi";
+import { Bi, Button, Card, ErrorBox, Field, Loading, Page, PhotoPicker, Section, StatusBadge } from "../../ui";
+import { W } from "../../utils/words";
+import { adminApi } from "../../utils/api";
+import { getSession, saveSession, updateSessionAccount } from "../../utils/session";
+import { formatPkPhone } from "../../utils/phone";
+
+function IdBadge({ status }) {
+  if (status === "verified") return <StatusBadge status="verifiedId" />;
+  if (status === "pending") return <StatusBadge status="pendingId" />;
+  return <StatusBadge label="Not verified" tone="gray" />;
+}
+
+function DetailsCard({ profile, onSaved }) {
+  const [form, setForm] = useState({
+    name: profile.name || "",
+    phone: formatPkPhone(profile.phone),
+    email: profile.email || "",
+    city: profile.city || "",
+  });
+  const [saving, setSaving] = useState(false);
+  const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
+
+  const save = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      const data = await adminApi.patch("/api/admin/profile", form);
+      if (data.account) updateSessionAccount("admin", data.account);
+      onSaved(data.account);
+      toast.success("Your details are saved.");
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Section title="Your details" urdu="آپ کی معلومات">
+      <Card padding="p-5">
+        <form className="space-y-4" onSubmit={save}>
+          <Field label={W.name.en} urdu={W.name.ur} value={form.name} onChange={set("name")} autoComplete="name" required />
+          <Field
+            label={W.phone.en}
+            urdu={W.phone.ur}
+            prefix={<FiPhone />}
+            type="tel"
+            inputMode="tel"
+            placeholder="0300 1234567"
+            value={form.phone}
+            onChange={set("phone")}
+            autoComplete="tel"
+            required
+          />
+          <Field label={W.email.en} urdu={W.email.ur} type="email" value={form.email} onChange={set("email")} autoComplete="email" />
+          <Field label="City" urdu="شہر" value={form.city} onChange={set("city")} autoComplete="address-level2" />
+          <Button type="submit" full size="lg" loading={saving}>
+            <Bi {...W.save} />
+          </Button>
+        </form>
+      </Card>
+    </Section>
+  );
+}
+
+function IdentityCard({ profile, onSaved }) {
+  const [nicNumber, setNicNumber] = useState(profile.nicNumber || "");
+  const [nicImage, setNicImage] = useState(profile.nicImage || "");
+  const [status, setStatus] = useState(profile.verificationStatus);
+  const [saving, setSaving] = useState(false);
+
+  const save = async () => {
+    if (!nicNumber.trim() && !nicImage) {
+      toast.error("Please add your CNIC number or photo.");
+      return;
+    }
+    setSaving(true);
+    try {
+      const body = { nicNumber: nicNumber.trim() };
+      if (nicImage.startsWith("data:")) body.nicImage = nicImage;
+      const data = await adminApi.patch("/api/admin/profile", body);
+      if (data.account) {
+        updateSessionAccount("admin", data.account);
+        setStatus(data.account.verificationStatus);
+        onSaved(data.account);
+      }
+      toast.success(body.nicImage ? "Sent. We will check your CNIC soon." : "Saved.");
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Section title="Identity (blue tick)" urdu="شناخت (بلیو ٹک)">
+      <Card padding="p-5">
+        <div className="space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-[15px] text-ink-600">Status</span>
+            <IdBadge status={status} />
+          </div>
+          <Field
+            label="CNIC number"
+            urdu="شناختی کارڈ نمبر"
+            inputMode="numeric"
+            placeholder="35202-1234567-1"
+            value={nicNumber}
+            onChange={(e) => setNicNumber(e.target.value)}
+          />
+          <PhotoPicker label="CNIC photo" urdu="شناختی کارڈ کی تصویر" scope="admin" value={nicImage} onChange={setNicImage} />
+          <Button full size="lg" loading={saving} onClick={save}>
+            <Bi {...W.save} />
+          </Button>
+        </div>
+      </Card>
+    </Section>
+  );
+}
+
+function PasswordCard() {
+  const [current, setCurrent] = useState("");
+  const [next, setNext] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const save = async (e) => {
+    e.preventDefault();
+    if (next.length < 6) {
+      toast.error("New password must be at least 6 characters.");
+      return;
+    }
+    setSaving(true);
+    try {
+      const data = await adminApi.patch("/api/admin/profile", { currentPassword: current, newPassword: next });
+      if (data.token) saveSession("admin", data.token, data.account || getSession("admin")?.account);
+      setCurrent("");
+      setNext("");
+      toast.success("Password changed.");
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Section title="Change password" urdu="پاس ورڈ تبدیل کریں">
+      <Card padding="p-5">
+        <form className="space-y-4" onSubmit={save}>
+          <Field
+            label="Current password"
+            urdu="موجودہ پاس ورڈ"
+            prefix={<FiLock />}
+            type="password"
+            autoComplete="current-password"
+            value={current}
+            onChange={(e) => setCurrent(e.target.value)}
+            required
+          />
+          <Field
+            label="New password"
+            urdu="نیا پاس ورڈ"
+            prefix={<FiLock />}
+            type="password"
+            autoComplete="new-password"
+            hint="At least 6 characters."
+            value={next}
+            onChange={(e) => setNext(e.target.value)}
+            required
+          />
+          <Button type="submit" full size="lg" variant="secondary" loading={saving}>
+            Change password
+          </Button>
+        </form>
+      </Card>
+    </Section>
+  );
+}
 
 export default function AdminProfilePage() {
-    const [admin, setAdmin] = useState(null);
-    const [formData, setFormData] = useState({
-        name: "",
-        email: "",
-        phone: "",
-        country: "Pakistan",
-        city: "",
-        nicNumber: "",
-        nicImage: "",
-        location: { type: "Point", coordinates: [0, 0] },
-        newPassword: "",
-        confirmPassword: ""
-    });
-    const [loading, setLoading] = useState(false);
+  const [profile, setProfile] = useState(null);
+  const [error, setError] = useState("");
 
-    useEffect(() => {
-        const detail = localStorage.getItem("admin_detail");
-        if (detail) {
-            const parsed = JSON.parse(detail);
-            setAdmin(parsed);
-            setFormData(prev => ({
-                ...prev,
-                name: parsed.name,
-                email: parsed.email,
-                phone: parsed.phone || "",
-                country: parsed.country || "Pakistan",
-                city: parsed.city || "",
-                nicNumber: parsed.nicNumber || "",
-                nicImage: parsed.nicImage || "",
-                location: parsed.location || { type: "Point", coordinates: [0, 0] }
-            }));
-        }
-    }, []);
+  const load = useCallback(() => {
+    setError("");
+    adminApi
+      .get("/api/admin/profile")
+      .then((d) => setProfile(d.profile))
+      .catch((e) => setError(e.message));
+  }, []);
 
-    const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
-    };
+  useEffect(load, [load]);
 
-    const detectLocation = () => {
-        if (!navigator.geolocation) return toast.error("Geolocation not supported");
+  const merge = (account) => account && setProfile((p) => ({ ...p, ...account }));
 
-        toast.info("Detecting your location...", { autoClose: 2000 });
-        navigator.geolocation.getCurrentPosition((pos) => {
-            const { latitude, longitude } = pos.coords;
-            setFormData(prev => ({
-                ...prev,
-                location: { type: "Point", coordinates: [longitude, latitude] }
-            }));
-            toast.success("Location precision established!");
-        }, (err) => {
-            toast.error("Failed to detect location. Please enter coordinates manually.");
-        });
-    };
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        if (formData.newPassword && formData.newPassword !== formData.confirmPassword) {
-            return toast.error("Passwords do not match");
-        }
-
-        setLoading(true);
-        try {
-            const token = localStorage.getItem("admin_token");
-            const res = await fetch("/api/admin/profile", {
-                method: "PATCH",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    adminId: admin._id,
-                    name: formData.name,
-                    email: formData.email,
-                    phone: formData.phone,
-                    country: formData.country,
-                    city: formData.city,
-                    nicNumber: formData.nicNumber,
-                    nicImage: formData.nicImage,
-                    location: formData.location,
-                    password: formData.newPassword || undefined,
-                    requestVerification: formData.nicImage ? true : false
-                })
-            });
-
-            if (res.ok) {
-                const updatedAdmin = await res.json();
-                localStorage.setItem("admin_detail", JSON.stringify(updatedAdmin));
-                setAdmin(updatedAdmin);
-                toast.success("Profile updated successfully!");
-                setFormData(prev => ({ ...prev, newPassword: "", confirmPassword: "" }));
-            } else {
-                const error = await res.json();
-                throw new Error(error.message || "Failed to update profile");
-            }
-        } catch (err) {
-            toast.error(err.message);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    if (!admin) return null;
-
-    return (
-        <div className="p-8 md:p-12 max-w-4xl mx-auto space-y-12 animate-in fade-in duration-700">
-            <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                    <Link href="/admin" className="text-primary-600 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest hover:translate-x-[-4px] transition-transform">
-                        <FiArrowLeft /> Back to Command
-                    </Link>
-                    <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter uppercase italic">
-                        Organizer <span className="text-primary-600">Profile</span>
-                    </h1>
-                </div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-1 space-y-6">
-                    <Card className="p-8 flex flex-col items-center text-center space-y-6 bg-slate-900 border-none text-white relative overflow-hidden">
-                        <div className="relative z-10 space-y-4">
-                            <div className="relative">
-                                <div className="w-24 h-24 rounded-[2rem] bg-primary-600 flex items-center justify-center text-3xl font-black shadow-2xl shadow-primary-600/50 mx-auto">
-                                    {admin.name?.charAt(0)}
-                                </div>
-                                <button className="absolute -bottom-2 -right-2 w-10 h-10 bg-white dark:bg-slate-800 rounded-xl shadow-lg flex items-center justify-center text-slate-600 dark:text-white border border-slate-100 dark:border-slate-700 hover:scale-110 transition-transform">
-                                    <FiCamera size={18} />
-                                </button>
-                            </div>
-                            <div>
-                                <h3 className="text-xl font-black tracking-tight uppercase flex items-center justify-center gap-2">
-                                    {admin.name}
-                                    <BlueTick verified={admin.verificationStatus === 'verified'} size={20} />
-                                </h3>
-                                <p className="text-xs text-slate-400 font-medium italic">{admin.email}</p>
-                            </div>
-                            <div className="pt-4 flex justify-center gap-2">
-                                {admin.verificationStatus === "verified" ? (
-                                    <div className="px-3 py-1 bg-blue-500/10 text-blue-500 rounded-full text-[8px] font-black uppercase tracking-[0.2em] border border-blue-500/20 flex items-center gap-1">
-                                        Verified Organizer <FiCheckCircle />
-                                    </div>
-                                ) : admin.verificationStatus === "pending" ? (
-                                    <div className="px-3 py-1 bg-amber-500/10 text-amber-500 rounded-full text-[8px] font-black uppercase tracking-[0.2em] border border-amber-500/20">
-                                        Verification Pending
-                                    </div>
-                                ) : (
-                                    <div className="px-3 py-1 bg-slate-500/10 text-slate-500 rounded-full text-[8px] font-black uppercase tracking-[0.2em] border border-slate-500/20">
-                                        Unverified Profile
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                        <FiShield size={120} className="absolute -bottom-10 -right-10 text-white/5 -rotate-12" />
-                    </Card>
-
-                    <Card className="p-6 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
-                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Security Overview</h4>
-                        <div className="space-y-4">
-                            <div className="flex items-center justify-between">
-                                <span className="text-xs font-bold text-slate-500 uppercase">2FA Status</span>
-                                <span className="text-[10px] font-black text-red-500 uppercase">Disabled</span>
-                            </div>
-                            <div className="flex items-center justify-between">
-                                <span className="text-xs font-bold text-slate-500 uppercase">Last Login</span>
-                                <span className="text-[10px] font-black text-slate-400 uppercase">Today</span>
-                            </div>
-                        </div>
-                    </Card>
-                </div>
-
-                <Card className="lg:col-span-2 p-8 border-none shadow-2xl bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl">
-                    <form onSubmit={handleSubmit} className="space-y-8">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <Input
-                                label="Display Name"
-                                name="name"
-                                value={formData.name}
-                                onChange={handleChange}
-                                icon={<FiUser />}
-                                required
-                            />
-                            <Input
-                                label="Email Address"
-                                name="email"
-                                type="email"
-                                value={formData.email}
-                                onChange={handleChange}
-                                icon={<FiMail />}
-                                required
-                            />
-                            <Input
-                                label="Phone Number"
-                                name="phone"
-                                value={formData.phone}
-                                onChange={handleChange}
-                                icon={<FiUser />}
-                            />
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-slate-100 dark:border-slate-800">
-                            <div className="flex items-center gap-2 text-primary-600 md:col-span-2">
-                                <FiShield />
-                                <h3 className="text-xs font-black uppercase tracking-widest">Verification & Identity</h3>
-                            </div>
-                            <Input
-                                label="Country"
-                                name="country"
-                                value={formData.country}
-                                onChange={handleChange}
-                            />
-                            <Input
-                                label="City"
-                                name="city"
-                                value={formData.city}
-                                onChange={handleChange}
-                            />
-                            <Input
-                                label="NIC Number"
-                                name="nicNumber"
-                                value={formData.nicNumber}
-                                onChange={handleChange}
-                                placeholder="42101-XXXXXXX-X"
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Original NIC Image</label>
-                            <div className="relative group/file">
-                                <input
-                                    type="text"
-                                    name="nicImage"
-                                    placeholder="Paste Image URL or Upload..."
-                                    value={formData.nicImage}
-                                    onChange={handleChange}
-                                    className="w-full px-4 py-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800 text-xs font-bold outline-none focus:ring-2 focus:ring-primary-500/20 transition-all"
-                                />
-                            </div>
-                        </div>
-
-                        <div className="space-y-6 pt-6 border-t border-slate-100 dark:border-slate-800">
-                            <div className="flex items-center justify-between text-primary-600">
-                                <div className="flex items-center gap-2">
-                                    <FiMapPin />
-                                    <h3 className="text-xs font-black uppercase tracking-widest">Circuit Geo-Location</h3>
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={detectLocation}
-                                    className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest bg-primary-600/10 px-4 py-2 rounded-xl border border-primary-600/20 hover:bg-primary-600 hover:text-white transition-all"
-                                >
-                                    <FiNavigation /> Auto-Detect Presence
-                                </button>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Longitude</label>
-                                    <input
-                                        type="number"
-                                        step="any"
-                                        value={formData.location.coordinates[0]}
-                                        onChange={(e) => setFormData(prev => ({ ...prev, location: { ...prev.location, coordinates: [parseFloat(e.target.value), prev.location.coordinates[1]] } }))}
-                                        className="w-full px-4 py-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800 text-xs font-bold outline-none focus:ring-2 focus:ring-primary-500/20 transition-all font-mono"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Latitude</label>
-                                    <input
-                                        type="number"
-                                        step="any"
-                                        value={formData.location.coordinates[1]}
-                                        onChange={(e) => setFormData(prev => ({ ...prev, location: { ...prev.location, coordinates: [prev.location.coordinates[0], parseFloat(e.target.value)] } }))}
-                                        className="w-full px-4 py-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800 text-xs font-bold outline-none focus:ring-2 focus:ring-primary-500/20 transition-all font-mono"
-                                    />
-                                </div>
-                            </div>
-                            <p className="text-[10px] text-slate-400 italic">This location data helps nearby members discover your circuits. Exact coordinates are never exposed.</p>
-                        </div>
-
-                        <div className="space-y-6 pt-6 border-t border-slate-100 dark:border-slate-800">
-                            <div className="flex items-center gap-2 text-primary-600">
-                                <FiLock />
-                                <h3 className="text-xs font-black uppercase tracking-widest">Update Security Password</h3>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <Input
-                                    label="New Password"
-                                    name="newPassword"
-                                    type="password"
-                                    placeholder="••••••••"
-                                    value={formData.newPassword}
-                                    onChange={handleChange}
-                                    icon={<FiLock />}
-                                />
-                                <Input
-                                    label="Confirm New Password"
-                                    name="confirmPassword"
-                                    type="password"
-                                    placeholder="••••••••"
-                                    value={formData.confirmPassword}
-                                    onChange={handleChange}
-                                    icon={<FiLock />}
-                                />
-                            </div>
-                            <p className="text-[10px] text-slate-400 italic">Leave password fields empty to keep current password.</p>
-                        </div>
-
-                        <div className="pt-4">
-                            <Button type="submit" loading={loading} className="w-full py-5 font-black uppercase tracking-[0.2em] text-xs shadow-xl shadow-primary-500/20">
-                                Save Profile Changes <FiSave className="ml-2" />
-                            </Button>
-                        </div>
-                    </form>
-                </Card>
-            </div>
-        </div>
-    );
+  return (
+    <Page title={W.profile.en} urdu={W.profile.ur} subtitle={profile?.referralCode ? `Your code: ${profile.referralCode}` : undefined}>
+      {error && !profile ? (
+        <ErrorBox message={error} onRetry={load} />
+      ) : !profile ? (
+        <Loading rows={3} />
+      ) : (
+        <>
+          <DetailsCard profile={profile} onSaved={merge} />
+          <IdentityCard profile={profile} onSaved={merge} />
+          <PasswordCard />
+        </>
+      )}
+    </Page>
+  );
 }

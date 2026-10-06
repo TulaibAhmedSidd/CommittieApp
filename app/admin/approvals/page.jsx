@@ -1,221 +1,231 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { FiUserCheck, FiUserX, FiTarget, FiBriefcase, FiUser, FiInfo } from "react-icons/fi";
-import Card from "../../Components/Theme/Card";
-import Button from "../../Components/Theme/Button";
-import Pagination from "../../Components/Theme/Pagination";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "react-toastify";
+import { FiKey, FiLock, FiPhone, FiSlash, FiUserPlus, FiUsers } from "react-icons/fi";
+import { Bi, Button, Card, EmptyState, ErrorBox, Field, ListRow, Loading, MoreMenu, Page, ShareBox, Sheet, Tabs, useConfirm } from "../../ui";
+import { W } from "../../utils/words";
+import { adminApi } from "../../utils/api";
+import { getSession } from "../../utils/session";
+import { formatPkPhone } from "../../utils/phone";
 
-export default function ApprovalsPage() {
-    const [approvals, setApprovals] = useState({ admins: [], members: [] });
-    const [loading, setLoading] = useState(true);
-    const [actionLoading, setActionLoading] = useState(null);
-    const [adminPage, setAdminPage] = useState(1);
-    const [memberPage, setMemberPage] = useState(1);
-    const PAGE_SIZE = 5;
-    const router = useRouter();
+const TABS = [
+  { value: "pending", en: "Waiting", ur: "منتظر" },
+  { value: "approved", en: "Active", ur: "فعال" },
+  { value: "rejected", en: "Rejected", ur: "رد شدہ" },
+];
 
-    useEffect(() => {
-        const adminDetail = localStorage.getItem("admin_detail");
-        if (!adminDetail) {
-            router.push("/admin/login");
-            return;
-        }
-        const admin = JSON.parse(adminDetail);
-        if (!admin.isSuperAdmin) {
-            router.push("/admin");
-            return;
-        }
-        fetchPending();
-    }, [router]);
+const EMPTY = { pending: "No one is waiting", approved: "No active organizers", rejected: "No one is rejected" };
 
-    const fetchPending = async () => {
-        setLoading(true);
-        try {
-            const token = localStorage.getItem("admin_token");
-            const res = await fetch("/api/admin/approvals", {
-                headers: { "Authorization": `Bearer ${token}` }
-            });
-            const data = await res.json();
-            setApprovals(data);
-        } catch (err) {
-            toast.error("Failed to fetch pending requests");
-        } finally {
-            setLoading(false);
-        }
-    };
+function AddOrganizerSheet({ open, onClose }) {
+  const [form, setForm] = useState({ name: "", phone: "", email: "" });
+  const [saving, setSaving] = useState(false);
+  const [invite, setInvite] = useState(null);
+  const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
 
-    const handleAction = async (userId, role, action) => {
-        setActionLoading(userId);
-        try {
-            const token = localStorage.getItem("admin_token");
-            const res = await fetch("/api/admin/approvals", {
-                method: "PATCH",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                },
-                body: JSON.stringify({ userId, role, action })
-            });
+  const close = () => {
+    onClose(!!invite);
+    setForm({ name: "", phone: "", email: "" });
+    setInvite(null);
+  };
 
-            if (!res.ok) throw new Error("Action failed");
+  const submit = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      const d = await adminApi.post("/api/admin/organizers", form);
+      setInvite(d.invite);
+      toast.success("Organizer added. Send them the link.");
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
 
-            toast.success(`User ${action === 'approve' ? 'approved' : 'rejected'} successfully`);
-            fetchPending();
-        } catch (err) {
-            toast.error(err.message);
-        } finally {
-            setActionLoading(null);
-        }
-    };
-
-    if (loading) return (
-        <div className="p-12 text-center text-slate-400 font-black uppercase tracking-widest animate-pulse">
-            Establishing Secure Connection...
+  return (
+    <Sheet open={open} onClose={close} title="Add organizer" urdu="منتظم شامل کریں">
+      {invite ? (
+        <div className="space-y-4">
+          <p className="text-[15px] text-ink-700">Send this link so they can set their password.</p>
+          <ShareBox link={invite.link} text={invite.text} waHref={invite.waLink} />
+          <Button variant="secondary" full onClick={close}>
+            Done
+          </Button>
         </div>
-    );
+      ) : (
+        <form className="space-y-4" onSubmit={submit}>
+          <Field label={W.name.en} urdu={W.name.ur} value={form.name} onChange={set("name")} required />
+          <Field
+            label={W.phone.en}
+            urdu={W.phone.ur}
+            prefix={<FiPhone />}
+            type="tel"
+            inputMode="tel"
+            placeholder="0300 1234567"
+            value={form.phone}
+            onChange={set("phone")}
+            required
+          />
+          <Field label={W.email.en} urdu={W.email.ur} type="email" value={form.email} onChange={set("email")} />
+          <Button type="submit" full size="lg" loading={saving}>
+            Add organizer
+          </Button>
+        </form>
+      )}
+    </Sheet>
+  );
+}
 
+export default function OrganizersPage() {
+  const [isSuper, setIsSuper] = useState(null);
+  const [tab, setTab] = useState("pending");
+  const [rows, setRows] = useState(null);
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState("");
+  const [adding, setAdding] = useState(false);
+  const [linkFor, setLinkFor] = useState(null);
+  const confirm = useConfirm();
+
+  useEffect(() => setIsSuper(!!getSession("admin")?.account?.isSuperAdmin), []);
+
+  const load = useCallback(() => {
+    setError("");
+    setRows(null);
+    adminApi
+      .get(`/api/admin/organizers?status=${tab}`)
+      .then((d) => setRows(d.organizers || []))
+      .catch((e) => setError(e.message));
+  }, [tab]);
+
+  useEffect(() => {
+    if (isSuper) load();
+  }, [isSuper, load]);
+
+  const setStatus = async (o, status) => {
+    if (status === "rejected") {
+      const yes = await confirm({
+        title: tab === "approved" ? `Block ${o.name}?` : `Reject ${o.name}?`,
+        text: tab === "approved" ? "They will be logged out and can't use the app as an organizer." : "They will not be able to create BCs.",
+        confirmText: tab === "approved" ? "Block" : W.reject.en,
+        danger: true,
+      });
+      if (!yes) return;
+    }
+    setBusy(`${o._id}-${status}`);
+    try {
+      await adminApi.patch(`/api/admin/organizers/${o._id}`, { status });
+      setRows((list) => list.filter((x) => x._id !== o._id));
+      toast.success(status === "approved" ? `${o.name} is approved.` : tab === "approved" ? `${o.name} is blocked.` : `${o.name} is rejected.`);
+    } catch (e) {
+      toast.error(e.message);
+    } finally {
+      setBusy("");
+    }
+  };
+
+  const makeLink = async (o) => {
+    try {
+      const d = await adminApi.post(`/api/admin/organizers/${o._id}/link`);
+      setLinkFor({ name: o.name, ...d.invite });
+    } catch (e) {
+      toast.error(e.message);
+    }
+  };
+
+  if (isSuper === null) return <Loading rows={2} />;
+  if (!isSuper) {
     return (
-        <div className="p-8 md:p-12 space-y-12 animate-in fade-in duration-700">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                <div className="space-y-2">
-                    <h1 className="text-5xl font-black text-slate-900 dark:text-white tracking-tighter uppercase italic">
-                        Command <span className="text-primary-600">Approvals</span>
-                    </h1>
-                    <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">Authorize fresh entities into the ecosystem</p>
-                </div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-                {/* Organizers Queue */}
-                <section className="space-y-8">
-                    <div className="flex items-center gap-3">
-                        <div className="p-3 bg-primary-600/10 text-primary-600 rounded-2xl">
-                            <FiBriefcase size={24} />
-                        </div>
-                        <h2 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Organizers Queue</h2>
-                        <span className="px-3 py-1 bg-slate-900 text-white rounded-full text-[10px] font-black">{approvals.admins.length}</span>
-                    </div>
-
-                    <div className="space-y-4">
-                        {approvals.admins.length === 0 ? (
-                            <div className="p-12 bg-slate-100 dark:bg-slate-900/50 rounded-[2rem] text-center border-2 border-dashed border-slate-200 dark:border-slate-800">
-                                <p className="text-slate-400 font-black uppercase tracking-widest text-xs">No pending organizers</p>
-                            </div>
-                        ) : (
-                            <>
-                                {approvals.admins.slice((adminPage - 1) * PAGE_SIZE, adminPage * PAGE_SIZE).map(admin => (
-                                    <Card key={admin._id} className="p-8 border-none shadow-premium-hover bg-white dark:bg-slate-900 relative overflow-hidden group">
-                                        <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                                            <FiBriefcase size={120} />
-                                        </div>
-                                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative z-10">
-                                            <div className="space-y-2">
-                                                <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">{admin.name}</h3>
-                                                <p className="text-sm text-primary-600 font-bold font-mono">{admin.email}</p>
-                                            </div>
-                                            <div className="flex gap-3 w-full md:w-auto">
-                                                <Button
-                                                    onClick={() => handleAction(admin._id, "Admin", "approve")}
-                                                    loading={actionLoading === admin._id}
-                                                    className="flex-1 md:flex-none py-3 px-6 bg-green-600 hover:bg-green-700 shadow-green-500/20"
-                                                >
-                                                    <FiUserCheck className="mr-2" /> Approve
-                                                </Button>
-                                                <Button
-                                                    variant="secondary"
-                                                    onClick={() => handleAction(admin._id, "Admin", "reject")}
-                                                    className="flex-1 md:flex-none py-3 px-6 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white border-red-500/20"
-                                                >
-                                                    <FiUserX className="mr-2" /> Reject
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    </Card>
-                                ))}
-                                {approvals.admins.length > PAGE_SIZE && (
-                                    <Pagination
-                                        currentPage={adminPage}
-                                        totalPages={Math.ceil(approvals.admins.length / PAGE_SIZE)}
-                                        onPageChange={setAdminPage}
-                                        totalItems={approvals.admins.length}
-                                        pageSize={PAGE_SIZE}
-                                    />
-                                )}
-                            </>
-                        )}
-                    </div>
-                </section>
-
-                {/* Members Queue */}
-                <section className="space-y-8">
-                    <div className="flex items-center gap-3">
-                        <div className="p-3 bg-blue-600/10 text-blue-600 rounded-2xl">
-                            <FiUser size={24} />
-                        </div>
-                        <h2 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Members Queue</h2>
-                        <span className="px-3 py-1 bg-slate-900 text-white rounded-full text-[10px] font-black">{approvals.members.length}</span>
-                    </div>
-
-                    <div className="space-y-4">
-                        {approvals.members.length === 0 ? (
-                            <div className="p-12 bg-slate-100 dark:bg-slate-900/50 rounded-[2rem] text-center border-2 border-dashed border-slate-200 dark:border-slate-800">
-                                <p className="text-slate-400 font-black uppercase tracking-widest text-xs">No pending members</p>
-                            </div>
-                        ) : (
-                            <>
-                                {approvals.members.slice((memberPage - 1) * PAGE_SIZE, memberPage * PAGE_SIZE).map(member => (
-                                    <Card key={member._id} className="p-8 border-none shadow-premium-hover bg-white dark:bg-slate-900 relative overflow-hidden group">
-                                        <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                                            <FiUser size={120} />
-                                        </div>
-                                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative z-10">
-                                            <div className="space-y-2">
-                                                <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">{member.name}</h3>
-                                                <p className="text-sm text-blue-600 font-bold font-mono">{member.email}</p>
-                                            </div>
-                                            <div className="flex gap-3 w-full md:w-auto">
-                                                <Button
-                                                    onClick={() => handleAction(member._id, "Member", "approve")}
-                                                    loading={actionLoading === member._id}
-                                                    className="flex-1 md:flex-none py-3 px-6 bg-primary-600 hover:bg-primary-700 shadow-primary-500/20"
-                                                >
-                                                    <FiUserCheck className="mr-2" /> Approve
-                                                </Button>
-                                                <Button
-                                                    variant="secondary"
-                                                    onClick={() => handleAction(member._id, "Member", "reject")}
-                                                    className="flex-1 md:flex-none py-3 px-6 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white border-red-500/20"
-                                                >
-                                                    <FiUserX className="mr-2" /> Reject
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    </Card>
-                                ))}
-                                {approvals.members.length > PAGE_SIZE && (
-                                    <Pagination
-                                        currentPage={memberPage}
-                                        totalPages={Math.ceil(approvals.members.length / PAGE_SIZE)}
-                                        onPageChange={setMemberPage}
-                                        totalItems={approvals.members.length}
-                                        pageSize={PAGE_SIZE}
-                                    />
-                                )}
-                            </>
-                        )}
-                    </div>
-                </section>
-            </div>
-
-            <div className="p-6 bg-amber-500/5 border border-amber-500/10 rounded-[2rem] flex items-center gap-4">
-                <FiInfo className="text-amber-500" size={24} />
-                <p className="text-[11px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-widest leading-relaxed">
-                    Security Protocol: Actions on this page are permanent. Approving a user grants full access to their respective dashboard.
-                </p>
-            </div>
-        </div>
+      <Page title="Organizers" urdu="منتظمین">
+        <EmptyState icon={FiLock} title="Only the super admin can see this." urdu="یہ صرف سپر ایڈمن دیکھ سکتے ہیں" />
+      </Page>
     );
+  }
+
+  const me = getSession("admin")?.account?._id;
+  const subtitle = (o) => [formatPkPhone(o.phone) || o.email, o.city, `${o.bcCount || 0} BCs`].filter(Boolean).join(" · ");
+
+  const actions = (o) => {
+    const b = (s) => busy === `${o._id}-${s}`;
+    if (tab === "pending") {
+      return (
+        <div className="flex gap-2 px-4 pb-3">
+          <Button variant="danger" full loading={b("rejected")} disabled={!!busy} onClick={() => setStatus(o, "rejected")}>
+            <Bi {...W.reject} />
+          </Button>
+          <Button full loading={b("approved")} disabled={!!busy} onClick={() => setStatus(o, "approved")}>
+            <Bi {...W.approve} />
+          </Button>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  const right = (o) => {
+    if (tab === "rejected") {
+      return (
+        <Button size="sm" loading={busy === `${o._id}-approved`} disabled={!!busy} onClick={() => setStatus(o, "approved")}>
+          {W.approve.en}
+        </Button>
+      );
+    }
+    if (tab === "approved") {
+      return (
+        <MoreMenu
+          items={[
+            { label: "New password link", urdu: "نیا پاس ورڈ لنک", icon: FiKey, onClick: () => makeLink(o) },
+            { label: "Block", urdu: "بلاک کریں", icon: FiSlash, danger: true, hidden: o.isSuperAdmin || o._id === me, onClick: () => setStatus(o, "rejected") },
+          ]}
+        />
+      );
+    }
+    return null;
+  };
+
+  let body;
+  if (error) body = <ErrorBox message={error} onRetry={load} />;
+  else if (!rows) body = <Loading rows={3} />;
+  else if (!rows.length) body = <EmptyState icon={FiUsers} title={EMPTY[tab]} />;
+  else
+    body = (
+      <Card padding="p-0" className="divide-y divide-line overflow-hidden">
+        {rows.map((o) => (
+          <div key={o._id}>
+            <ListRow avatar={o.name} title={o.name} subtitle={subtitle(o)} right={right(o)} />
+            {actions(o)}
+          </div>
+        ))}
+      </Card>
+    );
+
+  return (
+    <Page
+      title="Organizers"
+      urdu="منتظمین"
+      action={
+        <Button icon={FiUserPlus} full onClick={() => setAdding(true)}>
+          Add organizer
+        </Button>
+      }
+    >
+      <Tabs tabs={TABS} value={tab} onChange={setTab} />
+      {body}
+      <AddOrganizerSheet
+        open={adding}
+        onClose={(added) => {
+          setAdding(false);
+          if (added && tab === "approved") load();
+        }}
+      />
+      <Sheet open={!!linkFor} onClose={() => setLinkFor(null)} title="New password link" urdu="نیا پاس ورڈ لنک">
+        {linkFor && (
+          <div className="space-y-4">
+            <p className="text-[15px] text-ink-700">Send this to {linkFor.name}. It works for 1 hour.</p>
+            <ShareBox link={linkFor.link} text={linkFor.text} waHref={linkFor.waLink} />
+          </div>
+        )}
+      </Sheet>
+    </Page>
+  );
 }

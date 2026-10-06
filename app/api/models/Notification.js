@@ -8,6 +8,7 @@ const notificationSchema = new mongoose.Schema({
   type: { type: String, default: 'info' }, // 'join_request', 'info', 'alert'
   message: { type: String, required: true },
   details: { type: Object }, // Store IDs or extra data
+  link: String, // where tapping the notification goes, e.g. /userDash/bc/<id>
   isRead: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now },
 });

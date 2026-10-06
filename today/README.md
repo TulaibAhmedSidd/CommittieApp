@@ -51,6 +51,6 @@ This documentation suite represents an end-to-end, empirical browser walkthrough
 
 | Role | Email | Password | Status | Authorization Claims |
 | :--- | :--- | :--- | :--- | :--- |
-| **Super Admin** | `superadmin_qa@example.com` / `Tulaib@gmail.com` | `Password123!` | Approved | `isAdmin: true`, `isSuperAdmin: true` |
-| **Organizer** | `organizer_qa@example.com` | `Password123!` | Approved | `isAdmin: true`, `isSuperAdmin: false` |
-| **Member** | `member_qa@example.com` | `Password123!` | Approved | `verificationStatus: "verified"` |
+| **Super Admin** | `superadmin_qa@example.com` / `Tulaib@gmail.com` | (ask the owner) | Approved | `isAdmin: true`, `isSuperAdmin: true` |
+| **Organizer** | `organizer_qa@example.com` | (ask the owner) | Approved | `isAdmin: true`, `isSuperAdmin: false` |
+| **Member** | `member_qa@example.com` | (ask the owner) | Approved | `verificationStatus: "verified"` |

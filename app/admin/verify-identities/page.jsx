@@ -1,140 +1,167 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { FiShield, FiUser, FiCheck, FiX, FiExternalLink, FiImage, FiMapPin } from "react-icons/fi";
-import Card from "../../Components/Theme/Card";
-import Button from "../../Components/Theme/Button";
-import Pagination from "../../Components/Theme/Pagination";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import MemberDocumentReview from "../../Components/Admin/MemberDocumentReview";
+import { FiCheckCircle, FiFileText } from "react-icons/fi";
+import { Bi, Button, Card, EmptyState, ErrorBox, Loading, Page, SecureImage, Section, Sheet, useConfirm } from "../../ui";
+import { W } from "../../utils/words";
+import { adminApi } from "../../utils/api";
+import { formatPkPhone } from "../../utils/phone";
 
-export default function IdentityVerificationPage() {
-    const [requests, setRequests] = useState({ admins: [], members: [] });
-    const [loading, setLoading] = useState(true);
-    const [actionLoading, setActionLoading] = useState(null);
-    const [page, setPage] = useState(1);
-    const PAGE_SIZE = 6;
-    const router = useRouter();
+function docsOf(p) {
+  if (p.role === "Admin") return p.nicImage ? [{ key: "nic", label: "CNIC photo", url: p.nicImage }] : [];
+  const list = [];
+  if (p.nicFront) list.push({ key: "front", label: "CNIC front", url: p.nicFront });
+  if (p.nicBack) list.push({ key: "back", label: "CNIC back", url: p.nicBack });
+  if (p.electricityBill) list.push({ key: "bill", label: "Electricity bill", url: p.electricityBill });
+  (p.documents || []).forEach((d, i) => d?.url && list.push({ key: `doc-${i}`, label: d.name || "Other paper", url: d.url }));
+  return list;
+}
 
-    useEffect(() => {
-        const adminDetail = localStorage.getItem("admin_detail");
-        if (!adminDetail) {
-            router.push("/admin/login");
-            return;
-        }
-        fetchRequests(JSON.parse(adminDetail)._id);
-    }, [router]);
-
-    const fetchRequests = async (adminId) => {
-        setLoading(true);
-        try {
-            const token = localStorage.getItem("admin_token");
-            const res = await fetch(`/api/admin/verify?adminId=${adminId}`, {
-                headers: { "Authorization": `Bearer ${token}` }
-            });
-            const data = await res.json();
-            if (data.admins && data.members) {
-                setRequests(data);
-            } else {
-                setRequests({ admins: [], members: [] });
-            }
-        } catch (err) {
-            console.error(err);
-            toast.error("Failed to fetch verification requests");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleAction = async (userId, status, role) => {
-        setActionLoading(userId);
-        try {
-            const token = localStorage.getItem("admin_token");
-            const res = await fetch("/api/admin/verify", {
-                method: "PATCH",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                },
-                body: JSON.stringify({ userId, role: role || 'Member', status })
-            });
-
-            if (res.ok) {
-                toast.success(`Identity ${status === 'verified' ? 'Verified' : 'Rejected'}`);
-                const adminDetail = JSON.parse(localStorage.getItem("admin_detail"));
-                fetchRequests(adminDetail._id);
-            }
-        } catch (err) {
-            toast.error("Process failed");
-        } finally {
-            setActionLoading(null);
-        }
-    };
-
-    if (loading) return <div className="p-12 text-center animate-pulse font-black uppercase tracking-widest text-slate-400">Syncing Identity Records...</div>;
-
-    return (
-        <div className="p-8 md:p-12 space-y-12 animate-in fade-in duration-700">
-            <div className="space-y-2">
-                <h1 className="text-5xl font-black text-slate-900 dark:text-white tracking-tighter uppercase italic">
-                    Identity <span className="text-primary-600">Verification</span>
-                </h1>
-                <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">Verify NIC and authorize Blue Tick trust badges</p>
-            </div>
-
-            <div className="grid grid-cols-1 gap-12">
-                {/* Combined Queue */}
-                <section className="space-y-6">
-                    <div className="flex items-center gap-3">
-                        <div className="w-2 h-8 bg-blue-500 rounded-full" />
-                        <h2 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Pending Verifications</h2>
-                    </div>
-
-                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-                        {(() => {
-                            const allRequests = [...requests.admins.map(a => ({ ...a, role: 'Admin' })), ...requests.members.map(m => ({ ...m, role: 'Member' }))];
-                            const totalPages = Math.ceil(allRequests.length / PAGE_SIZE) || 1;
-                            const pagedRequests = allRequests.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-
-                            return (
-                                <>
-                                    {pagedRequests.map((user) => (
-                                        <Card key={user._id} className="p-8 border-none bg-white dark:bg-slate-900 shadow-premium">
-                                            <MemberDocumentReview
-                                                member={user}
-                                                onAction={handleAction}
-                                                actionLoading={actionLoading}
-                                            />
-                                        </Card>
-                                    ))}
-
-                                    {allRequests.length === 0 && (
-                                        <div className="col-span-full py-20 text-center space-y-4">
-                                            <div className="flex justify-center text-slate-200">
-                                                <FiShield size={64} />
-                                            </div>
-                                            <p className="text-slate-400 font-black uppercase tracking-widest text-xs italic">All identities are synchronized. No pending verifications.</p>
-                                        </div>
-                                    )}
-
-                                    {allRequests.length > PAGE_SIZE && (
-                                        <div className="col-span-full">
-                                            <Pagination
-                                                currentPage={page}
-                                                totalPages={totalPages}
-                                                onPageChange={setPage}
-                                                totalItems={allRequests.length}
-                                                pageSize={PAGE_SIZE}
-                                            />
-                                        </div>
-                                    )}
-                                </>
-                            );
-                        })()}
-                    </div>
-                </section>
-            </div>
+function PersonCard({ person, onOpen }) {
+  const count = docsOf(person).length;
+  return (
+    <Card padding="p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="truncate text-[15px] font-semibold text-ink-900">{person.name}</p>
+          <p className="truncate text-[13px] text-ink-500">
+            {[person.role === "Admin" ? "Organizer" : "Member", formatPkPhone(person.phone), person.city].filter(Boolean).join(" · ")}
+          </p>
+          <p className="text-[13px] text-ink-500">
+            {count} {count === 1 ? "photo" : "photos"}
+          </p>
         </div>
+        <Button variant="secondary" icon={FiFileText} onClick={() => onOpen(person)}>
+          Check documents
+        </Button>
+      </div>
+    </Card>
+  );
+}
+
+export default function VerifyIdentitiesPage() {
+  const [people, setPeople] = useState(null);
+  const [error, setError] = useState("");
+  const [open, setOpen] = useState(null);
+  const [busy, setBusy] = useState("");
+  const confirm = useConfirm();
+
+  const load = useCallback(() => {
+    setError("");
+    adminApi
+      .get("/api/admin/verify")
+      .then((d) => {
+        const members = (d.members || []).map((m) => ({ ...m, role: "Member" }));
+        const admins = (d.admins || []).map((a) => ({ ...a, role: "Admin" }));
+        setPeople([...admins, ...members]);
+      })
+      .catch((e) => setError(e.message));
+  }, []);
+
+  useEffect(load, [load]);
+
+  const decide = async (status) => {
+    const p = open;
+    if (!p) return;
+    if (status === "unverified") {
+      const yes = await confirm({
+        title: `Reject ${p.name}'s documents?`,
+        urdu: "دستاویزات رد کریں؟",
+        text: "They will be asked to upload clear photos again.",
+        confirmText: "Reject",
+        danger: true,
+      });
+      if (!yes) return;
+    }
+    setBusy(status);
+    try {
+      await adminApi.patch("/api/admin/verify", { userId: p._id, role: p.role, status });
+      setPeople((list) => list.filter((x) => !(x._id === p._id && x.role === p.role)));
+      setOpen(null);
+      toast.success(status === "verified" ? `${p.name} is now verified.` : "Documents sent back.");
+    } catch (e) {
+      toast.error(e.message);
+    } finally {
+      setBusy("");
+    }
+  };
+
+  const organizers = (people || []).filter((p) => p.role === "Admin");
+  const members = (people || []).filter((p) => p.role === "Member");
+
+  let body;
+  if (error && !people) body = <ErrorBox message={error} onRetry={load} />;
+  else if (!people) body = <Loading rows={3} />;
+  else if (!people.length) body = <EmptyState icon={FiCheckCircle} title="Nothing to check" urdu="چیک کرنے کو کچھ نہیں" />;
+  else
+    body = (
+      <>
+        {organizers.length > 0 && (
+          <Section title="Organizers" urdu="منتظمین" count={organizers.length}>
+            <div className="space-y-3">
+              {organizers.map((p) => (
+                <PersonCard key={`a-${p._id}`} person={p} onOpen={setOpen} />
+              ))}
+            </div>
+          </Section>
+        )}
+        {members.length > 0 && (
+          <Section title={W.members.en} urdu={W.members.ur} count={members.length}>
+            <div className="space-y-3">
+              {members.map((p) => (
+                <PersonCard key={`m-${p._id}`} person={p} onOpen={setOpen} />
+              ))}
+            </div>
+          </Section>
+        )}
+      </>
     );
+
+  const docs = open ? docsOf(open) : [];
+
+  return (
+    <Page title={W.verifyIdentity.en} urdu={W.verifyIdentity.ur}>
+      {body}
+      <Sheet
+        open={!!open}
+        onClose={() => setOpen(null)}
+        title={open?.name || ""}
+        size="lg"
+        footer={
+          <div className="flex gap-2">
+            <Button variant="danger" full loading={busy === "unverified"} disabled={!!busy} onClick={() => decide("unverified")}>
+              <Bi {...W.reject} />
+            </Button>
+            <Button full loading={busy === "verified"} disabled={!!busy} onClick={() => decide("verified")}>
+              <Bi {...W.approve} />
+            </Button>
+          </div>
+        }
+      >
+        {open && (
+          <div className="space-y-5">
+            <div>
+              <p className="text-sm font-semibold text-ink-600">
+                <Bi en="CNIC number" ur="شناختی کارڈ نمبر" />
+              </p>
+              <p className="text-lg font-semibold text-ink-900">{open.nicNumber || "Not given"}</p>
+            </div>
+            {docs.length === 0 ? (
+              <EmptyState title="No photos added" urdu="کوئی تصویر نہیں" />
+            ) : (
+              docs.map((d) => (
+                <div key={d.key} className="space-y-1.5">
+                  <p className="text-sm font-semibold text-ink-600">{d.label}</p>
+                  <div className="overflow-hidden rounded-lg border border-line bg-surface-100">
+                    <SecureImage scope="admin" src={d.url} alt={d.label} className="h-56 w-full rounded-lg" />
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+      </Sheet>
+    </Page>
+  );
 }

@@ -1,22 +1,21 @@
-// app/not-found.js
+"use client";
 
-import React from "react";
+import { FiHome } from "react-icons/fi";
+import PublicLayout from "@/app/ui/PublicLayout";
+import { Bi, Button, Card } from "@/app/ui";
 
-const NotFoundPage = () => {
+export default function NotFound() {
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-r from-blue-300 via-indigo-400 to-purple-500 text-white">
-      <div className="text-center p-8 rounded-lg bg-opacity-90 bg-[rgba(0,0,0,0.2)] shadow-xl max-w-lg">
-        <h1 className="text-6xl font-bold mb-4">404</h1>
-        <p className="text-2xl mb-6">Oops! The page you're looking for does not exist.</p>
-        <a
-          href="/"
-          className="text-lg font-semibold text-blue-400 hover:text-blue-600 transition duration-300"
-        >
-          Go back to Home
-        </a>
-      </div>
-    </div>
+    <PublicLayout narrow>
+      <Card padding="p-6" className="text-center">
+        <h1 className="text-2xl font-bold text-ink-900">
+          <Bi en="Page not found" ur="صفحہ نہیں ملا" stack />
+        </h1>
+        <p className="mt-2 text-ink-600">This link may be old or typed wrong.</p>
+        <Button href="/" size="lg" full icon={FiHome} className="mt-5">
+          <Bi en="Go to home" ur="ہوم پر جائیں" />
+        </Button>
+      </Card>
+    </PublicLayout>
   );
-};
-
-export default NotFoundPage;
+}

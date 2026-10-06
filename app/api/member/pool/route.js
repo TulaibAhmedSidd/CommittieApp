@@ -1,76 +1,55 @@
-import connectToDatabase from "@/app/utils/db";
 import Member from "@/app/api/models/Member";
-import Notification from "@/app/api/models/Notification";
 import Admin from "@/app/api/models/Admin";
-import { unauthorizedResponse, verifyAuthenticatedUser, verifyAdmin, verifyMember } from "@/app/utils/auth";
+import { requireUser } from "@/app/utils/auth";
+import { ok, fail, readJson, serverError, isObjectId } from "@/app/utils/http";
+import { notify } from "@/app/utils/notify";
 
-export async function GET(req) {
-    try {
-        const auth = verifyAdmin(req);
-        if (!auth.authorized) {
-            return unauthorizedResponse(auth);
-        }
+export const dynamic = "force-dynamic";
 
-        await connectToDatabase();
-        const members = await Member.find({}, 'name email phone status organizers').populate('organizers', 'name email');
-        return new Response(JSON.stringify(members), { status: 200 });
-    } catch (err) {
-        return new Response(JSON.stringify({ error: err.message }), { status: 500 });
-    }
-}
-
+// POST { memberId } (organizer) -> ask a member to join my members list (member must accept).
+// POST { adminId }  (member)    -> follow an organizer, to see their upcoming BCs.
 export async function POST(req) {
-    try {
-        const auth = verifyAuthenticatedUser(req);
-        if (!auth.authorized) {
-            return unauthorizedResponse(auth);
-        }
+  try {
+    const auth = await requireUser(req);
+    if (auth.error) return auth.error;
+    const body = await readJson(req);
 
-        await connectToDatabase();
-        const { memberId, adminId } = await req.json();
-
-        if (!memberId || !adminId) {
-            return new Response(JSON.stringify({ error: "Member ID and Admin ID required" }), { status: 400 });
-        }
-
-        const isAdmin = !!auth.user?.isAdmin;
-        if ((!isAdmin && auth.user.userId !== memberId) || (isAdmin && auth.user.userId !== adminId)) {
-            return new Response(JSON.stringify({ error: "Unauthorized association request" }), { status: 403 });
-        }
-
-        const member = await Member.findById(memberId);
-        if (!member) {
-            return new Response(JSON.stringify({ error: "Member not found" }), { status: 404 });
-        }
-
-        // Check if already an organizer or already pending
-        if (member.organizers.includes(adminId)) {
-            return new Response(JSON.stringify({ error: "Already associated with this member" }), { status: 400 });
-        }
-
-        if (member.pendingOrganizers?.includes(adminId)) {
-            return new Response(JSON.stringify({ error: "Association request already pending" }), { status: 400 });
-        }
-
-        // Add to pendingOrganizers instead of organizers
-        if (!member.pendingOrganizers) member.pendingOrganizers = [];
-        member.pendingOrganizers.push(adminId);
-        await member.save();
-
-        // Notify Member
-        const admin = await Admin.findById(adminId);
-        await Notification.create({
-            recipient: memberId,
-            recipientModel: 'Member',
-            sender: adminId,
-            senderModel: 'Admin',
-            type: 'join_request',
-            message: `Organizer ${admin.name} wants to associate with your profile.`,
-            details: { adminId: adminId }
-        });
-
-        return new Response(JSON.stringify({ message: "Association request sent to member", member }), { status: 200 });
-    } catch (err) {
-        return new Response(JSON.stringify({ error: err.message }), { status: 500 });
+    if (auth.isAdmin) {
+      if (!isObjectId(body.memberId)) return fail(400, "Invalid member.");
+      const member = await Member.findById(body.memberId).select("name organizers pendingOrganizers status");
+      if (!member || member.status === "invited") return fail(404, "Member not found.");
+      const me = String(auth.user._id);
+      if ((member.organizers || []).some((o) => String(o) === me)) return fail(400, "Already in your members list.");
+      if ((member.pendingOrganizers || []).some((o) => String(o) === me)) return fail(400, "Request already sent.");
+      await Member.updateOne({ _id: member._id }, { $addToSet: { pendingOrganizers: auth.user._id } });
+      await notify({
+        recipient: member,
+        model: "Member",
+        sender: auth.user._id,
+        senderModel: "Admin",
+        type: "connect_request",
+        message: `${auth.user.name} (organizer) wants to add you to their members.`,
+        details: { adminId: me },
+        link: "/userDash/notifications",
+      });
+      return ok({ sent: true });
     }
+
+    if (!isObjectId(body.adminId)) return fail(400, "Invalid organizer.");
+    const admin = await Admin.findOne({ _id: body.adminId, status: "approved" }).select("name");
+    if (!admin) return fail(404, "Organizer not found.");
+    await Member.updateOne({ _id: auth.user._id }, { $addToSet: { organizers: admin._id }, $pull: { pendingOrganizers: admin._id } });
+    await notify({
+      recipient: admin._id,
+      model: "Admin",
+      sender: auth.user._id,
+      senderModel: "Member",
+      type: "info",
+      message: `${auth.user.name} added you as their organizer.`,
+      link: "/admin/members",
+    });
+    return ok({ following: true });
+  } catch (err) {
+    return serverError(err, "member/pool");
+  }
 }

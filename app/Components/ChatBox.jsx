@@ -1,171 +1,98 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { FiSend, FiX, FiMessageSquare, FiUser } from "react-icons/fi";
-import Button from "./Theme/Button";
-import moment from "moment";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { FiSend } from "react-icons/fi";
+import { Sheet } from "../ui";
+import { apiFor } from "../utils/api";
+import { getSession } from "../utils/session";
 
-export default function ChatBox({
-    committeeId,
-    currentUserId,
-    currentUserModel,
-    otherUserId,
-    otherUserName,
-    otherUserModel,
-    onClose
-}) {
-    const [messages, setMessages] = useState([]);
-    const [newMessage, setNewMessage] = useState("");
-    const [loading, setLoading] = useState(true);
-    const scrollRef = useRef(null);
-    const [sending, setSending] = useState(false);
+/**
+ * Chat with one person, in a sheet. Polls every 5s while open.
+ * <ChatBox open scope="member" otherId otherModel="Admin" otherName committeeId onClose />
+ */
+export default function ChatBox({ open, onClose, scope, otherId, otherModel, otherName, committeeId }) {
+  const [messages, setMessages] = useState([]);
+  const [text, setText] = useState("");
+  const [error, setError] = useState("");
+  const [sending, setSending] = useState(false);
+  const endRef = useRef(null);
+  const me = getSession(scope)?.account?._id;
+  const api = apiFor(scope);
 
-    // Initial fetch
-    useEffect(() => {
-        fetchMessages();
-        const interval = setInterval(fetchMessages, 3000); // Poll every 3s
-        return () => clearInterval(interval);
-    }, [committeeId, currentUserId, otherUserId]);
+  const load = useCallback(async () => {
+    if (!otherId) return;
+    try {
+      const q = new URLSearchParams({ otherId, ...(committeeId ? { committeeId } : {}) });
+      setMessages(await api.get(`/api/messages?${q}`));
+    } catch (e) {
+      setError(e.message);
+    }
+  }, [otherId, committeeId, api]);
 
-    // Scroll to bottom on new messages
-    useEffect(() => {
-        if (scrollRef.current) {
-            scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-        }
-    }, [messages]);
+  useEffect(() => {
+    if (!open) return;
+    load();
+    const t = setInterval(load, 5000);
+    return () => clearInterval(t);
+  }, [open, load]);
 
-    const fetchMessages = async () => {
-        try {
-            const token = currentUserModel === "Admin"
-                ? localStorage.getItem("admin_token")
-                : localStorage.getItem("token");
-            const res = await fetch(`/api/messages?committeeId=${committeeId}&userId=${currentUserId}&otherId=${otherUserId}`, {
-                headers: token ? { Authorization: `Bearer ${token}` } : {},
-            });
-            if (res.ok) {
-                const data = await res.json();
-                setMessages(prev => {
-                    // Simple check to avoid re-rendering if length matches (naive optimization)
-                    if (data.length === prev.length) return prev;
-                    return data;
-                });
-            }
-        } catch (err) {
-            console.error("Failed to fetch messages", err);
-        } finally {
-            setLoading(false);
-        }
-    };
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ block: "end" });
+  }, [messages.length]);
 
-    const handleSend = async (e) => {
-        e.preventDefault();
-        if (!newMessage.trim()) return;
+  const send = async (e) => {
+    e.preventDefault();
+    const content = text.trim();
+    if (!content) return;
+    setSending(true);
+    setError("");
+    try {
+      await api.post("/api/messages", { receiverId: otherId, receiverModel: otherModel, committeeId: committeeId || undefined, content });
+      setText("");
+      load();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSending(false);
+    }
+  };
 
-        setSending(true);
-        try {
-            const token = currentUserModel === "Admin"
-                ? localStorage.getItem("admin_token")
-                : localStorage.getItem("token");
-            const res = await fetch("/api/messages", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-                },
-                body: JSON.stringify({
-                    senderId: currentUserId,
-                    senderModel: currentUserModel,
-                    receiverId: otherUserId,
-                    receiverModel: otherUserModel,
-                    committeeId,
-                    content: newMessage
-                })
-            });
-
-            if (res.ok) {
-                const msg = await res.json();
-                setMessages([...messages, msg]);
-                setNewMessage("");
-            }
-        } catch (err) {
-            console.error("Failed to send message", err);
-        } finally {
-            setSending(false);
-        }
-    };
-
-    const isMe = (msg) => msg.sender === currentUserId;
-
-    return (
-        <div className="fixed bottom-4 right-4 md:bottom-8 md:right-8 w-80 md:w-96 h-[500px] bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col z-50 animate-in slide-in-from-bottom-10 duration-500 overflow-hidden">
-            {/* Header */}
-            <div className="p-4 bg-primary-600 text-white flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
-                        <FiMessageSquare size={16} />
-                    </div>
-                    <div>
-                        <h4 className="font-black uppercase text-xs tracking-widest">{otherUserName}</h4>
-                        <p className="text-[10px] text-primary-200 font-medium">Real-time Support</p>
-                    </div>
-                </div>
-                <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors">
-                    <FiX size={18} />
-                </button>
+  return (
+    <Sheet
+      open={open}
+      onClose={onClose}
+      title={otherName || "Chat"}
+      footer={
+        <form onSubmit={send} className="flex gap-2">
+          <input
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="Type a message"
+            aria-label="Message"
+            className="min-h-[48px] flex-1 rounded-xl border border-line px-3.5 outline-none focus:border-primary-500"
+          />
+          <button type="submit" disabled={sending || !text.trim()} aria-label="Send" className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary-600 text-white disabled:opacity-50">
+            <FiSend className="h-5 w-5" />
+          </button>
+        </form>
+      }
+    >
+      <div className="flex min-h-[40vh] flex-col gap-2">
+        {messages.length === 0 && <p className="py-10 text-center text-sm text-ink-500">No messages yet. Say Assalam o Alaikum!</p>}
+        {messages.map((m) => {
+          const mine = String(m.sender) === String(me);
+          return (
+            <div key={m._id} className={`max-w-[80%] rounded-2xl px-3.5 py-2 text-[15px] ${mine ? "self-end rounded-br-md bg-primary-600 text-white" : "self-start rounded-bl-md bg-surface-200 text-ink-900"}`}>
+              <p className="whitespace-pre-wrap break-words">{m.content}</p>
+              <p className={`mt-0.5 text-[11px] ${mine ? "text-white/70" : "text-ink-500"}`}>
+                {new Date(m.timestamp).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+              </p>
             </div>
-
-            {/* Messages Area */}
-            <div ref={scrollRef} className="flex-1 p-4 overflow-y-auto space-y-4 bg-slate-50 dark:bg-slate-950/50">
-                {loading ? (
-                    <div className="flex justify-center py-10">
-                        <div className="w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
-                    </div>
-                ) : messages.length === 0 ? (
-                    <div className="text-center py-10 text-slate-400">
-                        <p className="text-xs font-black uppercase tracking-widest">No messages yet</p>
-                        <p className="text-[10px] mt-1">Start the conversation!</p>
-                    </div>
-                ) : (
-                    messages.map((msg, idx) => (
-                        <div key={idx} className={`flex ${isMe(msg) ? "justify-end" : "justify-start"}`}>
-                            <div className={`
-                                max-w-[80%] p-3 rounded-2xl text-sm font-medium shadow-sm relative group
-                                ${isMe(msg)
-                                    ? "bg-primary-600 text-white rounded-br-none"
-                                    : "bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 rounded-bl-none"
-                                }
-                            `}>
-                                <p>{msg.content}</p>
-                                <p className={`
-                                    text-[9px] mt-1 font-black uppercase tracking-widest text-right
-                                    ${isMe(msg) ? "text-primary-200" : "text-slate-400"}
-                                `}>
-                                    {moment(msg.timestamp).format("HH:mm")}
-                                </p>
-                            </div>
-                        </div>
-                    ))
-                )}
-            </div>
-
-            {/* Input Area */}
-            <form onSubmit={handleSend} className="p-4 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 flex gap-2">
-                <input
-                    type="text"
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    placeholder="Type a message..."
-                    className="flex-1 bg-slate-100 dark:bg-slate-800 border-none rounded-xl px-4 text-sm focus:ring-2 focus:ring-primary-500/20 outline-none"
-                />
-                <Button
-                    type="submit"
-                    loading={sending}
-                    disabled={!newMessage.trim()}
-                    className="aspect-square p-0 w-10 flex items-center justify-center rounded-xl bg-primary-600 hover:bg-primary-700 text-white shadow-lg shadow-primary-500/20"
-                >
-                    <FiSend size={16} />
-                </Button>
-            </form>
-        </div>
-    );
+          );
+        })}
+        {error && <p className="text-sm text-danger-700">{error}</p>}
+        <div ref={endRef} />
+      </div>
+    </Sheet>
+  );
 }

@@ -1,70 +1,33 @@
-import connectToDatabase from "@/app/utils/db";
 import Admin from "@/app/api/models/Admin";
-import Member from "@/app/api/models/Member"; // Ensure Member model is registered
-import mongoose from "mongoose";
+import Member from "@/app/api/models/Member";
+import { requireAdmin } from "@/app/utils/auth";
+import { ok, serverError } from "@/app/utils/http";
+import { randomCode } from "@/app/utils/tokens";
+import { appUrl } from "@/app/utils/mailer";
+import { waLink } from "@/app/utils/whatsapp";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
+// GET -> my invite link (referral) and how many people joined with it.
 export async function GET(req) {
-    try {
-        await connectToDatabase();
-        const url = new URL(req.url);
-        const adminId = url.searchParams.get("adminId");
+  try {
+    const auth = await requireAdmin(req);
+    if (auth.error) return auth.error;
+    const admin = auth.user;
 
-        if (!adminId) {
-            return new Response(JSON.stringify({ error: "Admin ID required" }), { status: 400 });
-        }
-
-        const admin = await Admin.findById(adminId);
-        if (!admin) {
-            return new Response(JSON.stringify({ error: "Admin not found" }), { status: 404 });
-        }
-
-        // Auto-generate if missing
-        if (!admin.referralCode) {
-            const code = `REF-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
-            admin.referralCode = code;
-            await admin.save();
-        }
-
-        // Use imported models or mongoose.models if preferred, but importing ensures registration
-        const memberCount = await Member.countDocuments({ referredBy: admin._id });
-        // Wait, check Member model. If unable to check, use safe assumption or check existing usage. 
-        // The previous code used adminId for countDocuments({ referredBy: adminId }), implying referral by ID.
-        // But the referral link uses the code. Let's stick to adminId for now if that's how it's stored.
-
-        const adminCount = await Admin.countDocuments({ createdBy: adminId });
-
-        return new Response(JSON.stringify({
-            referralCode: admin.referralCode,
-            referralScore: admin.referralScore || 0,
-            memberCount,
-            adminCount
-        }), { status: 200 });
-    } catch (err) {
-        console.error("Referral API Error:", err);
-        return new Response(JSON.stringify({ error: err.message }), { status: 500 });
+    let code = admin.referralCode;
+    for (let i = 0; !code && i < 5; i++) {
+      const candidate = randomCode();
+      const res = await Admin.updateOne({ _id: admin._id, referralCode: { $exists: false } }, { referralCode: candidate }).catch(() => null);
+      if (res?.modifiedCount) code = candidate;
+      else code = (await Admin.findById(admin._id).select("referralCode"))?.referralCode;
     }
-}
 
-export async function POST(req) { // Keep POST for manual generation if needed
-    try {
-        await connectToDatabase();
-        const { adminId } = await req.json();
-
-        if (!adminId) return new Response(JSON.stringify({ error: "Admin ID required" }), { status: 400 });
-
-        const admin = await Admin.findById(adminId);
-        if (!admin) return new Response(JSON.stringify({ error: "Admin not found" }), { status: 404 });
-
-        if (!admin.referralCode) {
-            const code = `REF-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
-            admin.referralCode = code;
-            await admin.save();
-        }
-
-        return new Response(JSON.stringify({ referralCode: admin.referralCode }), { status: 200 });
-    } catch (err) {
-        return new Response(JSON.stringify({ error: err.message }), { status: 500 });
-    }
+    const link = appUrl(`/join/${code}`);
+    const text = `Assalam o Alaikum! Join my BC group on CommittieApp. Make your account here: ${link}`;
+    const joined = await Member.countDocuments({ referredBy: admin._id });
+    return ok({ referralCode: code, link, text, waLink: waLink(null, text), joined, score: admin.referralScore || 0 });
+  } catch (err) {
+    return serverError(err, "admin/referral");
+  }
 }

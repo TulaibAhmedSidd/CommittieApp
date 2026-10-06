@@ -1,34 +1,33 @@
-import connectToDatabase from "@/app/utils/db";
 import Log from "@/app/api/models/Log";
-import Admin from "@/app/api/models/Admin";
+import { requireSuperAdmin } from "@/app/utils/auth";
+import { ok, serverError } from "@/app/utils/http";
 
+export const dynamic = "force-dynamic";
+
+// GET ?page= -> audit log (super admin only). Only names are shown for people.
 export async function GET(req) {
-    await connectToDatabase();
-    const { searchParams } = new URL(req.url);
-    const adminId = searchParams.get("adminId");
-
-    if (!adminId) {
-        return new Response(JSON.stringify({ error: "Access denied" }), { status: 403 });
-    }
-
-    try {
-        const admin = await Admin.findById(adminId);
-        if (!admin) return new Response(JSON.stringify({ error: "Admin not found" }), { status: 404 });
-
-        // Logic check for Super Admin
-        const isSuperAdmin = admin.isSuperAdmin === true ||
-            admin.isSuperAdmin === "true" ||
-            admin.email.toLowerCase() === "tulaib@gmail.com" ||
-            admin.email.toLowerCase().includes("tulaib") ||
-            admin.name?.toLowerCase?.().includes("tulaib");
-
-        if (!isSuperAdmin) {
-            return new Response(JSON.stringify({ error: "Unauthorized access to logs" }), { status: 403 });
-        }
-
-        const logs = await Log.find().sort({ timestamp: -1 }).limit(100).populate("performedBy");
-        return new Response(JSON.stringify(logs), { status: 200 });
-    } catch (err) {
-        return new Response(JSON.stringify({ error: err.message }), { status: 500 });
-    }
+  try {
+    const auth = await requireSuperAdmin(req);
+    if (auth.error) return auth.error;
+    const page = Math.max(1, parseInt(new URL(req.url).searchParams.get("page") || "1", 10));
+    const limit = 50;
+    const [logs, total] = await Promise.all([
+      Log.find().sort({ timestamp: -1 }).skip((page - 1) * limit).limit(limit).populate("performedBy", "name").lean(),
+      Log.countDocuments(),
+    ]);
+    return ok({
+      logs: logs.map((l) => ({
+        _id: String(l._id),
+        action: l.action,
+        by: l.performedBy?.name || "Unknown",
+        byType: l.onModel,
+        details: l.details,
+        timestamp: l.timestamp,
+      })),
+      page,
+      pages: Math.ceil(total / limit),
+    });
+  } catch (err) {
+    return serverError(err, "logs");
+  }
 }

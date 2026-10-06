@@ -1,4 +1,3 @@
-
 import mongoose from "mongoose";
 
 const MONGODB_URI = process.env.MONGO_URI;
@@ -6,7 +5,7 @@ const MONGODB_URI = process.env.MONGO_URI;
 let cached = global.mongoose;
 
 if (!MONGODB_URI) {
-  console.error('Please define the MONGODB_URI environment variable in .env.local');
+  console.error("MONGO_URI is not set. Add it to .env");
 }
 
 if (!cached) {
@@ -23,6 +22,9 @@ async function connectToDatabase() {
 
     const opts = {
       bufferCommands: false,
+      // Indexes are created by scripts/migrate-2026-10.mjs only, never on app start
+      // (the app shares its database with production).
+      autoIndex: false,
     };
 
     cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {

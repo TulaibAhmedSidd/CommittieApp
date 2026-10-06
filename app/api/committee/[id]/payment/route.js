@@ -1,190 +1,156 @@
 import connectToDatabase from "@/app/utils/db";
 import Committee from "@/app/api/models/Committee";
-import Notification from "@/app/api/models/Notification";
-import Asset from "@/app/api/models/Asset";
+import Member from "@/app/api/models/Member";
+import { requireMember, requireCommitteeOwner } from "@/app/utils/auth";
+import { ok, fail, readJson, serverError, isObjectId } from "@/app/utils/http";
 import { createLog } from "@/app/utils/logger";
-import { unauthorizedResponse, verifyAdmin, verifyMember } from "@/app/utils/auth";
+import { notify } from "@/app/utils/notify";
+import { resolveImage } from "@/app/utils/assets";
+import { stage, whoMustPay, paymentFor, idOf } from "@/app/utils/bcRules";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
+const str = (v, n = 120) => (typeof v === "string" ? v.trim().slice(0, n) : "");
+
+// POST { month, screenshot, transactionId?, description? } -> member sends a payment receipt.
 export async function POST(req, { params }) {
-    try {
-        const auth = verifyMember(req);
-        if (!auth.authorized) {
-            return unauthorizedResponse(auth);
-        }
+  try {
+    const auth = await requireMember(req);
+    if (auth.error) return auth.error;
+    if (!isObjectId(params.id)) return fail(400, "Invalid BC id.");
+    const body = await readJson(req);
 
-        await connectToDatabase();
-        const { id } = await params;
-        const body = await req.json();
+    await connectToDatabase();
+    const c = await Committee.findById(params.id);
+    if (!c) return fail(404, "BC not found.");
+    const me = String(auth.user._id);
 
-        if (auth.user.userId !== body.memberId) {
-            return new Response(JSON.stringify({ error: "Unauthorized payment submission" }), { status: 403 });
-        }
+    if (!(c.members || []).some((m) => String(m) === me)) return fail(403, "You are not a member of this BC.");
+    if (stage(c) !== "running") return fail(400, "This BC has not started yet.");
 
-        const committee = await Committee.findById(id);
-        if (!committee) return new Response(JSON.stringify({ error: "Committee not found" }), { status: 404 });
+    const month = Math.round(Number(body.month) || c.currentMonth || 1);
+    if (month < 1 || month > (c.currentMonth || 1)) return fail(400, "You can only pay for the current or past months.");
+    if (!whoMustPay(c, month).includes(me)) return fail(400, "You don't pay this month. It is your turn to receive.");
 
-        let screenshotUrl = body.screenshot;
+    const existing = paymentFor(c, month, me);
+    if (existing?.status === "verified") return fail(400, "This month is already paid.");
+    if (existing?.status === "pending") return fail(400, "Your receipt is already sent. Please wait for the organizer to check it.");
 
-        // If screenshot is base64, save to Assets collection
-        if (body.screenshot && body.screenshot.startsWith("data:image")) {
-            const asset = new Asset({
-                name: `payment_proof_m${body.month}_${body.memberId}`,
-                data: body.screenshot,
-                contentType: body.screenshot.match(/data:([^;]+);/)[1],
-                uploadedBy: body.memberId,
-                onModel: "Member"
-            });
-            await asset.save();
-            screenshotUrl = `/api/assets/${asset._id}`;
-        }
+    const image = await resolveImage(body.screenshot, auth.user._id, "Member", `receipt-${c._id}-m${month}`);
+    if (image.error) return fail(400, image.error);
 
-        const targetMonth = Number(body.month);
+    const submission = {
+      screenshot: image.url,
+      transactionId: str(body.transactionId, 60),
+      description: str(body.description, 300),
+      submittedAt: new Date(),
+    };
 
-        // Deduplicate: check if payment for this month and member already exists
-        let existingPayment = committee.payments.find(p => 
-            p.month === targetMonth && 
-            (p.member?.toString() === body.memberId.toString() || p.member?._id?.toString() === body.memberId.toString())
-        );
-
-        if (existingPayment) {
-            existingPayment.status = "pending";
-            existingPayment.submission = {
-                screenshot: screenshotUrl,
-                description: body.description || "",
-                transactionId: body.transactionId,
-                submittedAt: new Date()
-            };
-            existingPayment.updatedAt = new Date();
-        } else {
-            committee.payments.push({
-                month: targetMonth,
-                member: body.memberId,
-                status: "pending",
-                submission: {
-                    screenshot: screenshotUrl,
-                    description: body.description || "",
-                    transactionId: body.transactionId,
-                    submittedAt: new Date()
-                },
-                updatedAt: new Date()
-            });
-        }
-
-        await committee.save();
-
-        await createLog({
-            action: "SUBMIT_PAYMENT",
-            performedBy: body.memberId,
-            onModel: "Member",
-            targetId: committee._id,
-            details: { month: targetMonth, assetId: screenshotUrl && screenshotUrl.includes('/api/assets/') ? screenshotUrl.split('/').pop() : null }
-        });
-
-        return new Response(JSON.stringify({ message: "Payment submitted", screenshot: screenshotUrl }), { status: 200 });
-    } catch (err) {
-        return new Response(JSON.stringify({ error: err.message }), { status: 500 });
+    if (existing) {
+      await Committee.updateOne(
+        { _id: c._id, "payments._id": existing._id },
+        { $set: { "payments.$.status": "pending", "payments.$.submission": submission, "payments.$.method": "online", "payments.$.rejectReason": "", "payments.$.updatedAt": new Date() } }
+      );
+    } else {
+      await Committee.updateOne(
+        { _id: c._id },
+        { $push: { payments: { month, member: auth.user._id, status: "pending", method: "online", submission, updatedAt: new Date() } } }
+      );
     }
+
+    await notify({
+      recipient: c.createdBy,
+      model: "Admin",
+      sender: auth.user._id,
+      senderModel: "Member",
+      type: "payment_submitted",
+      message: `${auth.user.name} sent a receipt for ${c.name} (month ${month}).`,
+      link: `/admin/bc/${c._id}`,
+    });
+    await createLog({ action: "SUBMIT_PAYMENT", performedBy: auth.user._id, onModel: "Member", targetId: c._id, details: { month } });
+    return ok({ done: true, screenshot: image.url });
+  } catch (err) {
+    return serverError(err, "payment POST");
+  }
 }
 
+// PATCH { action: "approve" | "reject" | "mark_cash", memberId, month?, reason? } -> organizer checks a payment.
 export async function PATCH(req, { params }) {
-    try {
-        const auth = verifyAdmin(req);
-        if (!auth.authorized) {
-            return unauthorizedResponse(auth);
-        }
+  try {
+    const auth = await requireCommitteeOwner(req, params.id);
+    if (auth.error) return auth.error;
+    const c = auth.committee;
+    const { action, memberId, reason, month } = await readJson(req);
 
-        await connectToDatabase();
-        const { id } = await params;
-        const { paymentId, status, memberId, reason, month } = await req.json();
-        const adminId = auth.user.userId;
+    if (!["approve", "reject", "mark_cash"].includes(action)) return fail(400, "Unknown action.");
+    if (!isObjectId(memberId)) return fail(400, "Invalid member.");
+    const m = Math.round(Number(month)) || c.currentMonth || 1;
+    return await reviewPayment(c, auth.user, action, memberId, reason, m);
+  } catch (err) {
+    return serverError(err, "payment PATCH");
+  }
+}
 
-        const committee = await Committee.findById(id);
-        if (!committee) return new Response(JSON.stringify({ error: "Committee not found" }), { status: 404 });
+async function reviewPayment(c, admin, action, memberId, reason, month) {
+  if (!(c.members || []).some((m) => String(m) === String(memberId))) return fail(400, "This person is not in the BC.");
+  if (stage(c) !== "running") return fail(400, "This BC is not running.");
+  if (month < 1 || month > (c.currentMonth || 1)) return fail(400, "Invalid month.");
+  if (!whoMustPay(c, month).includes(String(memberId))) return fail(400, "This member receives the pot this month and does not pay.");
 
-        const normalizedMemberId = (memberId?._id || memberId)?.toString();
+  const existing = paymentFor(c, month, memberId);
+  const now = new Date();
+  let message;
 
-        let payment = null;
-        if (paymentId && paymentId !== "FORCE_RECONCILE") {
-            payment = committee.payments.id(paymentId) || committee.payments.find(p => p._id?.toString() === paymentId?.toString());
-        }
-
-        if (!payment) {
-            const targetMonth = month ? Number(month) : committee.currentMonth;
-            payment = committee.payments.find(p => 
-                Number(p.month) === targetMonth && 
-                ((p.member?._id || p.member)?.toString() === normalizedMemberId)
-            );
-
-            if (!payment && status === "verified" && normalizedMemberId) {
-                const forcePayment = {
-                    month: targetMonth,
-                    member: normalizedMemberId,
-                    status: "verified",
-                    updatedAt: new Date(),
-                    submission: {
-                        description: "Force verified by Admin (Manual Reconciliation)",
-                        submittedAt: new Date()
-                    }
-                };
-                committee.payments.push(forcePayment);
-                payment = committee.payments[committee.payments.length - 1];
-            }
-        }
-
-        if (payment) {
-            payment.status = status;
-            payment.updatedAt = new Date();
-            if (reason && payment.submission) {
-                payment.submission.description = payment.submission.description 
-                    ? `${payment.submission.description} [Admin Note: ${reason}]`
-                    : `[Admin Note: ${reason}]`;
-            }
-
-            const memberStr = (payment.member?._id || payment.member)?.toString();
-            committee.payments.forEach(p => {
-                const pMemberStr = (p.member?._id || p.member)?.toString();
-                if (
-                    Number(p.month) === Number(payment.month) &&
-                    pMemberStr && memberStr && pMemberStr === memberStr
-                ) {
-                    p.status = status;
-                    p.updatedAt = new Date();
-                }
-            });
-        }
-
-        if (!payment) return new Response(JSON.stringify({ error: "Payment reconciliation failed" }), { status: 400 });
-
-        await committee.save();
-
-        const notificationMessage = status === 'rejected' && reason
-            ? `Your payment for ${committee.name} (Month ${payment.month}) was flagged/rejected. Reason: ${reason}`
-            : `Your payment status for ${committee.name} (Month ${payment.month}) has been set to ${status}.`;
-
-        const recipientId = (payment.member?._id || payment.member);
-        if (recipientId) {
-            const notification = new Notification({
-                userId: recipientId,
-                recipient: recipientId,
-                recipientModel: 'Member',
-                message: notificationMessage,
-                details: `Admin Action: ${status === 'verified' ? 'Approved / Verified' : status} ${reason ? '(' + reason + ')' : ''}`,
-            });
-            await notification.save();
-        }
-
-        await createLog({
-            action: "VERIFY_PAYMENT",
-            performedBy: adminId,
-            onModel: "Admin",
-            targetId: payment.member,
-            details: { committeeId: id, status, month: payment.month, reason: reason || null, isForced: !paymentId || paymentId === "FORCE_RECONCILE" }
-        });
-
-        return new Response(JSON.stringify({ message: "Status updated" }), { status: 200 });
-    } catch (err) {
-        return new Response(JSON.stringify({ error: err.message }), { status: 500 });
+  if (action === "approve") {
+    if (!existing || existing.status !== "pending") return fail(400, "There is no receipt waiting to be checked.");
+    await Committee.updateOne(
+      { _id: c._id, "payments._id": existing._id },
+      { $set: { "payments.$.status": "verified", "payments.$.reviewedBy": admin._id, "payments.$.reviewedAt": now, "payments.$.updatedAt": now } }
+    );
+    message = `Your payment for ${c.name} (month ${month}) is approved.`;
+  } else if (action === "reject") {
+    const why = str(reason, 200);
+    if (!why) return fail(400, "Please write why you are rejecting it.");
+    if (!existing || existing.status !== "pending") return fail(400, "There is no receipt waiting to be checked.");
+    await Committee.updateOne(
+      { _id: c._id, "payments._id": existing._id },
+      { $set: { "payments.$.status": "rejected", "payments.$.rejectReason": why, "payments.$.reviewedBy": admin._id, "payments.$.reviewedAt": now, "payments.$.updatedAt": now } }
+    );
+    message = `Your receipt for ${c.name} (month ${month}) was not accepted: ${why}. Please send it again.`;
+  } else {
+    if (existing?.status === "verified") return fail(400, "Already paid.");
+    if (existing) {
+      await Committee.updateOne(
+        { _id: c._id, "payments._id": existing._id },
+        { $set: { "payments.$.status": "verified", "payments.$.method": "cash", "payments.$.reviewedBy": admin._id, "payments.$.reviewedAt": now, "payments.$.updatedAt": now } }
+      );
+    } else {
+      await Committee.updateOne(
+        { _id: c._id },
+        { $push: { payments: { month, member: memberId, status: "verified", method: "cash", reviewedBy: admin._id, reviewedAt: now, updatedAt: now } } }
+      );
     }
+    message = `Your cash payment for ${c.name} (month ${month}) is marked as paid.`;
+  }
+
+  const member = await Member.findById(memberId).select("name email");
+  if (member) {
+    await notify({
+      recipient: member,
+      model: "Member",
+      sender: admin._id,
+      senderModel: "Admin",
+      type: "payment_reviewed",
+      message,
+      link: `/userDash/bc/${c._id}`,
+    });
+  }
+  await createLog({
+    action: action === "reject" ? "REJECT_PAYMENT" : "VERIFY_PAYMENT",
+    performedBy: admin._id,
+    onModel: "Admin",
+    targetId: c._id,
+    details: { memberId: idOf(memberId), month, method: action === "mark_cash" ? "cash" : "online" },
+  });
+  return ok({ done: true });
 }

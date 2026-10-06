@@ -1,0 +1,24 @@
+// UI kit. Import from "@/app/ui". Rules: docs/DESIGN_SYSTEM.md
+export { default as AppShell } from "./AppShell";
+export { default as Avatar } from "./Avatar";
+export { default as Bi } from "./Bi";
+export { default as Button } from "./Button";
+export { default as Card } from "./Card";
+export { ConfirmProvider, useConfirm } from "./Confirm";
+export { default as EmptyState } from "./EmptyState";
+export { Field, Select, TextArea } from "./Field";
+export { LanguageProvider, useLang } from "./lang";
+export { default as ListRow } from "./ListRow";
+export { default as Loading, Skeleton, ErrorBox } from "./Loading";
+export { default as Logo } from "./Logo";
+export { default as Money, moneyText } from "./Money";
+export { default as MoreMenu } from "./MoreMenu";
+export { default as Page } from "./Page";
+export { default as PhotoPicker } from "./PhotoPicker";
+export { default as Progress } from "./Progress";
+export { default as SecureImage } from "./SecureImage";
+export { default as Section } from "./Section";
+export { default as ShareBox } from "./ShareBox";
+export { default as Sheet } from "./Sheet";
+export { default as StatusBadge } from "./StatusBadge";
+export { default as Tabs } from "./Tabs";

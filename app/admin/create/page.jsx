@@ -1,562 +1,140 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { createCommittee } from "../apis";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
-import {
-    FiLayers,
-    FiDollarSign,
-    FiCheckCircle,
-    FiChevronRight,
-    FiChevronLeft,
-    FiInfo,
-    FiTarget,
-    FiCpu
-} from "react-icons/fi";
+import { FiChevronDown } from "react-icons/fi";
+import { Page, Card, Field, TextArea, Button, Money, Bi } from "../../ui";
+import { W } from "../../utils/words";
+import { adminApi } from "../../utils/api";
+import { plannedPot } from "../../utils/bcRules";
 
-import Button from "../../Components/Theme/Button";
-import Input from "../../Components/Theme/Input";
-import Card from "../../Components/Theme/Card";
-import StepProgress from "../../Components/Theme/StepProgress";
-import Modal from "../../Components/Theme/Modal";
-import { useLanguage } from "../../Components/LanguageContext";
+const DOCS = ["NIC Front", "NIC Back", "Electricity Bill", "Gas Bill", "Water Bill", "Work ID"];
 
-export const dynamic = "force-dynamic";
+function nextMonthValue() {
+  const d = new Date();
+  d.setMonth(d.getMonth() + 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
 
-export default function CreateCommittee() {
-    const { t } = useLanguage();
-    const router = useRouter();
-    const [step, setStep] = useState(0);
-    const [loading, setLoading] = useState(false);
-    const [userLoggedDetails, setUserLoggedDetails] = useState(null);
-    const [showConsent, setShowConsent] = useState(false);
-    const [isConsentChecked, setIsConsentChecked] = useState(false);
+function monthName(value, add = 0) {
+  if (!value) return "";
+  const [y, m] = value.split("-").map(Number);
+  return new Date(y, m - 1 + add, 1).toLocaleDateString("en-GB", { month: "short", year: "numeric" });
+}
 
-    const [formData, setFormData] = useState({
-        name: "",
-        description: "",
-        maxMembers: "",
-        monthlyAmount: "",
-        monthDuration: "",
-        startDate: "",
-        endDate: "",
-        totalAmount: "",
-        createdBy: "",
-        bankDetails: {
-            accountTitle: "",
-            bankName: "",
-            iban: ""
-        },
-        organizerFee: 0,
-        isFeeMandatory: false,
-        requireDocuments: false,
-        mandatoryDocuments: [],
-        durationError: ''
-    });
+export default function CreateBcPage() {
+  const router = useRouter();
+  const [form, setForm] = useState({ name: "", maxMembers: "10", monthlyAmount: "", startDate: nextMonthValue(), description: "", accountTitle: "", bankName: "", iban: "" });
+  const [docs, setDocs] = useState([]);
+  const [more, setMore] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [saving, setSaving] = useState(false);
+  const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
 
-    const documentOptions = ["NIC Front", "NIC Back", "Electricity Bill", "Gas Bill", "Water Bill", "Work ID"];
+  const members = Math.round(Number(form.maxMembers)) || 0;
+  const amount = Math.round(Number(form.monthlyAmount)) || 0;
+  const pot = plannedPot(amount, members);
 
-    const steps = [t("coreParameters"), t("financialSchema"), t("bankInformation"), t("finalCalibration")];
+  const validate = () => {
+    const e = {};
+    if (form.name.trim().length < 2) e.name = "Please give the BC a name.";
+    if (!(members >= 2 && members <= 60)) e.maxMembers = "Between 2 and 60 members.";
+    if (!(amount >= 100)) e.monthlyAmount = "At least Rs 100.";
+    if (!form.startDate) e.startDate = "Choose the start month.";
+    setErrors(e);
+    return !Object.keys(e).length;
+  };
 
-    useEffect(() => {
-        const detail = localStorage.getItem("admin_detail");
-        const token = localStorage.getItem("admin_token");
+  const submit = async (ev) => {
+    ev.preventDefault();
+    if (!validate()) return;
+    setSaving(true);
+    try {
+      const { committee } = await adminApi.post("/api/committee", {
+        name: form.name,
+        maxMembers: members,
+        monthlyAmount: amount,
+        startDate: form.startDate,
+        description: form.description,
+        bankDetails: { accountTitle: form.accountTitle, bankName: form.bankName, iban: form.iban },
+        requireDocuments: docs.length > 0,
+        mandatoryDocuments: docs,
+      });
+      toast.success("BC created. Now add members.");
+      router.replace(`/admin/bc/${committee._id}?new=1`);
+    } catch (e) {
+      toast.error(e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
 
-        if (!token) {
-            router.push("/admin/login");
-            return;
-        }
+  return (
+    <Page title={W.createBc.en} urdu={W.createBc.ur} back="/admin">
+      <form onSubmit={submit} className="space-y-5">
+        <Card padding="p-5" className="space-y-4">
+          <Field label={W.bcName.en} urdu={W.bcName.ur} placeholder="e.g. Family BC 2027" value={form.name} onChange={set("name")} error={errors.name} maxLength={60} />
+          <div className="grid grid-cols-2 gap-3">
+            <Field label={W.howManyMembers.en} urdu={W.howManyMembers.ur} type="number" inputMode="numeric" min={2} max={60} value={form.maxMembers} onChange={set("maxMembers")} error={errors.maxMembers} />
+            <Field label={W.monthlyAmount.en} urdu={W.monthlyAmount.ur} type="number" inputMode="numeric" min={100} step={100} placeholder="10000" prefix="Rs" value={form.monthlyAmount} onChange={set("monthlyAmount")} error={errors.monthlyAmount} />
+          </div>
+          <Field label={W.startMonth.en} urdu={W.startMonth.ur} type="month" value={form.startDate} onChange={set("startDate")} error={errors.startDate} />
+        </Card>
 
-        if (detail) {
-            const parsed = JSON.parse(detail);
-            setUserLoggedDetails(parsed);
-            setFormData((prev) => ({ ...prev, createdBy: parsed._id }));
-        }
-    }, [router]);
+        {members >= 2 && amount >= 100 && (
+          <Card padding="p-5" className="border-primary-100 bg-primary-50">
+            <p className="text-sm font-semibold text-primary-800">
+              <Bi en="Summary" ur="خلاصہ" />
+            </p>
+            <ul className="mt-2 space-y-1.5 text-[15px] text-ink-800">
+              <li>
+                <b>{members} members</b>, <b>{members} months</b> ({monthName(form.startDate)} – {monthName(form.startDate, members - 1)})
+              </li>
+              <li>
+                Each person pays <Money value={amount} /> a month
+              </li>
+              <li>
+                Each month one person gets <Money value={pot} className="text-primary-800" />
+              </li>
+              <li className="text-sm text-ink-600">The person whose turn it is does not pay that month.</li>
+            </ul>
+          </Card>
+        )}
 
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        const newData = { ...formData, [name]: value };
-        setFormData(newData);
+        <button type="button" onClick={() => setMore(!more)} className="flex min-h-[44px] items-center gap-2 font-semibold text-primary-700" aria-expanded={more}>
+          <FiChevronDown className={`h-5 w-5 transition-transform ${more ? "rotate-180" : ""}`} aria-hidden />
+          <Bi en="More options" ur="مزید" />
+          <span className="text-sm font-normal text-ink-500">(bank account, notes, documents)</span>
+        </button>
 
-        if (name === "startDate" || name === "monthDuration") {
-            calculateEndDate(newData);
-        }
-        if (name === "monthlyAmount" || name === "monthDuration") {
-            calculateTotalAmount(newData);
-        }
-    };
-
-    const handleBankChange = (e) => {
-        const { name, value } = e.target;
-        setFormData((prev) => ({
-            ...prev,
-            bankDetails: {
-                ...prev.bankDetails,
-                [name]: value
-            }
-        }));
-    };
-
-    const calculateEndDate = ({ startDate, monthDuration }) => {
-        if (!startDate || !monthDuration) return;
-        const start = new Date(startDate);
-        const duration = parseInt(monthDuration, 10);
-        if (!isNaN(duration) && duration > 0) {
-            const end = new Date(start.setMonth(start.getMonth() + duration - 1));
-            setFormData((prev) => ({
-                ...prev,
-                endDate: end.toISOString().split("T")[0],
-            }));
-        }
-    };
-
-    const calculateTotalAmount = ({ monthlyAmount, monthDuration }) => {
-        const installment = parseFloat(monthlyAmount);
-        const duration = parseInt(monthDuration, 10);
-        const maxMembers = parseInt(formData.maxMembers, 10) || 0;
-
-        if (
-            isNaN(installment) ||
-            isNaN(duration) ||
-            installment <= 0 ||
-            duration <= 0 ||
-            maxMembers <= 0
-        ) {
-            setFormData((prev) => ({
-                ...prev,
-                totalAmount: "",
-                durationError: "Invalid input values",
-            }));
-            return;
-        }
-
-        if (duration % maxMembers !== 0) {
-            setFormData((prev) => ({
-                ...prev,
-                totalAmount: "",
-                durationError: `Duration must be ${maxMembers}, ${maxMembers * 2}, ${maxMembers * 3} months`,
-            }));
-            return;
-        }
-
-        const monthlyPool = maxMembers * installment;
-        const totalBCAmount = installment * duration;
-        const perMemberTotal = installment * duration;
-
-        setFormData((prev) => ({
-            ...prev,
-            totalAmount: Math.round(totalBCAmount),
-            durationError: "",
-            monthlyPool,
-            perMemberTotal,
-        }));
-    };
-
-
-    const validateStep = () => {
-        if (formData.durationError) { return false }
-        if (step === 0) return formData.name.length > 3 && formData.description.length > 5 && formData.maxMembers > 0;
-        if (step === 1) return formData.monthlyAmount > 0 && formData.monthDuration >= 3 && formData.startDate;
-        if (step === 2) return formData.bankDetails.accountTitle && formData.bankDetails.bankName && formData.bankDetails.iban;
-        return true;
-    };
-
-    const handleNext = () => setStep((s) => Math.min(s + 1, steps.length - 1));
-    const handleBack = () => setStep((s) => Math.max(s - 1, 0));
-
-    const handleSubmit = async (e) => {
-        if (e) e.preventDefault();
-        setShowConsent(true);
-    };
-
-    const handleFinalSubmit = async () => {
-        if (!isConsentChecked) return toast.warning("Please accept the operational terms.");
-
-        setShowConsent(false);
-        setLoading(true);
-        try {
-            await createCommittee({ ...formData, createdBy: userLoggedDetails?._id });
-            toast.success(t("success") || "Pool Initialized Successfully");
-
-            if (confirm(t("assignMembersProtocol") || "Do you want to assign members now?")) {
-                router.push("/admin/assign-member");
-            } else {
-                router.push("/admin");
-            }
-        } catch (err) {
-            toast.error(t("error") + ": " + (err.message || "Initialization Failed"));
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    return (
-        <div className="space-y-12 max-w-4xl mx-auto py-8">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-slate-200 dark:border-slate-800">
-                <div className="space-y-1">
-                    <div className="flex items-center gap-2 text-primary-600 font-black tracking-[0.2em] text-[10px] uppercase">
-                        <FiLayers className="animate-spin-slow" /> {t("committees") || "Committees"}
-                    </div>
-                    <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">{t("createCommittee") || "Create Committee"}</h1>
-                    <p className="text-slate-500 font-medium italic">Setup a new committee and define its rules.</p>
-                </div>
+        {more && (
+          <Card padding="p-5" className="space-y-4">
+            <p className="text-sm font-semibold text-ink-700">Where members send money</p>
+            <Field label="Account title" value={form.accountTitle} onChange={set("accountTitle")} />
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label="Bank / JazzCash / Easypaisa" value={form.bankName} onChange={set("bankName")} />
+              <Field label="Account number or IBAN" value={form.iban} onChange={set("iban")} />
             </div>
+            <TextArea label="Notes for members" placeholder="Pay before the 10th of every month." value={form.description} onChange={set("description")} maxLength={500} />
+            <fieldset>
+              <legend className="mb-2 text-sm font-semibold text-ink-800">Documents members must upload to join (optional)</legend>
+              <div className="grid grid-cols-2 gap-2">
+                {DOCS.map((d) => (
+                  <label key={d} className="flex min-h-[44px] items-center gap-2 rounded-lg border border-line px-3 text-sm">
+                    <input type="checkbox" className="h-5 w-5 accent-primary-600" checked={docs.includes(d)} onChange={(e) => setDocs(e.target.checked ? [...docs, d] : docs.filter((x) => x !== d))} />
+                    {d}
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+          </Card>
+        )}
 
-            <Card className="border-none shadow-2xl bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl overflow-visible p-8 md:p-12">
-                <div className="mb-12">
-                    <StepProgress steps={steps} currentStep={step} />
-                </div>
-
-                <form onSubmit={handleSubmit} className="space-y-10 min-h-[450px]">
-                    {step === 0 && (
-                        <div className="space-y-8 animate-in slide-in-from-right-8 duration-500">
-                            <div className="flex items-center gap-4 p-5 bg-primary-500/5 rounded-2xl border border-primary-500/10">
-                                <div className="p-3 bg-primary-600 text-white rounded-xl shadow-lg shadow-primary-500/20">
-                                    <FiTarget size={22} />
-                                </div>
-                                <div>
-                                    <p className="text-[10px] font-black text-primary-600 uppercase tracking-widest">{t("step") || "Step"} 1</p>
-                                    <p className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tighter italic">{t("coreParameters")}</p>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                <Input
-                                    label={t("operationName") || "Operation Name"}
-                                    name="name"
-                                    placeholder="Nexus Core Pool"
-                                    value={formData.name}
-                                    onChange={handleChange}
-                                    className="h-14 text-lg font-black tracking-tight"
-                                    required
-                                />
-                                <Input
-                                    label={t("maxLoadMembers") || "Max Members"}
-                                    name="maxMembers"
-                                    type="number"
-                                    min={2}
-                                    placeholder="12"
-                                    value={formData.maxMembers}
-                                    onChange={handleChange}
-                                    className="h-14 text-lg font-black tracking-tight"
-                                    required
-                                />
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="text-[11px] font-black uppercase text-slate-500 tracking-widest ml-1">{t("missionDirectiveDesc") || "Mission Description"}</label>
-                                <textarea
-                                    name="description"
-                                    placeholder="Outline the goals..."
-                                    value={formData.description}
-                                    onChange={handleChange}
-                                    rows={4}
-                                    className="input-field min-h-[120px] bg-white/5 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 text-base font-medium resize-none shadow-sm transition-all focus:ring-2 focus:ring-primary-500/20 w-full outline-none"
-                                    required
-                                />
-                            </div>
-                        </div>
-                    )}
-
-                    {step === 1 && (
-                        <div className="space-y-8 animate-in slide-in-from-right-8 duration-500">
-                            <div className="flex items-center gap-4 p-5 bg-amber-500/5 rounded-2xl border border-amber-500/10">
-                                <div className="p-3 bg-amber-500 text-white rounded-xl shadow-lg shadow-amber-500/20">
-                                    <FiCpu size={22} />
-                                </div>
-                                <div>
-                                    <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest">{t("step") || "Step"} 2</p>
-                                    <p className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tighter italic">{t("financialSchema")}</p>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                <Input
-                                    label={t("monthlyCommitmentPkr") || "Monthly Commitment (PKR)"}
-                                    name="monthlyAmount"
-                                    type="number"
-                                    min={1}
-                                    placeholder="10000"
-                                    value={formData.monthlyAmount}
-                                    onChange={handleChange}
-                                    className="h-14 text-lg font-black tracking-tight"
-                                    required
-                                />
-                                <Input
-                                    label={t("cycleDurationMonths") || "Duration (Months)"}
-                                    name="monthDuration"
-                                    type="number"
-                                    min={formData.maxMembers}
-                                    placeholder="12"
-                                    value={formData.monthDuration}
-                                    onChange={handleChange}
-                                    className="h-14 text-lg font-black tracking-tight"
-                                    required
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                <Input
-                                    label={t("cycleInitializationStart") || "Start Date"}
-                                    name="startDate"
-                                    type="date"
-                                    value={formData.startDate}
-                                    onChange={handleChange}
-                                    className="h-14 text-lg font-black tracking-tight"
-                                    required
-                                />
-                                <div className="space-y-1">
-                                    <label className="text-[11px] font-black uppercase text-slate-400 tracking-widest ml-1">{t("projectedTermination") || "Projected End Date"}</label>
-                                    <div className="h-14 flex items-center px-6 bg-slate-100 dark:bg-slate-950/50 rounded-xl text-slate-500 italic font-black text-lg border border-slate-200 dark:border-slate-800">
-                                        {formData.endDate || "Pending..."}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                <Input
-                                    label="Organizer Fee (Optional)"
-                                    name="organizerFee"
-                                    type="number"
-                                    placeholder="500"
-                                    value={formData.organizerFee}
-                                    onChange={handleChange}
-                                    className="h-14 text-lg font-black tracking-tight"
-                                />
-                                <div className="flex items-center gap-4 px-6 h-14 bg-slate-50 dark:bg-slate-950/50 rounded-2xl border border-slate-200 dark:border-slate-800">
-                                    <input
-                                        type="checkbox"
-                                        id="isFeeMandatory"
-                                        checked={formData.isFeeMandatory}
-                                        onChange={(e) => setFormData({ ...formData, isFeeMandatory: e.target.checked })}
-                                        className="w-5 h-5 accent-primary-600"
-                                    />
-                                    <label htmlFor="isFeeMandatory" className="text-xs font-black uppercase text-slate-500 tracking-widest cursor-pointer">
-                                        Mandatory for all members?
-                                    </label>
-                                </div>
-                            </div>
-
-                            <div className="space-y-6 p-6 bg-slate-50 dark:bg-slate-950/50 rounded-3xl border border-slate-200 dark:border-slate-800">
-                                <div className="flex items-center gap-4">
-                                    <input
-                                        type="checkbox"
-                                        id="requireDocuments"
-                                        checked={formData.requireDocuments}
-                                        onChange={(e) => setFormData({ ...formData, requireDocuments: e.target.checked })}
-                                        className="w-6 h-6 accent-primary-600"
-                                    />
-                                    <label htmlFor="requireDocuments" className="text-sm font-black uppercase text-slate-700 dark:text-slate-200 tracking-tighter cursor-pointer">
-                                        Require Documents to Join?
-                                    </label>
-                                </div>
-
-                                {formData.requireDocuments && (
-                                    <div className="space-y-4 animate-in fade-in slide-in-from-top-4">
-                                        <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest leading-none mb-3">Select Mandatory Documents</p>
-                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                                            {documentOptions.map(opt => (
-                                                <div
-                                                    key={opt}
-                                                    onClick={() => {
-                                                        const current = formData.mandatoryDocuments || [];
-                                                        if (current.includes(opt)) {
-                                                            setFormData({ ...formData, mandatoryDocuments: current.filter(o => o !== opt) });
-                                                        } else {
-                                                            setFormData({ ...formData, mandatoryDocuments: [...current, opt] });
-                                                        }
-                                                    }}
-                                                    className={`
-                                                        px-4 py-3 rounded-xl border-2 transition-all cursor-pointer text-center text-[10px] font-black uppercase tracking-tight
-                                                        ${(formData.mandatoryDocuments || []).includes(opt)
-                                                            ? "border-primary-500 bg-primary-500/10 text-primary-600"
-                                                            : "border-slate-100 dark:border-slate-800 text-slate-400 hover:border-slate-200"}
-                                                    `}
-                                                >
-                                                    {opt}
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="p-8 rounded-[2rem] bg-slate-900 dark:bg-white text-white dark:text-slate-900 flex justify-between items-center shadow-2xl relative overflow-hidden group">
-                                <div className="relative z-10">
-                                    <p className="text-[10px] uppercase font-black tracking-[0.3em] opacity-60 mb-2 underline decoration-primary-500 decoration-2">{t("totalPoolValuation") || "Total Pool Valuation"}</p>
-                                    <h4 className="text-4xl md:text-5xl font-black tracking-tighter uppercase">
-                                        PKR {formData.totalAmount ? parseInt(formData.totalAmount).toLocaleString() : "0"}
-                                    </h4>
-                                    {formData.organizerFee > 0 && (
-                                        <p className="text-[10px] font-bold mt-2 text-primary-400">
-                                            + {formData.organizerFee} PKR Organizer Fee {formData.isFeeMandatory ? "(Mandatory)" : "(Optional)"}
-                                        </p>
-                                    )}
-                                    <h2 className="text-2xl text-red-500 tracking-tighter uppercase">
-                                        {formData.durationError}
-                                    </h2>
-                                </div>
-                                <FiDollarSign size={80} className="absolute -bottom-4 -right-4 opacity-10 group-hover:scale-110 transition-transform duration-700" />
-                            </div>
-                        </div>
-                    )}
-
-                    {step === 2 && (
-                        <div className="space-y-8 animate-in slide-in-from-right-8 duration-500">
-                            <div className="flex items-center gap-4 p-5 bg-blue-500/5 rounded-2xl border border-blue-500/10">
-                                <div className="p-3 bg-blue-500 text-white rounded-xl shadow-lg shadow-blue-500/20">
-                                    <FiDollarSign size={22} />
-                                </div>
-                                <div className="">
-                                    <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">{t("step") || "Step"} 3</p>
-                                    <p className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tighter italic">{t("bankInformation") || "Bank Information"}</p>
-                                </div>
-                            </div>
-                            <div className="grid grid-cols-1 gap-8">
-                                <Input
-                                    label={t("accountTitle") || "Account Title"}
-                                    name="accountTitle"
-                                    placeholder="John Doe"
-                                    value={formData.bankDetails.accountTitle}
-                                    onChange={handleBankChange}
-                                    className="h-14 text-lg font-black tracking-tight"
-                                    required
-                                />
-                                <Input
-                                    label={t("bankName") || "Bank Name"}
-                                    name="bankName"
-                                    placeholder="HBL BANK"
-                                    value={formData.bankDetails.bankName}
-                                    onChange={handleBankChange}
-                                    className="h-14 text-lg font-black tracking-tight"
-                                    required
-                                />
-                                <Input
-                                    label={t("iban") || "IBAN"}
-                                    name="iban"
-                                    placeholder="PK00HBL000000000000000"
-                                    value={formData.bankDetails.iban}
-                                    onChange={handleBankChange}
-                                    className="h-14 text-lg font-black tracking-tight"
-                                    required
-                                />
-                            </div>
-                        </div>
-                    )}
-
-                    {step === 3 && (
-                        <div className="space-y-8 animate-in slide-in-from-right-8 duration-500">
-                            <div className="flex items-center gap-4 p-5 bg-green-500/5 rounded-2xl border border-green-500/10">
-                                <div className="p-3 bg-green-500 text-white rounded-xl shadow-lg shadow-green-500/20">
-                                    <FiCheckCircle size={22} />
-                                </div>
-                                <div className="">
-                                    <p className="text-[10px] font-black text-green-600 uppercase tracking-widest">{t("step") || "Step"} 4</p>
-                                    <p className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tighter italic">{t("finalValidation") || "Final Validation"}</p>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-slate-200 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden shadow-premium">
-                                {[
-                                    { label: t("designation") || "Designation", value: formData.name },
-                                    { label: t("neuralLoad") || "Neural Load", value: formData.maxMembers + " " + (t("members") || "Members") },
-                                    { label: t("monthlyPulse") || "Monthly Pulse", value: `PKR ${formData.monthlyAmount}` },
-                                    { label: t("timeline") || "Timeline", value: `${formData.monthDuration} Months` },
-                                    { label: t("activation") || "Activation", value: formData.startDate },
-                                    { label: t("deactivation") || "Deactivation", value: formData.endDate },
-                                ].map((item, i) => (
-                                    <div key={i} className="bg-white/80 dark:bg-slate-900/80 p-6 flex flex-col gap-1">
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{item.label}</span>
-                                        <p className="font-black text-slate-900 dark:text-white text-lg tracking-tight uppercase">
-                                            {item.value}
-                                        </p>
-                                    </div>
-                                ))}
-                                <div className="col-span-full bg-primary-600 p-8 text-white">
-                                    <span className="text-[10px] font-black uppercase tracking-widest opacity-60">{t("totalAssetPool") || "Total Asset Pool"}</span>
-                                    <p className="text-4xl font-black tracking-tighter uppercase">PKR {formData.totalAmount ? parseInt(formData.totalAmount).toLocaleString() : "0"}</p>
-                                </div>
-                            </div>
-
-                            <div className="flex gap-4 p-5 bg-amber-500/5 rounded-2xl border border-amber-500/10 text-xs font-medium text-amber-700 dark:text-amber-400 italic">
-                                <FiInfo className="shrink-0 mt-0.5" />
-                                <p>{t("immutableWarning") || "Please review all details. Some information may be immutable after pool initialization."}</p>
-                            </div>
-                        </div>
-                    )}
-                </form>
-
-                <div className="mt-12 flex justify-between items-center pt-8 border-t border-slate-100 dark:border-slate-800">
-                    <button onClick={handleBack} disabled={step === 0 || loading} className={`flex items-center gap-2 font-black uppercase text-xs tracking-widest text-slate-400 hover:text-slate-600 transition-colors ${step === 0 ? "invisible" : ""}`}>
-                        <FiChevronLeft /> {t("back") || "Back"}
-                    </button>
-
-                    {step < steps.length - 1 ? (
-                        <Button onClick={handleNext} disabled={!validateStep()} className="px-10 py-4 font-black uppercase text-xs tracking-[0.2em] shadow-xl shadow-primary-500/20">
-                            {t("next") || "Next"} <FiChevronRight className="ml-2" />
-                        </Button>
-                    ) : (
-                        <Button onClick={handleSubmit} loading={loading} className="px-10 py-4 font-black uppercase text-xs tracking-[0.2em] bg-green-600 hover:bg-green-700 shadow-xl shadow-green-500/20 border-none">
-                            {t("launchPoolButton") || "Launch Pool"} <FiCheckCircle className="ml-2" />
-                        </Button>
-                    )}
-                </div>
-            </Card>
-
-            <Modal
-                isOpen={showConsent}
-                onClose={() => setShowConsent(false)}
-                title="Organizer Ethical Declaration"
-                size="lg"
-            >
-                <div className="space-y-8">
-                    <div className="p-6 bg-primary-500/5 rounded-3xl border border-primary-500/10 space-y-4">
-                        <div className="flex items-center gap-3 text-primary-600 font-black uppercase text-xs">
-                            <FiInfo /> Operational Accountability
-                        </div>
-                        <ul className="space-y-3 text-xs text-slate-600 dark:text-slate-400 font-medium list-disc ml-4 leading-relaxed">
-                            <li>I solemnly swear to manage the pooled assets (PKR {formData.totalAmount?.toLocaleString()}) with absolute transparency and integrity.</li>
-                            <li>I acknowledge my responsibility to disburse payouts timely as per the defined cycle logic.</li>
-                            <li>In case of a member's unforeseen uncertainty (death, insolvency), I agree to follow the predetermined succession plan or community-led resolution.</li>
-                            <li>I understand that mismanagent or fraud will result in immediate termination of my organizer privileges and possible legal pursuit.</li>
-                            <li>I verify that the provided bank information is correct and belongs to the authorized organizer identity.</li>
-                        </ul>
-                    </div>
-
-                    <div className="flex items-start gap-4">
-                        <input
-                            type="checkbox"
-                            id="organizer-consent-check"
-                            className="w-6 h-6 mt-1 rounded-lg accent-primary-600"
-                            checked={isConsentChecked}
-                            onChange={(e) => setIsConsentChecked(e.target.checked)}
-                        />
-                        <label htmlFor="organizer-consent-check" className="text-sm font-bold text-slate-900 dark:text-white leading-relaxed cursor-pointer">
-                            I accept full ethical and management responsibility for this financial circuit and agree to these terms.
-                        </label>
-                    </div>
-
-                    <div className="flex gap-4">
-                        <Button
-                            variant="secondary"
-                            onClick={() => setShowConsent(false)}
-                            className="flex-1 py-4 text-[10px] font-black uppercase tracking-widest bg-slate-100 dark:bg-slate-800 border-none"
-                        >
-                            Decline
-                        </Button>
-                        <Button
-                            onClick={handleFinalSubmit}
-                            disabled={!isConsentChecked || loading}
-                            loading={loading}
-                            className="flex-[2] py-4 text-[10px] font-black uppercase tracking-widest bg-primary-600 border-none shadow-xl shadow-primary-500/20"
-                        >
-                            Establish Pool
-                        </Button>
-                    </div>
-                </div>
-            </Modal>
-        </div>
-    );
+        <Button type="submit" size="lg" full loading={saving}>
+          <Bi {...W.createBc} />
+        </Button>
+      </form>
+    </Page>
+  );
 }

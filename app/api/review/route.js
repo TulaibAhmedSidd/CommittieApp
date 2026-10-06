@@ -1,63 +1,52 @@
 import connectToDatabase from "@/app/utils/db";
-import mongoose from "mongoose";
 import Review from "@/app/api/models/Review";
-import Admin from "@/app/api/models/Admin";
+import Committee from "@/app/api/models/Committee";
+import { requireMember } from "@/app/utils/auth";
+import { ok, fail, readJson, serverError, isObjectId } from "@/app/utils/http";
 
+export const dynamic = "force-dynamic";
+
+// POST { organizerId, rating 1-5, comment? } -> member reviews an organizer after a finished BC. One per organizer.
 export async function POST(req) {
-    try {
-        await connectToDatabase();
-        const { organizerId, memberId, rating, comment } = await req.json();
+  try {
+    const auth = await requireMember(req);
+    if (auth.error) return auth.error;
+    const { organizerId, rating, comment } = await readJson(req);
+    const stars = Math.round(Number(rating));
+    if (!isObjectId(organizerId)) return fail(400, "Invalid organizer.");
+    if (!(stars >= 1 && stars <= 5)) return fail(400, "Choose 1 to 5 stars.");
 
-        if (!organizerId || !memberId || !rating) {
-            return new Response(JSON.stringify({ error: "Missing required fields" }), { status: 400 });
-        }
+    const finished = await Committee.exists({ createdBy: organizerId, members: auth.user._id, status: "finished" });
+    if (!finished) return fail(403, "You can review after finishing a BC with this organizer.");
 
-        // Eligibility Check: User must have completed at least one finished committee with this organizer
-        const Committee = mongoose.models.Committee || (await import("@/app/api/models/Committee")).default;
-        const finishedCommittee = await Committee.findOne({
-            createdBy: organizerId,
-            members: memberId,
-            status: "finished"
-        });
-
-        if (!finishedCommittee) {
-            return new Response(JSON.stringify({ error: "You must complete at least one committee with this organizer to submit a review." }), { status: 403 });
-        }
-
-        const review = new Review({
-            organizer: organizerId,
-            member: memberId,
-            rating,
-            comment
-        });
-
-        await review.save();
-
-        // Update organizer's average rating (optional but good for performance)
-        // For now we'll just fetch them on demand
-
-        return new Response(JSON.stringify(review), { status: 201 });
-    } catch (err) {
-        return new Response(JSON.stringify({ error: err.message }), { status: 500 });
-    }
+    await Review.findOneAndUpdate(
+      { organizer: organizerId, member: auth.user._id },
+      { rating: stars, comment: typeof comment === "string" ? comment.trim().slice(0, 500) : "", createdAt: new Date() },
+      { upsert: true }
+    );
+    return ok({ saved: true }, 201);
+  } catch (err) {
+    return serverError(err, "review POST");
+  }
 }
 
+// GET ?organizerId= -> public reviews (first name only)
 export async function GET(req) {
-    try {
-        await connectToDatabase();
-        const { searchParams } = new URL(req.url);
-        const organizerId = searchParams.get("organizerId");
-
-        if (!organizerId) {
-            return new Response(JSON.stringify({ error: "Organizer ID required" }), { status: 400 });
-        }
-
-        const reviews = await Review.find({ organizer: organizerId })
-            .populate("member", "name")
-            .sort({ createdAt: -1 });
-
-        return new Response(JSON.stringify(reviews), { status: 200 });
-    } catch (err) {
-        return new Response(JSON.stringify({ error: err.message }), { status: 500 });
-    }
+  try {
+    const organizerId = new URL(req.url).searchParams.get("organizerId");
+    if (!isObjectId(organizerId)) return fail(400, "Invalid organizer.");
+    await connectToDatabase();
+    const reviews = await Review.find({ organizer: organizerId }).populate("member", "name").sort({ createdAt: -1 }).limit(50).lean();
+    return ok({
+      reviews: reviews.map((r) => ({
+        _id: String(r._id),
+        rating: r.rating,
+        comment: r.comment || "",
+        createdAt: r.createdAt,
+        memberName: String(r.member?.name || "Member").split(" ")[0],
+      })),
+    });
+  } catch (err) {
+    return serverError(err, "review GET");
+  }
 }

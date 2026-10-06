@@ -1,147 +1,126 @@
 import connectToDatabase from "@/app/utils/db";
 import Committee from "@/app/api/models/Committee";
 import Member from "@/app/api/models/Member";
-import Admin from "@/app/api/models/Admin";
-import Notification from "@/app/api/models/Notification";
+import { requireMember, requireCommitteeOwner } from "@/app/utils/auth";
+import { ok, fail, readJson, serverError, isObjectId } from "@/app/utils/http";
 import { createLog } from "@/app/utils/logger";
-import { unauthorizedResponse, verifyAdmin, verifyAuthenticatedUser, verifyMember } from "@/app/utils/auth";
+import { notify } from "@/app/utils/notify";
+import { emails } from "@/app/utils/emailTemplates";
+import { stage } from "@/app/utils/bcRules";
+import { missingDocs } from "@/app/utils/memberDocs";
+import { addMemberToCommittee } from "@/app/utils/committeeOps";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
+const has = (list, id) => (list || []).some((x) => String(x) === String(id));
+
+// POST {}                         -> member asks to join
+// POST { action: "cancel" }       -> member cancels their request
+// POST { action: "approve" | "reject", memberId } -> organizer decides
 export async function POST(req, { params }) {
-    try {
-        const auth = verifyAuthenticatedUser(req);
-        if (!auth.authorized) {
-            return unauthorizedResponse(auth);
-        }
+  try {
+    const body = await readJson(req);
+    const action = body.action;
 
-        await connectToDatabase();
-        const { id } = await params;
-        const { memberId, action } = await req.json();
+    if (action === "approve" || action === "reject") {
+      const auth = await requireCommitteeOwner(req, params.id);
+      if (auth.error) return auth.error;
+      const committee = auth.committee;
+      if (!isObjectId(body.memberId)) return fail(400, "Invalid member.");
+      if (!has(committee.pendingMembers, body.memberId)) return fail(400, "This request is no longer waiting.");
 
-        const committee = await Committee.findById(id);
-        if (!committee) return new Response(JSON.stringify({ error: "Committee not found" }), { status: 404 });
+      const member = await Member.findById(body.memberId).select("name email");
+      if (!member) return fail(404, "Member not found.");
 
-        // CASE 1: Member Reuqest to Join
-        if (!action) {
-            if (auth.user?.isAdmin) {
-                return new Response(JSON.stringify({ error: "Only members can request to join" }), { status: 403 });
-            }
-            if (!memberId) return new Response(JSON.stringify({ error: "Member ID required" }), { status: 400 });
-            if (auth.user.userId !== memberId) {
-                return new Response(JSON.stringify({ error: "Unauthorized join request" }), { status: 403 });
-            }
-            if (committee.members.length + committee.pendingMembers.length >= committee.maxMembers) {
-                return new Response(JSON.stringify({ error: "Committee is full" }), { status: 400 });
-            }
-
-            // Check if already a member or pending
-            if (committee.members.some(m => m.toString() === memberId) || committee.pendingMembers.some(m => m.toString() === memberId)) {
-                return new Response(JSON.stringify({ error: "Already member or request pending" }), { status: 400 });
-            }
-
-            committee.pendingMembers.push(memberId);
-            await committee.save();
-
-            // Also update Member's pendingOrganizers if needed, but Member schema has committees array too
-            const member = await Member.findById(memberId);
-            if (member) {
-                const existingCommittee = member.committees?.find(entry => entry.committee.toString() === id.toString());
-                if (!existingCommittee) {
-                    member.committees.push({ committee: id, status: "pending" });
-                }
-                await member.save();
-            }
-            await Notification.create({
-                recipient: committee.createdBy,
-                recipientModel: "Admin",
-                sender: memberId,
-                senderModel: "Member",
-                type: "join_request",
-                message: `A new member has requested to join ${committee.name}.`,
-                details: { committeeId: id, memberId }
-            });
-            await createLog({
-                action: "REQUEST_JOIN_COMMITTEE",
-                performedBy: memberId,
-                onModel: "Member",
-                targetId: id,
-                details: { committeeId: id }
-            });
-
-            return new Response(JSON.stringify({ message: "Request sent successfully" }), { status: 201 });
-        }
-
-        // CASE 2: Admin Approve/Reject
-        const adminAuth = verifyAdmin(req);
-        if (!adminAuth.authorized) {
-            return unauthorizedResponse(adminAuth);
-        }
-        const adminId = adminAuth.user.userId;
-        const requester = await Admin.findById(adminId);
-        if (!requester) {
-            return new Response(JSON.stringify({ error: "Admin not found" }), { status: 404 });
-        }
-        if (committee.createdBy.toString() !== adminId && !requester.isSuperAdmin) {
-            return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 403 });
-        }
-        if (!memberId) {
-            return new Response(JSON.stringify({ error: "Member ID required for this action" }), { status: 400 });
-        }
-        if (!["approve", "reject"].includes(action)) {
-            return new Response(JSON.stringify({ error: "Invalid action" }), { status: 400 });
-        }
-
-        if (action === "approve") {
-            // Remove from pending
-            committee.pendingMembers = committee.pendingMembers.filter(m => m.toString() !== memberId);
-
-            // Add to active (check duplicates)
-            if (!committee.members.some(m => m.toString() === memberId)) {
-                committee.members.push(memberId);
-            }
-
-            // Update Member status
-            await Member.updateOne(
-                { _id: memberId, "committees.committee": id },
-                { $set: { "committees.$.status": "approved" } }
-            );
-
-            // Check if full
-            if (committee.members.length >= committee.maxMembers) {
-                committee.status = "full";
-            }
-        } else if (action === "reject") {
-            // Remove from pending
-            committee.pendingMembers = committee.pendingMembers.filter(m => m.toString() !== memberId);
-
-            // Update Member status
-            await Member.updateOne(
-                { _id: memberId, "committees.committee": id },
-                { $set: { "committees.$.status": "rejected" } }
-            );
-        }
-
-        await committee.save();
-        await Notification.create({
-            recipient: memberId,
-            recipientModel: "Member",
-            sender: adminId,
-            senderModel: "Admin",
-            type: "info",
-            message: `Your request to join ${committee.name} was ${action}ed.`,
-            details: { committeeId: id, action }
+      if (action === "approve") {
+        if (stage(committee) !== "upcoming") return fail(400, "This BC has already started.");
+        if ((committee.members?.length || 0) >= committee.maxMembers) return fail(400, "This BC is already full.");
+        await addMemberToCommittee(committee, member, auth.user._id);
+        await notify({
+          recipient: member,
+          model: "Member",
+          sender: auth.user._id,
+          senderModel: "Admin",
+          type: "join_approved",
+          message: `You are now a member of ${committee.name}.`,
+          link: `/userDash/bc/${committee._id}`,
+          email: emails.joinApproved({ name: member.name, bcName: committee.name, bcId: committee._id }),
         });
-        await createLog({
-            action: action === "approve" ? "APPROVE_COMMITTEE_REQUEST" : "REJECT_COMMITTEE_REQUEST",
-            performedBy: adminId,
-            onModel: "Admin",
-            targetId: memberId,
-            details: { committeeId: id }
+      } else {
+        await Committee.updateOne({ _id: committee._id }, { $pull: { pendingMembers: member._id } });
+        await Member.updateOne(
+          { _id: member._id, "committees.committee": committee._id },
+          { $set: { "committees.$.status": "rejected" } }
+        );
+        await notify({
+          recipient: member,
+          model: "Member",
+          sender: auth.user._id,
+          senderModel: "Admin",
+          type: "join_rejected",
+          message: `Your request to join ${committee.name} was not accepted.`,
+          link: "/userDash",
         });
-        return new Response(JSON.stringify({ message: `Request ${action}ed successfully` }), { status: 200 });
+      }
 
-    } catch (err) {
-        return new Response(JSON.stringify({ error: err.message }), { status: 500 });
+      await createLog({
+        action: action === "approve" ? "APPROVE_COMMITTEE_REQUEST" : "REJECT_COMMITTEE_REQUEST",
+        performedBy: auth.user._id,
+        onModel: "Admin",
+        targetId: committee._id,
+        details: { memberId: String(member._id) },
+      });
+      return ok({ done: true });
     }
+
+    // Member side
+    const auth = await requireMember(req);
+    if (auth.error) return auth.error;
+    if (!isObjectId(params.id)) return fail(400, "Invalid BC id.");
+    await connectToDatabase();
+    const committee = await Committee.findById(params.id);
+    if (!committee) return fail(404, "BC not found.");
+    const me = auth.user;
+
+    if (action === "cancel") {
+      if (!has(committee.pendingMembers, me._id)) return fail(400, "You have no request for this BC.");
+      await Committee.updateOne({ _id: committee._id }, { $pull: { pendingMembers: me._id } });
+      await Member.updateOne({ _id: me._id }, { $pull: { committees: { committee: committee._id, status: "pending" } } });
+      return ok({ done: true });
+    }
+
+    if (has(committee.members, me._id)) return fail(400, "You are already in this BC.");
+    if (has(committee.pendingMembers, me._id)) return fail(400, "You already asked to join. Please wait for the organizer.");
+    if (stage(committee) !== "upcoming") return fail(400, "This BC has already started.");
+    const taken = (committee.members?.length || 0) + (committee.pendingMembers?.length || 0);
+    if (taken >= committee.maxMembers) return fail(400, "This BC is full.");
+
+    if (committee.requireDocuments && committee.mandatoryDocuments?.length) {
+      const missing = missingDocs(me, committee.mandatoryDocuments);
+      if (missing.length) return fail(400, `Please upload these documents in your profile first: ${missing.join(", ")}.`);
+    }
+
+    await Committee.updateOne({ _id: committee._id }, { $addToSet: { pendingMembers: me._id } });
+    const existing = await Member.updateOne(
+      { _id: me._id, "committees.committee": committee._id },
+      { $set: { "committees.$.status": "pending" } }
+    );
+    if (!existing.matchedCount) {
+      await Member.updateOne({ _id: me._id }, { $push: { committees: { committee: committee._id, status: "pending" } } });
+    }
+
+    await notify({
+      recipient: committee.createdBy,
+      model: "Admin",
+      sender: me._id,
+      senderModel: "Member",
+      type: "join_request",
+      message: `${me.name} wants to join ${committee.name}.`,
+      link: `/admin/bc/${committee._id}`,
+    });
+    await createLog({ action: "REQUEST_JOIN_COMMITTEE", performedBy: me._id, onModel: "Member", targetId: committee._id });
+    return ok({ done: true }, 201);
+  } catch (err) {
+    return serverError(err, "committee request");
+  }
 }

@@ -1,61 +1,36 @@
-import connectToDatabase from "@/app/utils/db";
 import Member from "@/app/api/models/Member";
-import Notification from "@/app/api/models/Notification";
-import { unauthorizedResponse, verifyMember } from "@/app/utils/auth";
+import { requireMember } from "@/app/utils/auth";
+import { ok, fail, readJson, serverError, isObjectId } from "@/app/utils/http";
+import { notify } from "@/app/utils/notify";
 
+export const dynamic = "force-dynamic";
+
+// POST { adminId, action: "approve" | "reject" } -> member answers an organizer's request.
 export async function POST(req) {
-    try {
-        const auth = verifyMember(req);
-        if (!auth.authorized) {
-            return unauthorizedResponse(auth);
-        }
+  try {
+    const auth = await requireMember(req);
+    if (auth.error) return auth.error;
+    const { adminId, action } = await readJson(req);
+    if (!isObjectId(adminId) || !["approve", "reject"].includes(action)) return fail(400, "Invalid request.");
+    const me = auth.user;
+    if (!(me.pendingOrganizers || []).some((id) => String(id) === adminId)) return fail(400, "No request from this organizer.");
 
-        await connectToDatabase();
-        const { memberId, adminId, action } = await req.json(); // action: 'approve' or 'reject'
+    const update = { $pull: { pendingOrganizers: adminId } };
+    if (action === "approve") update.$addToSet = { organizers: adminId };
+    await Member.updateOne({ _id: me._id }, update);
 
-        if (!memberId || !adminId || !action) {
-            return new Response(JSON.stringify({ error: "Missing required fields" }), { status: 400 });
-        }
-        if (auth.user.userId !== memberId) {
-            return new Response(JSON.stringify({ error: "Unauthorized request response" }), { status: 403 });
-        }
-        if (!["approve", "reject"].includes(action)) {
-            return new Response(JSON.stringify({ error: "Invalid action" }), { status: 400 });
-        }
-
-        const member = await Member.findById(memberId);
-        if (!member) return new Response(JSON.stringify({ error: "Member not found" }), { status: 404 });
-        if (!member.pendingOrganizers?.some(id => id.toString() === adminId)) {
-            return new Response(JSON.stringify({ error: "No pending request found for this organizer" }), { status: 400 });
-        }
-
-        if (action === 'approve') {
-            // Remove from pending, add to organizers
-            member.pendingOrganizers = member.pendingOrganizers.filter(id => id.toString() !== adminId);
-            if (!member.organizers.includes(adminId)) {
-                member.organizers.push(adminId);
-            }
-            await member.save();
-
-            // Notify Admin
-            await Notification.create({
-                recipient: adminId,
-                recipientModel: 'Admin',
-                sender: memberId,
-                senderModel: 'Member',
-                type: 'info',
-                message: `Member ${member.name} has approved your association request.`
-            });
-
-            return new Response(JSON.stringify({ message: "Request approved" }), { status: 200 });
-        } else {
-            // Remove from pending
-            member.pendingOrganizers = member.pendingOrganizers.filter(id => id.toString() !== adminId);
-            await member.save();
-
-            return new Response(JSON.stringify({ message: "Request rejected" }), { status: 200 });
-        }
-    } catch (err) {
-        return new Response(JSON.stringify({ error: err.message }), { status: 500 });
+    if (action === "approve") {
+      await notify({
+        recipient: adminId,
+        model: "Admin",
+        sender: me._id,
+        senderModel: "Member",
+        message: `${me.name} accepted your request.`,
+        link: "/admin/members",
+      });
     }
+    return ok({ done: true });
+  } catch (err) {
+    return serverError(err, "respond-request");
+  }
 }

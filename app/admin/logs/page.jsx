@@ -1,174 +1,108 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { toast } from "react-toastify";
-import moment from "moment";
-import {
-    FiActivity, FiClock, FiUser, FiInfo,
-    FiShield, FiDatabase, FiSearch, FiRefreshCcw
-} from "react-icons/fi";
+import { useCallback, useEffect, useState } from "react";
+import { FiActivity, FiChevronLeft, FiChevronRight, FiLock } from "react-icons/fi";
+import { Button, Card, EmptyState, ErrorBox, ListRow, Loading, Page } from "../../ui";
+import { adminApi } from "../../utils/api";
+import { getSession } from "../../utils/session";
 
-import Card from "../../Components/Theme/Card";
-import Button from "../../Components/Theme/Button";
-import Input from "../../Components/Theme/Input";
-import Table, { TableRow, TableCell } from "../../Components/Theme/Table";
-import Pagination from "../../Components/Theme/Pagination";
-import { useLanguage } from "../../Components/LanguageContext";
+const ACTIONS = {
+  CREATE_COMMITTEE: "Created a BC",
+  START_COMMITTEE: "Started a BC",
+  ADVANCE_MONTH: "Moved to next month",
+  RECORD_PAYOUT: "Gave a payout",
+  VERIFY_PAYMENT: "Approved a payment",
+  REJECT_PAYMENT: "Sent back a receipt",
+  SUBMIT_PAYMENT: "Sent a receipt",
+  REQUEST_JOIN_COMMITTEE: "Asked to join",
+  APPROVE_COMMITTEE_REQUEST: "Approved a join request",
+  ADD_MEMBER: "Added a member",
+  CREATE_PASSWORD_LINK: "Made a password link",
+  VERIFY_IDENTITY: "Verified an identity",
+  REJECT_IDENTITY: "Sent back identity papers",
+  CREATE_ORGANIZER: "Added an organizer",
+  APPROVE_ORGANIZER: "Approved an organizer",
+  REJECT_ORGANIZER: "Rejected an organizer",
+};
 
-export default function LogsPage() {
-    const { t } = useLanguage();
-    const router = useRouter();
-    const [logs, setLogs] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [admin, setAdmin] = useState(null);
-    const [filter, setFilter] = useState("");
-    const [page, setPage] = useState(1);
-    const PAGE_SIZE = 10;
+const friendly = (action) => {
+  if (ACTIONS[action]) return ACTIONS[action];
+  const text = String(action || "Something changed").toLowerCase().replace(/_/g, " ");
+  return text.charAt(0).toUpperCase() + text.slice(1);
+};
 
-    useEffect(() => {
-        const detail = localStorage.getItem("admin_detail");
-        const token = localStorage.getItem("admin_token");
-        if (!token) {
-            router.push("/admin/login");
-            return;
-        }
-        const parsed = JSON.parse(detail);
-        setAdmin(parsed);
+const when = (d) => {
+  if (!d) return "";
+  const date = new Date(d);
+  if (Number.isNaN(date.getTime())) return "";
+  const day = date.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+  const time = date.toLocaleTimeString("en-GB", { hour: "numeric", minute: "2-digit", hour12: true });
+  return `${day} ${time}`;
+};
 
-        const isSuperAdmin = parsed.isSuperAdmin === true ||
-            parsed.isSuperAdmin === "true" ||
-            parsed.email?.toLowerCase() === "tulaib@gmail.com" ||
-            parsed.email?.toLowerCase().includes("tulaib") ||
-            parsed.name?.toLowerCase?.().includes("tulaib");
+export default function ActivityLogPage() {
+  const [isSuper, setIsSuper] = useState(null);
+  const [page, setPage] = useState(1);
+  const [data, setData] = useState(null);
+  const [error, setError] = useState("");
 
-        if (!isSuperAdmin) {
-            toast.error("Unauthorized access to logs");
-            router.push("/admin");
-            return;
-        }
+  useEffect(() => setIsSuper(!!getSession("admin")?.account?.isSuperAdmin), []);
 
-        fetchLogs(parsed._id);
-    }, [router]);
+  const load = useCallback(() => {
+    setError("");
+    setData(null);
+    adminApi
+      .get(`/api/logs?page=${page}`)
+      .then(setData)
+      .catch((e) => setError(e.message));
+  }, [page]);
 
-    const fetchLogs = async (adminId) => {
-        setLoading(true);
-        try {
-            const res = await fetch(`/api/logs?adminId=${adminId}`);
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.error);
-            setLogs(data);
-        } catch (err) {
-            toast.error(err.message);
-        } finally {
-            setLoading(false);
-        }
-    };
+  useEffect(() => {
+    if (isSuper) load();
+  }, [isSuper, load]);
 
-    useEffect(() => {
-        setPage(1);
-    }, [filter]);
-
-    const filteredLogs = logs.filter(l =>
-        l.action.toLowerCase().includes(filter.toLowerCase()) ||
-        l.performedBy?.name?.toLowerCase().includes(filter.toLowerCase())
-    );
-
-    const totalPages = Math.ceil(filteredLogs.length / PAGE_SIZE) || 1;
-    const paginatedLogs = filteredLogs.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-
-    if (loading) return (
-        <div className="flex flex-col items-center justify-center min-h-[500px] gap-6 animate-pulse">
-            <div className="w-16 h-16 border-4 border-primary-500 border-t-transparent rounded-full animate-spin" />
-            <p className="text-slate-500 font-black tracking-widest uppercase text-[10px]">Accessing Secure Vault...</p>
-        </div>
-    );
-
+  if (isSuper === null) return <Loading rows={2} />;
+  if (!isSuper) {
     return (
-        <div className="p-8 space-y-12 animate-in fade-in slide-in-from-bottom-6 duration-1000">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 border-b border-slate-200 dark:border-slate-800 pb-10">
-                <div className="space-y-2">
-                    <span className="eyebrow flex items-center gap-2">
-                        <FiShield className="animate-spin-slow" /> Security Architecture
-                    </span>
-                    <h1 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">Audit Logs</h1>
-                    <p className="text-slate-500 font-medium italic">Comprehensive ledger of all system operations and administrative actions.</p>
-                </div>
-                <div className="flex items-center gap-4">
-                    <div className="w-64">
-                        <Input
-                            icon={FiSearch}
-                            placeholder="Filter actions..."
-                            value={filter}
-                            onChange={(e) => setFilter(e.target.value)}
-                        />
-                    </div>
-                    <Button onClick={() => fetchLogs(admin._id)} className="h-12 px-5 bg-slate-900 text-white hover:bg-primary-600 transition-all shadow-md">
-                        <FiRefreshCcw />
-                    </Button>
-                </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <Card className="bg-slate-900 text-white border-none p-8 flex flex-col justify-between relative overflow-hidden">
-                    <FiActivity size={120} className="absolute -bottom-10 -right-10 text-white/5" />
-                    <div className="relative z-10 space-y-4">
-                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Total Entries</p>
-                        <h4 className="text-5xl font-black tracking-tighter">{logs.length}</h4>
-                        <p className="text-xs text-primary-500 font-black uppercase tracking-widest italic">Live Operations</p>
-                    </div>
-                </Card>
-                <Card className="md:col-span-2 p-0 overflow-hidden border-none shadow-premium bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl flex flex-col justify-between">
-                    <div className="overflow-x-auto">
-                        <Table headers={["Timestamp", "Action", "Performed By", "Details"]}>
-                            {paginatedLogs.map((log) => (
-                                <TableRow key={log._id} className="hover:bg-primary-50/30 transition-colors">
-                                    <TableCell className="font-mono text-[10px] text-slate-400">
-                                        {moment(log.timestamp).format("YYYY-MM-DD HH:mm:ss")}
-                                    </TableCell>
-                                    <TableCell>
-                                        <span className="px-3 py-1 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg text-[10px] font-black uppercase tracking-widest border border-white/10">
-                                            {log.action}
-                                        </span>
-                                    </TableCell>
-                                    <TableCell>
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-6 h-6 rounded-md bg-primary-600 text-white flex items-center justify-center text-[9px] font-black">
-                                                {log.performedBy?.name?.substring(0, 2).toUpperCase()}
-                                            </div>
-                                            <span className="text-xs font-black uppercase text-slate-700 dark:text-slate-200">{log.performedBy?.name || "System"}</span>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell className="max-w-xs truncate">
-                                        <div className="flex items-center gap-2">
-                                            <FiInfo className="text-slate-300" />
-                                            <span className="text-[10px] font-medium text-slate-500 italic">
-                                                {JSON.stringify(log.details)}
-                                            </span>
-                                        </div>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </Table>
-                    </div>
-                    {filteredLogs.length === 0 && (
-                        <div className="py-20 text-center space-y-4">
-                            <FiDatabase size={48} className="mx-auto text-slate-100" />
-                            <p className="text-slate-400 font-black uppercase tracking-widest text-xs italic">No activity matching your filter</p>
-                        </div>
-                    )}
-                    {filteredLogs.length > 0 && (
-                        <Pagination
-                            currentPage={page}
-                            totalPages={totalPages}
-                            onPageChange={setPage}
-                            totalItems={filteredLogs.length}
-                            pageSize={PAGE_SIZE}
-                            className="px-6 py-4"
-                        />
-                    )}
-                </Card>
-            </div>
-        </div>
+      <Page title="Activity log" urdu="سرگرمی">
+        <EmptyState icon={FiLock} title="Only the super admin can see this." urdu="یہ صرف سپر ایڈمن دیکھ سکتے ہیں" />
+      </Page>
     );
+  }
+
+  const logs = data?.logs || [];
+  const pages = data?.pages || 1;
+
+  let body;
+  if (error) body = <ErrorBox message={error} onRetry={load} />;
+  else if (!data) body = <Loading rows={4} />;
+  else if (!logs.length) body = <EmptyState icon={FiActivity} title="Nothing yet" urdu="ابھی کچھ نہیں" />;
+  else
+    body = (
+      <Card padding="p-0" className="divide-y divide-line overflow-hidden">
+        {logs.map((l) => (
+          <ListRow key={l._id} icon={FiActivity} title={friendly(l.action)} subtitle={`by ${l.by || "Unknown"} · ${when(l.timestamp)}`} />
+        ))}
+      </Card>
+    );
+
+  return (
+    <Page title="Activity log" urdu="سرگرمی">
+      {body}
+      {data && pages > 1 && (
+        <div className="flex items-center justify-between gap-3">
+          <Button variant="secondary" icon={FiChevronLeft} disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+            Previous
+          </Button>
+          <span className="text-sm text-ink-600">
+            Page {page} of {pages}
+          </span>
+          <Button variant="secondary" disabled={page >= pages} onClick={() => setPage((p) => p + 1)}>
+            Next
+            <FiChevronRight className="h-[1.15em] w-[1.15em]" aria-hidden />
+          </Button>
+        </div>
+      )}
+    </Page>
+  );
 }

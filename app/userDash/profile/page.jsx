@@ -1,373 +1,234 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { FiUser, FiMail, FiLock, FiSave, FiArrowLeft, FiCamera, FiPhone, FiCreditCard, FiShield, FiMapPin, FiNavigation, FiCrosshair, FiCheckCircle } from "react-icons/fi";
-import Card from "../../Components/Theme/Card";
-import Button from "../../Components/Theme/Button";
-import Input from "../../Components/Theme/Input";
-import BlueTick from "../../Components/Theme/BlueTick";
+import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
-import Link from "next/link";
+import { FiFileText, FiLogOut } from "react-icons/fi";
+import { Bi, Button, Card, EmptyState, ErrorBox, Field, Loading, Page, PhotoPicker, SecureImage, Select, StatusBadge } from "@/app/ui";
+import { W } from "@/app/utils/words";
+import { memberApi } from "@/app/utils/api";
+import { clearSession, saveSession, updateSessionAccount } from "@/app/utils/session";
+import { formatPkPhone } from "@/app/utils/phone";
 
-export default function MemberProfilePage() {
-    const [member, setMember] = useState(null);
-    const [formData, setFormData] = useState({
-        name: "",
-        email: "",
-        phone: "",
-        country: "Pakistan",
-        city: "",
-        nicNumber: "",
-        nicImage: "",
-        location: { type: "Point", coordinates: [0, 0] },
-        accountTitle: "",
-        bankName: "",
-        iban: "",
-        newPassword: "",
-        confirmPassword: ""
-    });
-    const [loading, setLoading] = useState(false);
+const PROFILE_URL = "/api/member/profile";
+const CITY = { en: "City", ur: "شہر" };
+const OTHER_DOCS = ["Gas Bill", "Water Bill", "Work ID"];
+const ID_PHOTOS = [
+  { key: "nicFront", en: "CNIC front", ur: "شناختی کارڈ (سامنے)" },
+  { key: "nicBack", en: "CNIC back", ur: "شناختی کارڈ (پیچھے)" },
+  { key: "electricityBill", en: "Electricity bill", ur: "بجلی کا بل" },
+];
 
-    useEffect(() => {
-        const detail = localStorage.getItem("member");
-        if (detail) {
-            const parsed = JSON.parse(detail);
-            setMember(parsed);
-            setFormData(prev => ({
-                ...prev,
-                name: parsed.name,
-                email: parsed.email,
-                phone: parsed.phone || "",
-                nicNumber: parsed.nicNumber || "",
-                nicImage: parsed.nicImage || "",
-                location: parsed.location || { type: "Point", coordinates: [0, 0] },
-                accountTitle: parsed.payoutDetails?.accountTitle || "",
-                bankName: parsed.payoutDetails?.bankName || "",
-                iban: parsed.payoutDetails?.iban || ""
-            }));
-        }
-    }, []);
+/** PATCH the profile with a busy flag and a toast. Returns the response or null. */
+function useSave() {
+  const [busy, setBusy] = useState(false);
+  const save = async (body, message) => {
+    setBusy(true);
+    try {
+      const d = await memberApi.patch(PROFILE_URL, body);
+      toast.success(message);
+      return d;
+    } catch (e) {
+      toast.error(e.message);
+      return null;
+    } finally {
+      setBusy(false);
+    }
+  };
+  return [busy, save];
+}
 
-    const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
-    };
-
-    const detectLocation = () => {
-        if (!navigator.geolocation) return toast.error("Geolocation not supported");
-
-        toast.info("Detecting your location...", { autoClose: 2000 });
-        navigator.geolocation.getCurrentPosition((pos) => {
-            const { latitude, longitude } = pos.coords;
-            setFormData(prev => ({
-                ...prev,
-                location: { type: "Point", coordinates: [longitude, latitude] }
-            }));
-            toast.success("Location precision established!");
-        }, (err) => {
-            toast.error("Failed to detect location. Please enter coordinates manually.");
-        });
-    };
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        if (formData.newPassword && formData.newPassword !== formData.confirmPassword) {
-            return toast.error("Passwords do not match");
-        }
-
-        setLoading(true);
-        try {
-            const res = await fetch("/api/member/profile", {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    memberId: member._id,
-                    name: formData.name,
-                    email: formData.email,
-                    phone: formData.phone,
-                    country: formData.country,
-                    city: formData.city,
-                    nicNumber: formData.nicNumber,
-                    nicImage: formData.nicImage,
-                    location: formData.location,
-                    payoutDetails: {
-                        accountTitle: formData.accountTitle,
-                        bankName: formData.bankName,
-                        iban: formData.iban
-                    },
-                    password: formData.newPassword || undefined,
-                    requestVerification: formData.nicImage ? true : false
-                })
-            });
-
-            if (res.ok) {
-                const updatedMember = await res.json();
-                localStorage.setItem("member", JSON.stringify(updatedMember));
-                setMember(updatedMember);
-                toast.success("Profile updated successfully!");
-                setFormData(prev => ({ ...prev, newPassword: "", confirmPassword: "" }));
-            } else {
-                const error = await res.json();
-                throw new Error(error.message || "Failed to update profile");
-            }
-        } catch (err) {
-            toast.error(err.message);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    if (!member) return null;
-
-    return (
-        <div className="p-8 md:p-12 max-w-5xl mx-auto space-y-12 animate-in fade-in duration-700">
-            <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                    <Link href="/userDash" className="text-primary-600 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest hover:translate-x-[-4px] transition-transform">
-                        <FiArrowLeft /> Back to Dashboard
-                    </Link>
-                    <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter uppercase italic">
-                        Member <span className="text-primary-600">Profile</span>
-                    </h1>
-                </div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-1 space-y-6">
-                    <Card className="p-8 flex flex-col items-center text-center space-y-6 bg-slate-900 border-none text-white relative overflow-hidden">
-                        <div className="relative z-10 space-y-4">
-                            <div className="relative">
-                                <div className="w-24 h-24 rounded-[2rem] bg-indigo-600 flex items-center justify-center text-3xl font-black shadow-2xl shadow-indigo-600/50 mx-auto">
-                                    {member.name?.charAt(0)}
-                                </div>
-                                <button className="absolute -bottom-2 -right-2 w-10 h-10 bg-white dark:bg-slate-800 rounded-xl shadow-lg flex items-center justify-center text-slate-600 dark:text-white border border-slate-100 dark:border-slate-700 hover:scale-110 transition-transform">
-                                    <FiCamera size={18} />
-                                </button>
-                            </div>
-                            <div>
-                                <p className="text-[10px] font-black text-primary-600 uppercase tracking-widest">{member.isAdmin ? 'Circuit Organizer' : 'Node Member'}</p>
-                                <h2 className="text-xl font-black tracking-tight uppercase flex items-center justify-center gap-2">
-                                    {member.name}
-                                    <BlueTick verified={member.verificationStatus === 'verified'} size={20} />
-                                </h2>
-                                <p className="text-xs text-slate-400 font-medium italic">{member.email}</p>
-                            </div>
-                            <div className="pt-4 flex justify-center gap-2">
-                                {member.verificationStatus === "verified" ? (
-                                    <div className="px-3 py-1 bg-blue-500/10 text-blue-500 rounded-full text-[8px] font-black uppercase tracking-[0.2em] border border-blue-500/20 flex items-center gap-1">
-                                        Verified Member <FiShield className="text-[10px]" />
-                                    </div>
-                                ) : member.verificationStatus === "pending" ? (
-                                    <div className="px-3 py-1 bg-amber-500/10 text-amber-500 rounded-full text-[8px] font-black uppercase tracking-[0.2em] border border-amber-500/20">
-                                        Verification Pending
-                                    </div>
-                                ) : (
-                                    <div className="px-3 py-1 bg-slate-500/10 text-slate-500 rounded-full text-[8px] font-black uppercase tracking-[0.2em] border border-slate-500/20">
-                                        Unverified
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                        <FiUser size={120} className="absolute -bottom-10 -right-10 text-white/5 -rotate-12" />
-                    </Card>
-
-                    <Card className="p-6 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
-                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Membership Info</h4>
-                        <div className="space-y-4">
-                            <div className="flex items-center justify-between">
-                                <span className="text-xs font-bold text-slate-500 uppercase">Committees</span>
-                                <span className="text-[10px] font-black text-primary-600 uppercase">{member.committees?.length || 0} Active</span>
-                            </div>
-                            <div className="flex items-center justify-between">
-                                <span className="text-xs font-bold text-slate-500 uppercase">Status</span>
-                                <span className="text-[10px] font-black text-green-500 uppercase">{member.status}</span>
-                            </div>
-                        </div>
-                    </Card>
-                </div>
-
-                <Card className="lg:col-span-2 p-8 border-none shadow-2xl bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl">
-                    <form onSubmit={handleSubmit} className="space-y-12">
-                        <div className="space-y-6">
-                            <div className="flex items-center gap-2 text-primary-600">
-                                <FiUser />
-                                <h3 className="text-xs font-black uppercase tracking-widest">Personal Information</h3>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <Input
-                                    label="Full Name"
-                                    name="name"
-                                    value={formData.name}
-                                    onChange={handleChange}
-                                    icon={<FiUser />}
-                                    required
-                                />
-                                <Input
-                                    label="Email Address"
-                                    name="email"
-                                    type="email"
-                                    value={formData.email}
-                                    onChange={handleChange}
-                                    icon={<FiMail />}
-                                    required
-                                />
-                                <Input
-                                    label="Phone Number"
-                                    name="phone"
-                                    type="tel"
-                                    value={formData.phone}
-                                    onChange={handleChange}
-                                    icon={<FiPhone />}
-                                />
-                            </div>
-                        </div>
-
-                        <div className="space-y-6 pt-6 border-t border-slate-100 dark:border-slate-800">
-                            <div className="flex items-center gap-2 text-primary-600">
-                                <FiShield />
-                                <h3 className="text-xs font-black uppercase tracking-widest">Verification & Identity</h3>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <Input
-                                    label="Country"
-                                    name="country"
-                                    value={formData.country}
-                                    onChange={handleChange}
-                                />
-                                <Input
-                                    label="City"
-                                    name="city"
-                                    value={formData.city}
-                                    onChange={handleChange}
-                                />
-                                <Input
-                                    label="NIC Number"
-                                    name="nicNumber"
-                                    value={formData.nicNumber}
-                                    onChange={handleChange}
-                                    placeholder="42101-XXXXXXX-X"
-                                />
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Profile Trust Score</label>
-                                    <Link
-                                        href="/userDash?view=verification"
-                                        className="w-full flex items-center justify-between px-4 py-4 bg-primary-600/5 dark:bg-primary-900/10 rounded-2xl border border-primary-500/10 text-xs font-black text-primary-600 hover:bg-primary-600 hover:text-white transition-all group"
-                                    >
-                                        Go to Verification Hub
-                                        <FiShield className="group-hover:rotate-12 transition-transform" />
-                                    </Link>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="space-y-6 pt-6 border-t border-slate-100 dark:border-slate-800">
-                            <div className="flex items-center justify-between text-primary-600">
-                                <div className="flex items-center gap-2">
-                                    <FiMapPin />
-                                    <h3 className="text-xs font-black uppercase tracking-widest">Geo-Location Presence</h3>
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={detectLocation}
-                                    className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest bg-primary-600/10 px-4 py-2 rounded-xl border border-primary-600/20 hover:bg-primary-600 hover:text-white transition-all"
-                                >
-                                    <FiNavigation /> Auto-Detect Presence
-                                </button>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Longitude</label>
-                                    <input
-                                        type="number"
-                                        step="any"
-                                        value={formData.location.coordinates[0]}
-                                        onChange={(e) => setFormData(prev => ({ ...prev, location: { ...prev.location, coordinates: [parseFloat(e.target.value), prev.location.coordinates[1]] } }))}
-                                        className="w-full px-4 py-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800 text-xs font-bold outline-none focus:ring-2 focus:ring-primary-500/20 transition-all font-mono"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Latitude</label>
-                                    <input
-                                        type="number"
-                                        step="any"
-                                        value={formData.location.coordinates[1]}
-                                        onChange={(e) => setFormData(prev => ({ ...prev, location: { ...prev.location, coordinates: [prev.location.coordinates[0], parseFloat(e.target.value)] } }))}
-                                        className="w-full px-4 py-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800 text-xs font-bold outline-none focus:ring-2 focus:ring-primary-500/20 transition-all font-mono"
-                                    />
-                                </div>
-                            </div>
-                            <p className="text-[10px] text-slate-400 italic">Location data helps organizers find members in their vicinity. Your privacy is protected with range-based discovery.</p>
-                        </div>
-
-                        <div className="space-y-6 pt-6 border-t border-slate-100 dark:border-slate-800">
-                            <div className="flex items-center gap-2 text-primary-600">
-                                <FiCreditCard />
-                                <h3 className="text-xs font-black uppercase tracking-widest">Payout Details</h3>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <Input
-                                    label="Account Title"
-                                    name="accountTitle"
-                                    value={formData.accountTitle}
-                                    onChange={handleChange}
-                                    placeholder="John Doe"
-                                    icon={<FiUser />}
-                                />
-                                <Input
-                                    label="Bank Name"
-                                    name="bankName"
-                                    value={formData.bankName}
-                                    onChange={handleChange}
-                                    placeholder="Meezan Bank"
-                                    icon={<FiShield />}
-                                />
-                                <div className="md:col-span-2">
-                                    <Input
-                                        label="IBAN / Account Number"
-                                        name="iban"
-                                        value={formData.iban}
-                                        onChange={handleChange}
-                                        placeholder="PK00MEZN..."
-                                        icon={<FiCreditCard />}
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="space-y-6 pt-6 border-t border-slate-100 dark:border-slate-800">
-                            <div className="flex items-center gap-2 text-primary-600">
-                                <FiLock />
-                                <h3 className="text-xs font-black uppercase tracking-widest">Security Settings</h3>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <Input
-                                    label="New Password"
-                                    name="newPassword"
-                                    type="password"
-                                    placeholder="••••••••"
-                                    value={formData.newPassword}
-                                    onChange={handleChange}
-                                    icon={<FiLock />}
-                                />
-                                <Input
-                                    label="Confirm New Password"
-                                    name="confirmPassword"
-                                    type="password"
-                                    placeholder="••••••••"
-                                    value={formData.confirmPassword}
-                                    onChange={handleChange}
-                                    icon={<FiLock />}
-                                />
-                            </div>
-                        </div>
-
-                        <div className="pt-4">
-                            <Button type="submit" loading={loading} className="w-full py-5 font-black uppercase tracking-[0.2em] text-xs shadow-xl shadow-primary-500/20">
-                                Save Profile Changes <FiSave className="ml-2" />
-                            </Button>
-                        </div>
-                    </form>
-                </Card>
-            </div>
+/** One profile card: title, optional hint, fields, own Save button. */
+function Box({ title, urdu, hint, extra, busy, onSave, saveLabel, children }) {
+  return (
+    <Card padding="p-5">
+      <form
+        className="space-y-4"
+        onSubmit={(e) => {
+          e.preventDefault();
+          onSave();
+        }}
+      >
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <h2 className="text-[17px] font-bold text-ink-900">
+            <Bi en={title} ur={urdu} stack />
+          </h2>
+          {extra}
         </div>
-    );
+        {hint && <p className="-mt-2 text-sm text-ink-500">{hint}</p>}
+        {children}
+        <Button type="submit" full loading={busy}>
+          {saveLabel || <Bi {...W.save} />}
+        </Button>
+      </form>
+    </Card>
+  );
+}
+
+function DetailsCard({ p }) {
+  const [f, setF] = useState({ name: p.name || "", phone: formatPkPhone(p.phone), email: p.email || "", city: p.city || "" });
+  const [busy, save] = useSave();
+  const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
+  const submit = async () => {
+    const { phone, ...rest } = f;
+    const d = await save(phone.trim() ? f : rest, "Your details are saved.");
+    if (d?.account) updateSessionAccount("member", d.account);
+  };
+  return (
+    <Box title="Your details" urdu="آپ کی تفصیلات" busy={busy} onSave={submit}>
+      <Field label={W.name.en} urdu={W.name.ur} autoComplete="name" value={f.name} onChange={set("name")} required />
+      <Field label={W.phone.en} urdu={W.phone.ur} type="tel" inputMode="tel" placeholder="0300 1234567" value={f.phone} onChange={set("phone")} required />
+      <Field label={W.email.en} urdu={W.email.ur} type="email" autoComplete="email" value={f.email} onChange={set("email")} />
+      <Field label={CITY.en} urdu={CITY.ur} placeholder="e.g. Lahore" value={f.city} onChange={set("city")} />
+    </Box>
+  );
+}
+
+function PayoutCard({ p }) {
+  const pd = p.payoutDetails || {};
+  const [f, setF] = useState({ accountTitle: pd.accountTitle || "", bankName: pd.bankName || "", iban: pd.iban || "" });
+  const [busy, save] = useSave();
+  const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
+  return (
+    <Box
+      title="Where to send your payout"
+      urdu="آپ کی رقم کہاں بھیجیں"
+      hint="Your organizer sends your BC money here."
+      busy={busy}
+      onSave={() => save({ payoutDetails: f }, "Payout details saved.")}
+    >
+      <Field label="Account name" urdu="اکاؤنٹ کا نام" value={f.accountTitle} onChange={set("accountTitle")} />
+      <Field label="Bank, JazzCash or Easypaisa" urdu="بینک، جیز کیش یا ایزی پیسہ" placeholder="e.g. HBL" value={f.bankName} onChange={set("bankName")} />
+      <Field label="Account number or IBAN" urdu="اکاؤنٹ نمبر" inputMode="text" value={f.iban} onChange={set("iban")} />
+    </Box>
+  );
+}
+
+function VerifyCard({ p }) {
+  const [status, setStatus] = useState(p.verificationStatus || "unverified");
+  const [nic, setNic] = useState(p.nicNumber || "");
+  const [saved, setSaved] = useState({ nicFront: p.nicFront || "", nicBack: p.nicBack || "", electricityBill: p.electricityBill || "" });
+  const [imgs, setImgs] = useState(saved);
+  const [busy, save] = useSave();
+  const submit = async () => {
+    const changed = {};
+    for (const { key } of ID_PHOTOS) if (imgs[key] && imgs[key] !== saved[key]) changed[key] = imgs[key];
+    const d = await save({ nicNumber: nic, ...changed }, "Saved. We will check your ID.");
+    if (d) {
+      setSaved({ ...saved, ...changed });
+      if (d.verificationStatus) setStatus(d.verificationStatus);
+    }
+  };
+  const badge =
+    status === "verified" ? <StatusBadge status="verifiedId" /> : status === "pending" ? <StatusBadge status="pendingId" /> : <StatusBadge label="Not verified" tone="gray" />;
+  return (
+    <Box title="Verify identity (blue tick)" urdu={W.verifyIdentity.ur} hint="Optional. Some BCs ask for this." extra={badge} busy={busy} onSave={submit}>
+      <Field label="CNIC number" urdu="شناختی کارڈ نمبر" inputMode="numeric" placeholder="35202-1234567-1" value={nic} onChange={(e) => setNic(e.target.value)} />
+      {ID_PHOTOS.map((d) => (
+        <PhotoPicker key={d.key} scope="member" label={d.en} urdu={d.ur} value={imgs[d.key]} onChange={(v) => setImgs({ ...imgs, [d.key]: v })} />
+      ))}
+    </Box>
+  );
+}
+
+function DocsCard({ p }) {
+  const [docs, setDocs] = useState(p.documents || []);
+  const [name, setName] = useState(OTHER_DOCS[0]);
+  const [image, setImage] = useState("");
+  const [busy, save] = useSave();
+  const submit = async () => {
+    if (!image) return toast.error("Please add a photo.");
+    const d = await save({ document: { name, image } }, "Document added.");
+    if (d) {
+      setDocs([...docs.filter((x) => x.name !== name), { name, url: image }]);
+      setImage("");
+    }
+  };
+  return (
+    <Box title="Other documents" urdu="دیگر کاغذات" busy={busy} onSave={submit} saveLabel={<Bi en="Add document" ur="کاغذ شامل کریں" />}>
+      {docs.length > 0 ? (
+        <ul className="divide-y divide-line">
+          {docs.map((d) => (
+            <li key={d.name} className="flex min-h-[60px] items-center gap-3 py-2">
+              <SecureImage src={d.url} scope="member" alt={d.name} className="h-14 w-14 shrink-0 rounded-lg bg-surface-100" />
+              <span className="text-[15px] font-semibold text-ink-900">{d.name}</span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <EmptyState icon={FiFileText} title="No other documents yet" urdu="ابھی کوئی کاغذ نہیں" />
+      )}
+      <Select label="Which document" urdu="کون سا کاغذ" value={name} onChange={(e) => setName(e.target.value)}>
+        {OTHER_DOCS.map((d) => (
+          <option key={d} value={d}>
+            {d}
+          </option>
+        ))}
+      </Select>
+      <PhotoPicker scope="member" label="Photo" urdu="تصویر" value={image} onChange={setImage} />
+    </Box>
+  );
+}
+
+function PasswordCard() {
+  const [current, setCurrent] = useState("");
+  const [next, setNext] = useState("");
+  const [busy, save] = useSave();
+  const submit = async () => {
+    if (next.length < 6) return toast.error("New password must be at least 6 characters.");
+    const d = await save({ currentPassword: current, newPassword: next }, "Password changed.");
+    if (d?.token) {
+      saveSession("member", d.token, d.account);
+      setCurrent("");
+      setNext("");
+    }
+  };
+  return (
+    <Box title="Change password" urdu="پاس ورڈ تبدیل کریں" busy={busy} onSave={submit}>
+      <Field label="Current password" urdu="موجودہ پاس ورڈ" type="password" autoComplete="current-password" value={current} onChange={(e) => setCurrent(e.target.value)} required />
+      <Field label="New password" urdu="نیا پاس ورڈ" type="password" autoComplete="new-password" hint="At least 6 characters." value={next} onChange={(e) => setNext(e.target.value)} required />
+    </Box>
+  );
+}
+
+export default function ProfilePage() {
+  const router = useRouter();
+  const [profile, setProfile] = useState(null);
+  const [error, setError] = useState("");
+
+  const load = useCallback(() => {
+    setError("");
+    memberApi
+      .get(PROFILE_URL)
+      .then((d) => setProfile(d.profile))
+      .catch((e) => setError(e.message));
+  }, []);
+
+  useEffect(load, [load]);
+
+  const logout = () => {
+    clearSession("member");
+    router.replace("/login");
+  };
+
+  if (!profile && !error) return <Loading rows={4} />;
+
+  return (
+    <Page title={W.profile.en} urdu={W.profile.ur}>
+      {error ? (
+        <ErrorBox message={error} onRetry={load} />
+      ) : (
+        <>
+          <DetailsCard p={profile} />
+          <PayoutCard p={profile} />
+          <VerifyCard p={profile} />
+          <DocsCard p={profile} />
+          <PasswordCard />
+        </>
+      )}
+      <Button variant="secondary" size="lg" full icon={FiLogOut} onClick={logout}>
+        <Bi {...W.logout} />
+      </Button>
+    </Page>
+  );
 }

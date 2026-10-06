@@ -1,489 +1,113 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useMemo } from "react";
 import Link from "next/link";
-import {
-    FiActivity,
-    FiLayers,
-    FiUsers,
-    FiClock,
-    FiPlusSquare,
-    FiCheckCircle,
-    FiShield,
-    FiBell,
-    FiMessageSquare,
-    FiArrowRight,
-    FiAlertTriangle,
-    FiTrendingUp,
-    FiZap,
-} from "react-icons/fi";
+import { FiPlus, FiAlertCircle, FiLayers, FiChevronRight, FiLink } from "react-icons/fi";
+import { Page, Section, Button, EmptyState, Loading, ErrorBox, Bi } from "../ui";
+import BcCard from "../Components/BcCard";
+import { W } from "../utils/words";
+import { useApi } from "../utils/useApi";
+import { getSession } from "../utils/session";
 
-import Card from "../Components/Theme/Card";
-import Stat from "../Components/Theme/Stat";
-import Money from "../Components/Theme/Money";
-import StatusPill from "../Components/Theme/StatusPill";
-import Button from "../Components/Theme/Button";
-import CycleProgress from "../Components/Theme/CycleProgress";
-import EmptyState from "../Components/Theme/EmptyState";
-import BilingualLabel from "../Components/Theme/BilingualLabel";
-
-export default function AdminDashboard() {
-    const router = useRouter();
-    const [admin, setAdmin] = useState(null);
-    const [stats, setStats] = useState({
-        activeCommittees: 0,
-        totalMembers: 0,
-        pendingApprovals: 0,
-        systemStatus: "Operational",
-    });
-    const [committees, setCommittees] = useState([]);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        if (typeof window === "undefined") return;
-        const token = localStorage.getItem("admin_token");
-        const raw = localStorage.getItem("admin_detail");
-        if (!token || !raw) {
-            router.push("/admin/login");
-            return;
-        }
-        let parsed;
-        try {
-            parsed = JSON.parse(raw);
-        } catch {
-            router.push("/admin/login");
-            return;
-        }
-        setAdmin(parsed);
-        void hydrate(parsed._id, token);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
-
-    async function hydrate(adminId, token) {
-        setLoading(true);
-        try {
-            const [statsRes, committeesRes] = await Promise.all([
-                fetch(`/api/admin/stats?adminId=${adminId}`, {
-                    headers: { Authorization: `Bearer ${token}` },
-                }),
-                fetch(`/api/committee?adminId=${adminId}&limit=6`, {
-                    headers: { Authorization: `Bearer ${token}` },
-                }),
-            ]);
-
-            if (statsRes.ok) {
-                const s = await statsRes.json();
-                setStats(s);
-            }
-            if (committeesRes.ok) {
-                const c = await committeesRes.json();
-                setCommittees(c.committees || []);
-            }
-        } catch (err) {
-            console.error(err);
-        } finally {
-            setLoading(false);
-        }
-    }
-
-    const greeting = useMemo(() => {
-        const h = new Date().getHours();
-        if (h < 12) return "Assalam-o-Alaikum, subh bakhair";
-        if (h < 18) return "Assalam-o-Alaikum";
-        return "Assalam-o-Alaikum, shaam bakhair";
-    }, []);
-
-    const totalPooled = useMemo(
-        () => committees.reduce((acc, c) => acc + (c.totalAmount || 0), 0),
-        [committees],
-    );
-
-    const isSuperAdmin = !!admin?.isSuperAdmin;
-
-    if (loading && !admin) {
-        return (
-            <div className="flex min-h-[400px] items-center justify-center">
-                <div className="h-12 w-12 animate-spin rounded-2xl border-4 border-primary-500 border-t-transparent" />
-            </div>
-        );
-    }
-
-    return (
-        <div className="space-y-8 p-4 md:p-8">
-            {/* ─────── Greeting card ─────── */}
-            <Card className="relative overflow-hidden">
-                <div className="jaali-border pointer-events-none absolute -right-12 -top-12 h-56 w-56 opacity-30" />
-                <div className="relative grid gap-6 md:grid-cols-[1.4fr_1fr]">
-                    <div className="space-y-3">
-                        <p className="eyebrow">Organizer console · منتظم</p>
-                        <h1 className="text-3xl font-black tracking-tighter text-ink-900 md:text-4xl">
-                            {greeting},
-                            <br />
-                            <span className="text-primary-700">{admin?.name?.split(" ")[0] || "Organizer"}.</span>
-                        </h1>
-                        <p className="font-urdu text-lg text-muted-500" dir="rtl">
-                            آپ کی کمیٹیوں کا کنٹرول پینل
-                        </p>
-
-                        <div className="flex flex-wrap items-center gap-2 pt-1">
-                            <StatusPill tone="success">
-                                <FiZap size={12} /> {stats.systemStatus}
-                            </StatusPill>
-                            {isSuperAdmin ? (
-                                <StatusPill tone="accent">
-                                    <FiShield size={12} /> Super admin
-                                </StatusPill>
-                            ) : (
-                                <StatusPill tone="info">
-                                    <FiUsers size={12} /> Organizer
-                                </StatusPill>
-                            )}
-                            {admin?.verificationStatus === "verified" ? (
-                                <StatusPill tone="success">
-                                    <FiCheckCircle size={12} /> Verified
-                                </StatusPill>
-                            ) : (
-                                <StatusPill tone="warning">
-                                    <FiAlertTriangle size={12} /> Verification {admin?.verificationStatus || "pending"}
-                                </StatusPill>
-                            )}
-                        </div>
-                    </div>
-
-                    <Card className="border-primary-500/30 bg-primary-500/5">
-                        <div className="space-y-3">
-                            <p className="eyebrow">Across your committees</p>
-                            <Money amount={totalPooled} size="xl" tone="primary" />
-                            <p className="text-xs text-muted-500">
-                                Total pooled value · live across {stats.activeCommittees} committee
-                                {stats.activeCommittees === 1 ? "" : "s"}
-                            </p>
-                            <Link href="/admin/create">
-                                <Button variant="primary" className="w-full">
-                                    <FiPlusSquare /> New committee
-                                </Button>
-                            </Link>
-                        </div>
-                    </Card>
-                </div>
-            </Card>
-
-            {/* ─────── Stats strip ─────── */}
-            <section className="grid gap-4 md:grid-cols-4">
-                <Stat
-                    label="Active committees"
-                    urduLabel="فعال کمیٹیاں"
-                    value={String(stats.activeCommittees)}
-                    icon={FiLayers}
-                    tone="primary"
-                />
-                <Stat
-                    label="Total members"
-                    urduLabel="کل اراکین"
-                    value={String(stats.totalMembers)}
-                    hint={`across all your committees`}
-                    icon={FiUsers}
-                    tone="accent"
-                />
-                <Stat
-                    label="Pending approvals"
-                    urduLabel="منظوری زیر التواء"
-                    value={String(stats.pendingApprovals)}
-                    hint={
-                        stats.pendingApprovals > 0
-                            ? "Members waiting for your approval"
-                            : "All caught up"
-                    }
-                    icon={FiClock}
-                    tone={stats.pendingApprovals > 0 ? "warning" : "success"}
-                />
-                <Stat
-                    label="Total pooled"
-                    urduLabel="کل جمع رقم"
-                    value={<Money amount={totalPooled} size="md" tone="primary" />}
-                    icon={FiTrendingUp}
-                    tone="success"
-                />
-            </section>
-
-            {/* ─────── Pending approvals callout ─────── */}
-            {stats.pendingApprovals > 0 ? (
-                <Card className="border-warning-500/30 bg-warning-500/5">
-                    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                        <div className="flex items-start gap-3">
-                            <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-warning-500/15 text-warning-700">
-                                <FiClock size={22} />
-                            </div>
-                            <div>
-                                <p className="text-base font-black text-ink-900">
-                                    {stats.pendingApprovals} member request
-                                    {stats.pendingApprovals === 1 ? "" : "s"} waiting
-                                </p>
-                                <p className="text-sm text-muted-600">
-                                    Members ne join karne ki request bheji hai — review aur approve karain.
-                                </p>
-                            </div>
-                        </div>
-                        <Link href="/admin/members">
-                            <Button variant="primary">
-                                Review requests <FiArrowRight />
-                            </Button>
-                        </Link>
-                    </div>
-                </Card>
-            ) : null}
-
-            {/* ─────── Quick actions ─────── */}
-            <section>
-                <div className="mb-3 flex items-center justify-between">
-                    <h2 className="text-sm font-black uppercase tracking-[0.18em] text-muted-500">
-                        Quick actions · فوری کام
-                    </h2>
-                </div>
-                <div className="grid gap-3 md:grid-cols-4">
-                    <ActionTile
-                        href="/admin/create"
-                        icon={FiPlusSquare}
-                        title="Create committee"
-                        urdu="نئی کمیٹی"
-                        tone="primary"
-                    />
-                    <ActionTile
-                        href="/admin/members"
-                        icon={FiUsers}
-                        title="Manage members"
-                        urdu="اراکین"
-                        tone="accent"
-                    />
-                    <ActionTile
-                        href="/admin/announcement"
-                        icon={FiBell}
-                        title="Announcements"
-                        urdu="اعلانات"
-                    />
-                    <ActionTile
-                        href="/admin/inbox"
-                        icon={FiMessageSquare}
-                        title="Inbox"
-                        urdu="پیغامات"
-                    />
-                    {isSuperAdmin ? (
-                        <>
-                            <ActionTile
-                                href="/admin/approvals"
-                                icon={FiShield}
-                                title="Approve organizers"
-                                urdu="آرگنائزر منظوری"
-                                tone="accent"
-                            />
-                            <ActionTile
-                                href="/admin/verify-identities"
-                                icon={FiCheckCircle}
-                                title="Verify identities"
-                                urdu="شناخت کی تصدیق"
-                            />
-                            <ActionTile
-                                href="/admin/logs"
-                                icon={FiActivity}
-                                title="Audit logs"
-                                urdu="آڈٹ ٹریل"
-                            />
-                            <ActionTile
-                                href="/admin/all-members"
-                                icon={FiUsers}
-                                title="Global member pool"
-                                urdu="عالمی پول"
-                            />
-                        </>
-                    ) : (
-                        <>
-                            <ActionTile
-                                href="/admin/assign-member"
-                                icon={FiUsers}
-                                title="Add members"
-                                urdu="اراکین شامل کریں"
-                            />
-                            <ActionTile
-                                href="/admin/referrals"
-                                icon={FiZap}
-                                title="Referral center"
-                                urdu="ریفرل سینٹر"
-                            />
-                            <ActionTile
-                                href="/admin/profile"
-                                icon={FiShield}
-                                title="My profile"
-                                urdu="پروفائل"
-                            />
-                            <ActionTile
-                                href="/guide/organizer"
-                                icon={FiBell}
-                                title="Organizer guide"
-                                urdu="رہنما"
-                            />
-                        </>
-                    )}
-                </div>
-            </section>
-
-            {/* ─────── Live committees ─────── */}
-            <section>
-                <div className="mb-4 flex items-end justify-between">
-                    <div>
-                        <p className="eyebrow">Active pools · فعال پول</p>
-                        <h2 className="text-2xl font-black tracking-tight text-ink-900">Your committees</h2>
-                    </div>
-                    <Link href="/admin/manage-committie">
-                        <Button variant="ghost" size="sm">
-                            Manage all <FiArrowRight />
-                        </Button>
-                    </Link>
-                </div>
-
-                {committees.length === 0 ? (
-                    <EmptyState
-                        icon={FiLayers}
-                        title="No committees yet"
-                        description="Spin up your first committee — set monthly amount, max members, and duration."
-                        action={
-                            <Link href="/admin/create">
-                                <Button variant="primary">
-                                    <FiPlusSquare /> Create your first committee
-                                </Button>
-                            </Link>
-                        }
-                    />
-                ) : (
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                        {committees.map((c) => (
-                            <AdminCommitteeCard key={c._id} c={c} />
-                        ))}
-                    </div>
-                )}
-            </section>
-
-            {/* ─────── Onboarding hint ─────── */}
-            <Card className="border-accent-500/30 bg-accent-500/5">
-                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                    <div className="flex items-start gap-3">
-                        <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-accent-500/15 text-accent-700">
-                            <FiBell size={22} />
-                        </div>
-                        <div>
-                            <p className="text-base font-black text-ink-900">New to the organizer console?</p>
-                            <p className="text-sm text-muted-600">
-                                Detailed walkthrough — every option explained in plain Urdu + English.
-                            </p>
-                        </div>
-                    </div>
-                    <Link href="/guide/organizer">
-                        <Button variant="accent">
-                            <BilingualLabel en="Read organizer guide" ur="رہنما پڑھیں" />
-                        </Button>
-                    </Link>
-                </div>
-            </Card>
-        </div>
-    );
+function greeting() {
+  const h = new Date().getHours();
+  return h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening";
 }
 
-/* ────────── helpers ────────── */
+export default function OrganizerHome() {
+  const { data, error, loading, reload } = useApi("admin", "/api/committee");
+  const name = (typeof window !== "undefined" && getSession("admin")?.account?.name?.split(" ")[0]) || "";
 
-function ActionTile({ href, icon: Icon, title, urdu, tone = "default" }) {
-    const toneClasses = {
-        default: "bg-primary-500/10 text-primary-600 group-hover:bg-primary-600 group-hover:text-white",
-        primary: "bg-primary-600 text-white group-hover:bg-primary-700",
-        accent: "bg-accent-500 text-ink-900 group-hover:bg-accent-600",
+  const groups = useMemo(() => {
+    const list = data?.committees || [];
+    return {
+      running: list.filter((c) => c.stage === "running"),
+      upcoming: list.filter((c) => c.stage === "upcoming").sort((a, b) => new Date(a.startDate) - new Date(b.startDate)),
+      finished: list.filter((c) => c.stage === "finished"),
     };
-    return (
-        <Link
-            href={href}
-            className="group flex items-center gap-4 rounded-[1.5rem] border border-border-100 bg-surface-50 p-4 transition hover:-translate-y-0.5 hover:border-primary-500/50 hover:shadow-card"
-        >
-            <div className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl transition ${toneClasses[tone] || toneClasses.default}`}>
-                <Icon size={20} />
-            </div>
-            <div className="min-w-0">
-                <p className="truncate text-sm font-black text-ink-900">{title}</p>
-                <p className="font-urdu text-xs text-muted-500" dir="rtl">
-                    {urdu}
-                </p>
-            </div>
-        </Link>
-    );
+  }, [data]);
+
+  const todo = useMemo(() => {
+    const items = [];
+    for (const c of [...groups.running, ...groups.upcoming]) {
+      if (c.receiptsToCheck) items.push({ id: c._id + "r", href: `/admin/bc/${c._id}`, text: `${c.receiptsToCheck} receipt${c.receiptsToCheck > 1 ? "s" : ""} to check`, bc: c.name });
+      if (c.joinRequests) items.push({ id: c._id + "j", href: `/admin/bc/${c._id}`, text: `${c.joinRequests} want${c.joinRequests > 1 ? "" : "s"} to join`, bc: c.name });
+      if (c.stage === "running" && c.payersCount && c.paidCount === c.payersCount && !c.payoutGiven)
+        items.push({ id: c._id + "p", href: `/admin/bc/${c._id}`, text: `Everyone paid. Give payout to ${c.receiverName}`, bc: c.name });
+      if (c.stage === "upcoming" && c.membersCount === c.maxMembers) items.push({ id: c._id + "s", href: `/admin/bc/${c._id}`, text: "BC is full. Ready to start", bc: c.name });
+    }
+    return items;
+  }, [groups]);
+
+  if (loading && !data) return <Loading />;
+
+  return (
+    <Page title={`${greeting()}${name ? `, ${name}` : ""}`} subtitle="Here is what is happening in your BCs.">
+      {error && <ErrorBox message={error} onRetry={reload} />}
+
+      <Button href="/admin/create" size="lg" full icon={FiPlus} className="sm:w-auto">
+        <Bi {...W.createBc} />
+      </Button>
+
+      {todo.length > 0 && (
+        <Section title={W.toDo.en} urdu={W.toDo.ur}>
+          <div className="overflow-hidden rounded-xl border border-warning-100 bg-warning-50">
+            {todo.slice(0, 5).map((t) => (
+              <Link key={t.id} href={t.href} className="flex min-h-[56px] items-center gap-3 border-b border-warning-100 px-4 py-3 last:border-0 hover:bg-warning-100/50">
+                <FiAlertCircle className="h-5 w-5 shrink-0 text-warning-600" aria-hidden />
+                <span className="min-w-0 flex-1">
+                  <span className="block font-semibold text-ink-900">{t.text}</span>
+                  <span className="block truncate text-sm text-ink-600">{t.bc}</span>
+                </span>
+                <FiChevronRight className="h-5 w-5 text-ink-400" aria-hidden />
+              </Link>
+            ))}
+          </div>
+        </Section>
+      )}
+
+      {data && !data.committees.length ? (
+        <EmptyState
+          icon={FiLayers}
+          title="No BCs yet"
+          urdu="ابھی کوئی کمیٹی نہیں"
+          text="Create your first BC. Then add your family members and send them the link on WhatsApp."
+          action={
+            <Button href="/admin/create" icon={FiPlus}>
+              <Bi {...W.createBc} />
+            </Button>
+          }
+        />
+      ) : (
+        <>
+          <BcList title={W.running} items={groups.running} tab="running" empty="No BC is running right now." />
+          <BcList title={W.comingUp} items={groups.upcoming} tab="upcoming" empty="No upcoming BC. Create one so members can join." />
+          {groups.finished.length > 0 && <BcList title={W.finished} items={groups.finished} tab="finished" />}
+          <Link href="/admin/invite" className="flex items-center gap-3 rounded-xl border border-line bg-white px-4 py-3.5 hover:bg-surface-100">
+            <FiLink className="h-5 w-5 text-primary-600" aria-hidden />
+            <span className="flex-1 text-[15px] font-semibold text-ink-900">
+              <Bi en="Send your invite link to family" ur="خاندان کو دعوت کا لنک بھیجیں" />
+            </span>
+            <FiChevronRight className="h-5 w-5 text-ink-400" aria-hidden />
+          </Link>
+        </>
+      )}
+    </Page>
+  );
 }
 
-function AdminCommitteeCard({ c }) {
-    const paidCount = (c.payments || []).filter(
-        (p) => p.month === c.currentMonth && p.status === "verified",
-    ).length;
-    const memberCount = c.members?.length || 0;
-    const isFull = memberCount >= c.maxMembers;
-
-    return (
-        <Card>
-            <div className="space-y-4">
-                <div className="flex items-start justify-between gap-3">
-                    <div>
-                        <h3 className="text-base font-black text-ink-900">{c.name}</h3>
-                        <p className="text-xs text-muted-500">
-                            {memberCount} / {c.maxMembers} members · {c.monthDuration} months
-                        </p>
-                    </div>
-                    <StatusPill
-                        tone={
-                            c.status === "ongoing"
-                                ? "success"
-                                : c.status === "finished"
-                                  ? "neutral"
-                                  : isFull
-                                    ? "info"
-                                    : "warning"
-                        }
-                    >
-                        {c.status}
-                    </StatusPill>
-                </div>
-
-                <CycleProgress
-                    current={c.currentMonth}
-                    total={c.monthDuration}
-                    paidCount={c.status === "open" ? null : paidCount}
-                    memberCount={c.status === "open" ? null : memberCount}
-                    status={c.status === "open" ? "open" : c.status === "finished" ? "finished" : "ongoing"}
-                />
-
-                <div className="grid gap-3 sm:grid-cols-2">
-                    <div className="rounded-2xl border border-border-100 bg-surface-100/60 p-3">
-                        <p className="eyebrow mb-0.5">Monthly</p>
-                        <Money amount={c.monthlyAmount} size="md" tone="primary" />
-                    </div>
-                    <div className="rounded-2xl border border-border-100 bg-surface-100/60 p-3">
-                        <p className="eyebrow mb-0.5">Total pool</p>
-                        <Money amount={c.totalAmount} size="md" tone="accent" />
-                    </div>
-                </div>
-
-                {(c.pendingMembers?.length || 0) > 0 ? (
-                    <div className="rounded-2xl border border-warning-500/25 bg-warning-500/5 p-3 text-xs font-semibold text-warning-700">
-                        {c.pendingMembers.length} join request{c.pendingMembers.length === 1 ? "" : "s"} pending
-                    </div>
-                ) : null}
-
-                <div className="grid grid-cols-2 gap-2">
-                    <Link href={`/admin/manage?id=${c._id}`}>
-                        <Button variant="primary" size="sm" className="w-full">
-                            Manage
-                        </Button>
-                    </Link>
-                    <Link href={`/admin/edit?id=${c._id}`}>
-                        <Button variant="secondary" size="sm" className="w-full">
-                            Edit
-                        </Button>
-                    </Link>
-                </div>
-            </div>
-        </Card>
-    );
+function BcList({ title, items, tab, empty }) {
+  return (
+    <Section title={title.en} urdu={title.ur} count={items.length} href={items.length > 3 ? `/admin/bcs?tab=${tab}` : undefined}>
+      {items.length ? (
+        <div className="grid gap-3 md:grid-cols-2">
+          {items.slice(0, 3).map((c) => (
+            <BcCard key={c._id} c={c} href={`/admin/bc/${c._id}`} />
+          ))}
+        </div>
+      ) : (
+        empty && <p className="rounded-xl border border-dashed border-line bg-white/60 px-4 py-4 text-sm text-ink-500">{empty}</p>
+      )}
+    </Section>
+  );
 }
