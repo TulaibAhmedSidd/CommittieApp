@@ -101,7 +101,7 @@ A family "BC" (committee / ROSCA) app for Pakistan. Each month one member gets t
 - **`scripts/e2e-api.mjs <baseUrl>`:** full lifecycle and security test using ZZTEST data.
 - **`scripts/cleanup-test-data.mjs`:** removes ZZTEST data (dry run by default).
 - **`scripts/seed-demo.mjs`:** adds a ZZTEST demo set (3 organizers, 12 members, 5 BCs in every stage). Dry run by default; refuses if ZZTEST data already exists. Demo logins are in the file header.
-- **`scripts/guide-video/`:** Urdu guide videos. `steps.cjs` = narration + which button to highlight; `capture.cjs mem|org` takes the screenshots (needs `npm run dev` and fresh demo data; `org` changes the demo Running BC); `build.cjs mem|org` makes the MP4 in `guide-videos/` (gitignored). Needs edge-tts and ffmpeg.
+- **`scripts/guide-video/`:** Urdu guide videos. `steps.cjs` = narration + which button to highlight; `capture.cjs mem|org` takes the screenshots (needs `npm run dev` and fresh demo data; `org` changes the demo Running BC); `build.cjs mem|org` makes the MP4 in `guide-videos/` (gitignored). Web copies (720p) are in `public/guides/` and shown by `app/Components/GuideVideo.jsx` on `/` (How it works) and on `/guide/organizer`, `/guide/member`. `public/guides` and `public/video` are excluded from the PWA precache. Needs edge-tts and ffmpeg.
 
 ## Warnings
 - The dev `.env` points to the **live** database. Use `ZZTEST` names for test data, keep `MAIL_MODE=log` in `.env.local`, and clean up afterwards.

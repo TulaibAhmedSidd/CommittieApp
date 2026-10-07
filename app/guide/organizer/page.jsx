@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { FiChevronDown } from "react-icons/fi";
 import PublicLayout from "@/app/ui/PublicLayout";
+import GuideVideo from "@/app/Components/GuideVideo";
 import { Bi, Button } from "@/app/ui";
 
 const FAQS = [
@@ -71,6 +72,10 @@ export default function OrganizerGuidePage() {
         <h1 className="mb-1 text-2xl font-bold text-ink-900">
           <Bi en="Help for organizers" ur="منتظم کے لیے مدد" stack />
         </h1>
+        <div className="mb-6">
+          <GuideVideo who="organizer" />
+        </div>
+
         <p className="mb-6 text-ink-600">Tap a question to see the answer.</p>
 
         <div className="space-y-3">

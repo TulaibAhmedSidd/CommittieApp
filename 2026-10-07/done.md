@@ -16,3 +16,5 @@
   - The ZZTEST prefix and the localhost link are hidden in the frames.
 - **Tools installed on this computer:** `edge-tts` (via uv) and ffmpeg (via winget).
 - **Video scripts saved** in `scripts/guide-video/` (steps, capture, build). Tested: member capture + both builds. Demo data re-seeded afterwards.
+- **Videos on the site:** 720p copies in `public/guides/` (7.6 MB + 3.8 MB), shown on the home page under "How it works" and at the top of both help pages (`GuideVideo` component, words in `words.js`). Checked at 375px and desktop; video loads and plays.
+- **PWA fix:** videos (`public/guides`, `public/video`) are no longer pre-downloaded when someone installs the app. Before, the 4.5 MB of promo videos were downloaded on install.

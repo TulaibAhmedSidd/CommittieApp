@@ -6,6 +6,8 @@ const withPWA = withPWAInit({
     register: true,
     skipWaiting: true,
     disable: process.env.NODE_ENV === 'development',
+    // Videos are big: never download them when the app is installed, only when someone presses play.
+    publicExcludes: ['!noprecache/**/*', '!guides/**/*', '!video/**/*'],
     // Never cache API answers (private data, money status). Pages and static files keep the default caching.
     runtimeCaching: [
         { urlPattern: ({ url }) => url.pathname.startsWith('/api/'), handler: 'NetworkOnly', method: 'GET' },

@@ -58,6 +58,11 @@ export const W = {
   email: { en: "Email (optional)", ur: "ای میل (اختیاری)" },
   toDo: { en: "To do", ur: "کرنے کے کام" },
   verifyIdentity: { en: "Verify identity", ur: "شناخت کی تصدیق" },
+
+  // Guide videos
+  videoGuide: { en: "Watch the video guide", ur: "ویڈیو گائیڈ دیکھیں" },
+  forOrganizers: { en: "For organizers", ur: "منتظم کے لیے" },
+  forMembers: { en: "For members", ur: "ممبرز کے لیے" },
 };
 
 // Fixed status words and colors (docs/DESIGN_SYSTEM.md section 5).

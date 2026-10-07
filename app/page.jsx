@@ -5,6 +5,7 @@ import { FiPlusCircle, FiUsers, FiCamera, FiGift, FiEye, FiPhone, FiGlobe } from
 import PublicLayout from "@/app/ui/PublicLayout";
 import { Button, Card, Bi } from "@/app/ui";
 import { W } from "@/app/utils/words";
+import GuideVideo from "@/app/Components/GuideVideo";
 
 
 const STEPS = [
@@ -109,6 +110,14 @@ export default function LandingPage() {
               </li>
             ))}
           </ol>
+
+          <h3 className="mb-3 mt-8 text-lg font-semibold text-ink-900">
+            <Bi {...W.videoGuide} stack />
+          </h3>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <GuideVideo who="organizer" />
+            <GuideVideo who="member" />
+          </div>
         </section>
 
         {/* Why families use it */}
