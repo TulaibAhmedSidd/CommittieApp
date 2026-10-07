@@ -97,9 +97,11 @@ A family "BC" (committee / ROSCA) app for Pakistan. Each month one member gets t
 
 ## Scripts
 - **Commands:** `npm run dev`, `npm run build`, `npm run lint`, `npm test`.
-- **`scripts/migrate-2026-10.mjs`:** dry run by default; `--apply` writes. Normalizes phones and emails, tags old BCs, creates indexes. **Not yet applied to live.**
+- **`scripts/migrate-2026-10.mjs`:** dry run by default; `--apply` writes. Normalizes phones and emails, tags old BCs, creates indexes. Applied to live on 2026-10-07 (after the live DB was reset).
 - **`scripts/e2e-api.mjs <baseUrl>`:** full lifecycle and security test using ZZTEST data.
 - **`scripts/cleanup-test-data.mjs`:** removes ZZTEST data (dry run by default).
+- **`scripts/seed-demo.mjs`:** adds a ZZTEST demo set (3 organizers, 12 members, 5 BCs in every stage). Dry run by default; refuses if ZZTEST data already exists. Demo logins are in the file header.
+- **`scripts/guide-video/`:** Urdu guide videos. `steps.cjs` = narration + which button to highlight; `capture.cjs mem|org` takes the screenshots (needs `npm run dev` and fresh demo data; `org` changes the demo Running BC); `build.cjs mem|org` makes the MP4 in `guide-videos/` (gitignored). Needs edge-tts and ffmpeg.
 
 ## Warnings
 - The dev `.env` points to the **live** database. Use `ZZTEST` names for test data, keep `MAIL_MODE=log` in `.env.local`, and clean up afterwards.

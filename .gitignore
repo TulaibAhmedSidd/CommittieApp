@@ -42,3 +42,6 @@ next-env.d.ts
 
 # migration backups
 scripts/backups/
+
+# guide videos (large, shared on WhatsApp, not in git)
+guide-videos/
